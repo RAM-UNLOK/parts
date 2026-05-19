@@ -6,10 +6,9 @@
  *
  * M3 tokens:
  *  Colour    — background, surfaceContainerHigh, secondaryContainer,
- *               onSecondaryContainer, onSurface, onSurfaceVariant,
- *               errorContainer, onErrorContainer (reset dialog icon)
+ *               onSecondaryContainer, onSurface, onSurfaceVariant
  *  Typography — headlineMedium (title), bodyLarge (row title), bodySmall (summary)
- *               bodyMedium (app label), labelSmall (chip label)
+ *               bodyMedium (app label), labelSmall (chip label), headlineSmall (dialog title)
  *  Shape     — extraLarge (cards + dialog + dropdown)
  *  Motion    — fadeIn/fadeOut tween for app-list animated content
  */
@@ -24,9 +23,9 @@ import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -48,7 +47,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Box
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -83,10 +81,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.xiaomi.settings.R
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.PartsDivider
+import com.xiaomi.settings.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -237,7 +235,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // App list animated section
+            // App list — animated between loading / disabled / populated states
             AnimatedContent(
                 targetState    = ThermalScreenState(isLoading, enabled, appEntries),
                 transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) },
