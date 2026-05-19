@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2023 Paranoid Android
+     SPDX-License-Identifier: Apache-2.0
+
+     Refactored: All XiaomiParts features are now exposed through a single
+     hub Activity (XiaomiPartsActivity) injected into the main Settings page.
+     GameBar has been fully removed.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.xiaomi.settings"
+    android:sharedUserId="android.uid.system">
+
+    <!-- Boot restore -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Display feature AIDL access via SurfaceFlinger -->
+    <uses-permission android:name="android.permission.ACCESS_SURFACE_FLINGER" />
+    <!-- Cross-user service start for multi-user builds -->
+    <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
+    <!-- Foreground app detection for per-app thermal profiles -->
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <!-- Write system settings for colour mode persistence -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- Write secure settings for touch polling rate -->
+    <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
+    <!-- Keep CPU alive while applying profiles at boot -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Per-app thermal usage statistics -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <application
+        android:label="@string/app_name"
+        android:persistent="true"
+        android:defaultToDeviceProtectedStorage="true"
+        android:directBootAware="true">
+
+        <!-- ════════════════════════════════════════════════
+             Boot receiver — restores all feature states on
+             both locked-boot and full-boot.
+             ════════════════════════════════════════════════ -->
+        <receiver
+            android:name=".BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter android:priority="1000">
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- ════════════════════════════════════════════════
+             DISPLAY — ColorService
+             Watches Settings.System.DISPLAY_COLOR_MODE and
+             applies the correct DisplayFeature AIDL call.
+             Runs as a sticky service started at locked-boot.
+             ════════════════════════════════════════════════ -->
+        <service
+            android:name=".display.ColorService"
+            android:exported="false" />
+
+        <!-- ════════════════════════════════════════════════
+             THERMAL — ThermalService
+             Monitors foreground app via TaskStackListener
+             and writes the matching profile to sconfig.
+             ════════════════════════════════════════════════ -->
+        <service
+            android:name=".thermal.ThermalService"
+            android:permission="ThermalService" />
+
+        <!-- ════════════════════════════════════════════════
+             TOUCH BOOST — TouchSamplingService
+             Applies ITouchFeature modes on screen-on /
+             preference change. Sticky, started at locked-boot.
+             ════════════════════════════════════════════════ -->
+        <service
+            android:name=".touchsampling.TouchSamplingService"
+            android:permission="android.permission.BIND_JOB_SERVICE"
+            android:exported="false" />
+
+        <!-- ════════════════════════════════════════════════
+             XIAOMI PARTS HUB — single Settings entry point.
+             Appears in the main Settings page as "Xiaomi Parts".
+             All sub-screens (Display Colours, Thermal, Touch
+             Boost) are Compose destinations inside this Activity.
+             ════════════════════════════════════════════════ -->
+        <activity
+            android:name=".XiaomiPartsActivity"
+            android:label="@string/xiaomi_parts_title"
+            android:exported="true"
+            android:theme="@android:style/Theme.DeviceDefault.DayNight">
+            <intent-filter>
+                <!-- IA_SETTINGS injects this into the Settings app tile list -->
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
+            </intent-filter>
+            <!-- Places the tile in the main "device" category of Settings -->
+            <meta-data
+                android:name="com.android.settings.category"
+                android:value="com.android.settings.category.ia.homepage" />
+            <meta-data
+                android:name="com.android.settings.summary"
+                android:resource="@string/xiaomi_parts_summary" />
+            <!-- Material icon shown next to the tile -->
+            <meta-data
+                android:name="com.android.settings.icon"
+                android:resource="@drawable/ic_xiaomi_parts" />
+        </activity>
+
+        <!-- ════════════════════════════════════════════════
+             CHARGING THERMAL
+             NOTE: ACTION_POWER_CONNECTED/DISCONNECTED cannot be received
+             by static receivers on Android 8+ (not in implicit broadcast
+             exemption list). Charging is detected via ACTION_BATTERY_CHANGED
+             (sticky, always works) read in ThermalService at runtime.
+             ════════════════════════════════════════════════ -->
+
+    </application>
+</manifest>

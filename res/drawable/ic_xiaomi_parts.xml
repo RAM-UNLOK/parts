@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Xiaomi Parts hub icon — phone + settings gear.
+  MD3 Expressive filled style, ?attr/colorControlNormal, 24dp × 24dp.
+  The phone outline uses rounded corners (rx/ry expressed as arcs).
+  The gear is a scaled-down settings cog centred on the screen area.
+  SPDX-License-Identifier: Apache-2.0
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Phone body (outer) with notch strip -->
+    <path
+        android:fillColor="?attr/colorControlNormal"
+        android:fillType="evenOdd"
+        android:pathData="
+M16,1 L8,1 C6.34,1 5,2.34 5,4 L5,20 C5,21.66 6.34,23 8,23
+  L16,23 C17.66,23 19,21.66 19,20 L19,4 C19,2.34 17.66,1 16,1 Z
+M16,3 C16.55,3 17,3.45 17,4 L17,20 C17,20.55 16.55,21 16,21
+  L8,21 C7.45,21 7,20.55 7,20 L7,4 C7,3.45 7.45,3 8,3 Z" />
+
+    <!-- Speaker slot -->
+    <path
+        android:fillColor="?attr/colorControlNormal"
+        android:pathData="M11,4 H13 C13.28,4 13.5,4.22 13.5,4.5 C13.5,4.78 13.28,5 13,5
+  H11 C10.72,5 10.5,4.78 10.5,4.5 C10.5,4.22 10.72,4 11,4 Z" />
+
+    <!-- Settings gear (centred on screen area between y=6 and y=19) -->
+    <!-- Outer ring + 8 teeth using clip path trick -->
+    <path
+        android:fillColor="?attr/colorControlNormal"
+        android:fillType="evenOdd"
+        android:pathData="
+M12.9,8 L11.1,8 L10.85,9.15 C10.54,9.27 10.25,9.42 9.99,9.61
+  L8.88,9.23 L7.98,10.78 L8.82,11.6 C8.79,11.73 8.77,11.86 8.77,12
+  C8.77,12.14 8.79,12.27 8.82,12.4 L7.98,13.22 L8.88,14.77
+  L9.99,14.39 C10.25,14.58 10.54,14.73 10.85,14.85 L11.1,16
+  L12.9,16 L13.15,14.85 C13.46,14.73 13.75,14.58 14.01,14.39
+  L15.12,14.77 L16.02,13.22 L15.18,12.4 C15.21,12.27 15.23,12.14 15.23,12
+  C15.23,11.86 15.21,11.73 15.18,11.6 L16.02,10.78 L15.12,9.23
+  L14.01,9.61 C13.75,9.42 13.46,9.27 13.15,9.15 Z
+M12,10.5 C12.83,10.5 13.5,11.17 13.5,12 C13.5,12.83 12.83,13.5 12,13.5
+  C11.17,13.5 10.5,12.83 10.5,12 C10.5,11.17 11.17,10.5 12,10.5 Z" />
+
+    <!-- Home bar -->
+    <path
+        android:fillColor="?attr/colorControlNormal"
+        android:pathData="M10.5,19.5 H13.5 C13.78,19.5 14,19.72 14,20
+  C14,20.28 13.78,20.5 13.5,20.5 H10.5 C10.22,20.5 10,20.28 10,20
+  C10,19.72 10.22,19.5 10.5,19.5 Z" />
+</vector>

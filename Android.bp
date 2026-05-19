@@ -1,0 +1,64 @@
+//
+// XiaomiParts — modernized Settings extension using Jetpack Compose.
+//
+// NOTE: All Compose modules are taken directly from
+//   prebuilts/sdk/current/androidx/m2repository
+// as detected in this ROM tree.
+//
+
+android_app {
+    name: "XiaomiParts",
+    certificate: "platform",
+    srcs: ["src/**/*.kt"],
+    resource_dirs: ["res"],
+    platform_apis: true,
+    privileged: true,
+    system_ext_specific: true,
+
+    static_libs: [
+        // Xiaomi vendor AIDL interfaces
+        "org.lineageos.settings.resources",
+        "vendor.xiaomi.hardware.displayfeature_aidl-V2-java",
+        "vendor.xiaomi.hw.touchfeature-V1-java",
+
+        // Compose runtime + UI core
+        "androidx.compose.runtime_runtime",
+        "androidx.compose.runtime_runtime-saveable",
+        "androidx.compose.ui_ui",
+        "androidx.compose.ui_ui-graphics",
+        "androidx.compose.foundation_foundation",
+        "androidx.compose.foundation_foundation-layout",
+        "androidx.compose.animation_animation",
+
+        // Material3 + Material icons
+        "androidx.compose.material3_material3",
+        "androidx.compose.material_material-icons-core",
+        "androidx.compose.material_material-icons-extended",
+
+        // Activity integration for setContent
+        "androidx.activity_activity-compose",
+
+        // Navigation-Compose (fixes NavHost/composable/rememberNavController)
+        "androidx.navigation_navigation-compose",
+
+        // AndroidX preference (fixes PreferenceManager)
+        "androidx.preference_preference",
+
+        // SettingsLib (fixes com.android.settingslib.applications.AppUtils)
+        "SettingsLib",
+
+        // Tooling preview (no runtime cost in release, but needed for previews)
+        "androidx.compose.ui_ui-tooling-preview",
+    ],
+
+    required: [
+        "privapp_whitelist_com.xiaomi.settings.xml",
+    ],
+}
+
+prebuilt_etc {
+    name: "privapp_whitelist_com.xiaomi.settings.xml",
+    src: "permissions/privapp_whitelist_com.xiaomi.settings.xml",
+    sub_dir: "permissions",
+    system_ext_specific: true,
+}

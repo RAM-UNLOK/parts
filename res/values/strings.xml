@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2023 Paranoid Android
+     SPDX-License-Identifier: Apache-2.0
+
+     All GameBar strings removed.
+     Xiaomi Parts hub strings added.
+-->
+<resources>
+    <!-- Application label (used by Settings to display the app name) -->
+    <string name="app_name">Xiaomi Parts</string>
+
+    <!-- ── Xiaomi Parts Hub ─────────────────────────────── -->
+    <string name="xiaomi_parts_title">Xiaomi Parts</string>
+    <string name="xiaomi_parts_summary">Display colours, thermal management &amp; touch boost</string>
+
+    <!-- ── Display Colours ──────────────────────────────── -->
+    <string name="display_title">Display Colours</string>
+    <string name="display_summary">Adjust colour profile for the screen</string>
+    <string name="color_mode_vivid">Vivid</string>
+    <string name="color_mode_saturated">Saturated</string>
+    <string name="color_mode_standard">Standard</string>
+    <string name="color_mode_original">Original (Expert)</string>
+    <string name="color_mode_p3">DCI-P3 (Expert)</string>
+    <string name="color_mode_srgb">sRGB (Expert)</string>
+    <string name="color_mode_applied_success">Colour mode applied: %1$s</string>
+    <string name="color_mode_applied_failure">Failed to apply colour mode</string>
+
+    <!-- ── Thermal Management ───────────────────────────── -->
+    <string name="thermal_title">Thermal Management</string>
+    <string name="thermal_summary">Per-app thermal profile configuration</string>
+    <string name="thermal_enable">Use thermal profiles</string>
+    <string name="thermal_loading">Loading apps\u2026</string>
+    <string name="thermal_reset">Reset to defaults</string>
+    <string name="thermal_reset_confirm">Reset thermal profiles for all apps?</string>
+    <string name="thermal_reset_success">All thermal profiles reset to default</string>
+    <string name="thermal_profile_applied">Thermal profile set: %1$s → %2$s</string>
+    <string name="thermal_profile_failed">Failed to set thermal profile for %1$s</string>
+    <string name="thermal_service_started">Thermal service started</string>
+    <string name="thermal_service_stopped">Thermal service stopped</string>
+
+    <!-- Thermal profile labels (match ThermalState enum order) -->
+    <string name="thermal_benchmark">Benchmark</string>
+    <string name="thermal_browser">Browser</string>
+    <string name="thermal_camera">Camera</string>
+    <string name="thermal_dialer">Dialer</string>
+    <string name="thermal_gaming">Gaming</string>
+    <string name="thermal_navigation">Navigation</string>
+    <string name="thermal_streaming">Video Call</string>
+    <string name="thermal_video_streaming">Video Streaming</string>
+    <string name="thermal_video">Video</string>
+    <string name="thermal_social">Social Media</string>
+    <string name="thermal_music">Music</string>
+    <string name="thermal_default">Default</string>
+
+    <!-- ── Touch Boost ──────────────────────────────────── -->
+    <string name="htsr_title">Touch Boost</string>
+    <string name="htsr_summary">Touch sampling rate settings</string>
+    <string name="htsr_enable_title">Enhanced Touch Responsiveness</string>
+    <string name="htsr_enable_summary">Boosts the touch polling rate to reduce input latency, delivering a smoother and more responsive experience</string>
+    <string name="htsr_enabled_toast">Touch boost enabled</string>
+    <string name="htsr_disabled_toast">Touch boost disabled</string>
+    <string name="htsr_failed_toast">Failed to change touch boost state</string>
+
+
+    <!-- ── Charging Thermal ─────────────────────────────────────── -->
+    <string name="thermal_charging_active">Charging profile active</string>
+    <string name="thermal_charging_restored">Charging profile removed</string>
+
+    <!-- ── Xiaomi CIT ───────────────────────────────────────────── -->
+    <string name="cit_title">Xiaomi CIT</string>
+    <string name="cit_summary">Hardware test and calibration tools</string>
+    <string name="cit_not_found">Xiaomi CIT app is not installed on this device</string>
+    <string name="cit_launched">Opening Xiaomi CIT…</string>
+
+    <!-- Auto-added by refactor -->
+    <string name="thermal_charging_active_desc">thermal-charge.conf is applied while plugged in</string>
+    <string name="thermal_charging_toast_connected">🔋 Charger connected — thermal-charge.conf applied</string>
+    <string name="thermal_charging_toast_disconnected">Charger removed — resuming normal thermal profiles</string>
+    <string name="thermal_apply_failed">⚠ Failed to apply thermal profile</string>
+    <string name="xiaomi_parts_category_display">Display</string>
+    <string name="xiaomi_parts_category_performance">Performance</string>
+    <string name="xiaomi_parts_category_diagnostics">Diagnostics</string>
+    <!-- Screen strings -->
+    <string name="back">Back</string>
+    <string name="color_section_standard">Standard</string>
+    <string name="color_section_expert">Expert (Wide Gamut)</string>
+    <string name="color_mode_applied">%1$s colour mode applied</string>
+    <string name="color_mode_failed">Failed to set colour mode</string>
+    <string name="color_mode_vivid_summary">Vivid, punchy colours with boosted saturation</string>
+    <string name="color_mode_saturated_summary">Balanced saturation for everyday use</string>
+    <string name="color_mode_standard_summary">Factory calibrated display colour</string>
+    <string name="color_mode_original_summary">Wide-gamut P3 with original tuning</string>
+    <string name="color_mode_p3_summary">DCI-P3 wide colour gamut</string>
+    <string name="color_mode_srgb_summary">Standard sRGB — most accurate for web content</string>
+    <string name="htsr_info_body">Touch boost raises the polling rate of the touch controller. This reduces tap-to-response latency but may slightly increase power consumption during active use.</string>
+    <string name="thermal_enable_summary">Apply per-app thermal profiles in the background</string>
+    <string name="thermal_reset_confirm_btn">Reset all</string>
+    <string name="thermal_reset_failed">Failed to reset thermal profiles</string>
+    <string name="thermal_toggle_failed">Failed to toggle thermal service</string>
+    <string name="thermal_disabled_hint">Enable thermal profiles to configure per-app settings</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="thermal_apps_category">Per-app profiles</string>
+</resources>
