@@ -12,6 +12,7 @@
  *
  * Navigation: single-activity Compose NavHost (no Fragments).
  */
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.xiaomi.settings
 
@@ -22,7 +23,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -75,7 +75,6 @@ class XiaomiPartsActivity : ComponentActivity() {
  *   - Dynamic colour on API 31+ (Material You)
  *   - Baseline M3 palette fallback on older API
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsExpressiveTheme(content: @Composable () -> Unit) {
     val context   = LocalContext.current

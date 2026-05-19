@@ -93,15 +93,15 @@ class ThermalUtils private constructor(private val context: Context) {
                 packageName, PackageManager.GET_META_DATA
             )
             return when {
-                isGameApp(appInfo)               -> ThermalState.GAMING
-                isCameraApp(packageName, pm)     -> ThermalState.CAMERA
-                isBrowserApp(context, packageName) -> ThermalState.BROWSER
-                isDialerApp(packageName)         -> ThermalState.DIALER
-                isVideoApp(packageName)          -> ThermalState.VIDEO
-                isStreamingApp(packageName)      -> ThermalState.STREAMING
-                isMusicApp(appInfo, pm)          -> ThermalState.MUSIC
-                isSocialApp(appInfo)             -> ThermalState.SOCIAL
-                else                             -> ThermalState.DEFAULT
+                isGameApp(appInfo)                                        -> ThermalState.GAMING
+                isCameraApp(packageName, pm)                              -> ThermalState.CAMERA
+                isBrowserApp(context, packageName, UserHandle.myUserId()) -> ThermalState.BROWSER
+                isDialerApp(packageName)                                  -> ThermalState.DIALER
+                isVideoApp(packageName)                                   -> ThermalState.VIDEO
+                isStreamingApp(packageName)                               -> ThermalState.STREAMING
+                isMusicApp(appInfo, pm)                                   -> ThermalState.MUSIC
+                isSocialApp(appInfo)                                      -> ThermalState.SOCIAL
+                else                                                      -> ThermalState.DEFAULT
             }
         }
         return ThermalState.DEFAULT
