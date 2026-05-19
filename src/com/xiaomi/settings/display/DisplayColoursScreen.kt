@@ -1,16 +1,9 @@
 /*
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Display Colours sub-screen.
- *
- * M3 tokens:
- *  Colour    — primaryContainer (selected row tint), surfaceContainerHigh,
- *               onPrimaryContainer, onSurface, onSurfaceVariant, primary
- *  Typography — bodyLarge (mode name), bodySmall (mode description)
- *  Shape     — extraLarge (card), full (radio button)
- *  Motion    — animateColorAsState spring for row background
  */
+
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.xiaomi.settings.display
 
@@ -57,10 +50,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.xiaomi.settings.R
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.PartsDivider
+import com.xiaomi.settings.R
 
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
@@ -116,24 +109,22 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .selectableGroup(),
         ) {
-            // Standard colour modes
             PartsCategory(stringResource(R.string.color_section_standard))
             PartsCard {
-                ColorMode.VIVID.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                ColorMode.VIVID.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
                 PartsDivider()
                 ColorMode.SATURATED.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                 PartsDivider()
-                ColorMode.STANDARD.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                ColorMode.STANDARD.Row(selectedId)  { applyMode(context, it) { selectedId = it.id } }
             }
 
-            // Expert / wide-gamut modes
             PartsCategory(stringResource(R.string.color_section_expert))
             PartsCard {
                 ColorMode.ORIGINAL.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                 PartsDivider()
-                ColorMode.P3.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                ColorMode.P3.Row(selectedId)       { applyMode(context, it) { selectedId = it.id } }
                 PartsDivider()
-                ColorMode.SRGB.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                ColorMode.SRGB.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -141,7 +132,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
     }
 }
 
-/** Convenience alias to keep call-sites tidy. */
 private typealias ColorMode = ColorService.ColorMode
 
 @Composable

@@ -13,6 +13,8 @@
  *  Motion    — fadeIn/fadeOut tween for app-list animated content
  */
 
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+
 package com.xiaomi.settings.thermal
 
 import android.content.Context
@@ -193,7 +195,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         ) {
             PartsCategory(stringResource(R.string.thermal_title))
 
-            // Enable / disable thermal service toggle row
             PartsCard {
                 Row(
                     modifier = Modifier
@@ -235,7 +236,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // App list — animated between loading / disabled / populated states
             AnimatedContent(
                 targetState    = ThermalScreenState(isLoading, enabled, appEntries),
                 transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) },

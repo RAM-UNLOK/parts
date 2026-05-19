@@ -1,18 +1,9 @@
 /*
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Xiaomi Parts home screen.
- *
- * M3 design tokens used:
- *  Colour    — background, surfaceContainerHigh, surfaceContainerLow,
- *               secondaryContainer, onSecondaryContainer, tertiaryContainer,
- *               onTertiaryContainer, primary, onSurface, onSurfaceVariant
- *  Typography — headlineMedium (collapsed bar title), bodyLarge (row title),
- *               bodySmall (row summary), labelMedium (section label)
- *  Shape     — extraLarge (cards), full circle (icon containers)
- *  Motion    — spring() for banner enter/exit, exitUntilCollapsed TopAppBar
  */
+
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.xiaomi.settings
 
@@ -86,7 +77,6 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    // Charging state — initial value from sticky broadcast, live updates via receiver.
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
@@ -132,8 +122,6 @@ fun XiaomiPartsHomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding),
         ) {
-
-            // Charging banner — spring enter/exit animation
             AnimatedVisibility(
                 visible = isCharging,
                 enter   = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)),
@@ -142,7 +130,6 @@ fun XiaomiPartsHomeScreen(
                 ChargingBanner(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
 
-            // Display section
             PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
             PartsCard {
                 PartsRow(
@@ -153,7 +140,6 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // Performance section
             PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
             PartsCard {
                 PartsRow(
@@ -171,7 +157,6 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // Diagnostics section
             PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
             PartsCard {
                 PartsRow(
@@ -191,10 +176,9 @@ fun XiaomiPartsHomeScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared M3 components (used across all sub-screens via import)
+// Shared M3 components
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** M3 section label — labelMedium, primary colour, 20dp top padding. */
 @Composable
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
@@ -205,10 +189,6 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     )
 }
 
-/**
- * M3 card container — surfaceContainerHigh tonal surface, extraLarge shape.
- * Groups related rows inside a visually distinct rounded card.
- */
 @Composable
 fun PartsCard(
     modifier : Modifier = Modifier,
@@ -225,7 +205,6 @@ fun PartsCard(
     )
 }
 
-/** M3 inset divider — indented past icon + spacing to align with text. */
 @Composable
 fun PartsDivider(modifier: Modifier = Modifier) {
     HorizontalDivider(
@@ -235,13 +214,6 @@ fun PartsDivider(modifier: Modifier = Modifier) {
     )
 }
 
-/**
- * M3 settings row.
- *
- * Layout: [icon container 40dp] [title + summary, weight=1] [chevron]
- * Colors: secondaryContainer icon bg, bodyLarge title, bodySmall summary,
- *         onSurfaceVariant chevron.
- */
 @Composable
 fun PartsRow(
     icon     : ImageVector,
@@ -259,7 +231,6 @@ fun PartsRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // M3 icon container — secondaryContainer tonal circle
         Surface(
             modifier = Modifier
                 .size(40.dp)
@@ -336,7 +307,7 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
     }
 }
 
-// Keep legacy aliases so sub-screens compiled before this refactor still resolve.
+// Legacy aliases
 @Composable fun SettingsCategoryLabel(label: String, modifier: Modifier = Modifier) = PartsCategory(label, modifier)
 @Composable fun SettingsBlock(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) = PartsCard(modifier, content)
 @Composable fun SettingsDivider(modifier: Modifier = Modifier) = PartsDivider(modifier)

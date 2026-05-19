@@ -8,10 +8,12 @@
  *  Colour    — background, surfaceContainerHigh, secondaryContainer,
  *               onSecondaryContainer, onSurface, onSurfaceVariant
  *  Typography — headlineMedium (title), bodyLarge (toggle title),
- *               bodySmall (summary + info text), labelLarge (info heading)
+ *               bodySmall (summary + info text)
  *  Shape     — extraLarge (card), large (info surface), circle (icon container)
  *  Motion    — spring-based exitUntilCollapsed TopAppBar collapse
  */
+
+@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 
 package com.xiaomi.settings.touchsampling
 
@@ -56,9 +58,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
-import com.xiaomi.settings.R
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
+import com.xiaomi.settings.R
 
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
@@ -114,7 +116,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         ) {
             PartsCategory(stringResource(R.string.htsr_title))
 
-            // Toggle card
             PartsCard {
                 Row(
                     modifier = Modifier
@@ -158,7 +159,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(8.dp))
 
-            // M3 info card — secondaryContainer tonal surface, large shape
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
