@@ -10,6 +10,12 @@
  *   registerReceiver(null, filter) without registering a persistent receiver.
  *   Live updates use a dynamically registered receiver.
  *   EXTRA_PLUGGED > 0 means any charger (AC=1, USB=2, Wireless=4) is connected.
+ *
+ * applyProfile() priority (highest → lowest):
+ *   1. Charging  → sconfig=27  (cannot be overridden by any app)
+ *   2. Screen off → sconfig=0  (default, low-power)
+ *   3. Foreground app known → per-app sconfig from ThermalUtils
+ *   4. No foreground app yet → skip (TaskStackListener hasn't fired)
  */
 
 package com.xiaomi.settings.thermal
@@ -52,8 +58,8 @@ class ThermalService : Service() {
         }
 
     /**
-     * Backing field — allows setting initial value at startup without triggering
-     * side-effects (applyProfile + toast) before receivers are registered.
+     * Backing field — allows setting initial charging state at startup without
+     * triggering side-effects (applyProfile + toast) before receivers are registered.
      */
     private var _isCharging = false
 
@@ -131,15 +137,27 @@ class ThermalService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
+    /**
+     * Applies the correct thermal profile based on current state.
+     * Priority order (highest wins):
+     *   1. Charging      → sconfig=27, cannot be overridden by any app switch
+     *   2. Screen off    → sconfig=0  (default low-power)
+     *   3. App known     → per-app sconfig via ThermalUtils
+     *   4. No app yet    → skip (TaskStackListener fires shortly after boot)
+     */
     private fun applyProfile() {
         runCatching {
             when {
-                _isCharging -> {
+                _isCharging             -> {
                     val ok = thermalUtils.setChargingThermalProfile()
                     if (!ok) showToast(getString(R.string.thermal_apply_failed))
                 }
-                !screenOn   -> thermalUtils.setDefaultThermalProfile()
-                else        -> thermalUtils.setThermalProfile(currentApp)
+                !screenOn               -> thermalUtils.setDefaultThermalProfile()
+                currentApp.isNotEmpty() -> thermalUtils.setThermalProfile(currentApp)
+                // currentApp is still "" — TaskStackListener hasn't fired yet.
+                // Skip: writing sconfig=0 for a nameless app is wasteful and
+                // would show a spurious log. The listener fires within ms of boot.
+                else                    -> dlog(TAG, "applyProfile: skipped — no foreground app yet")
             }
         }.onFailure { e ->
             dlog(TAG, "applyProfile failed: ${e.message}")
