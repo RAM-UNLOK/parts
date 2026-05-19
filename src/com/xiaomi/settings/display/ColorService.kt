@@ -1,16 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2023-2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Background service that keeps the display colour mode in sync with
- * Settings.System.DISPLAY_COLOR_MODE.
- *
- * Responsibilities:
- *  - Observe DISPLAY_COLOR_MODE changes via ContentObserver
- *  - Apply the corresponding DisplayFeature AIDL call
- *  - On AOD (screen-off with AOD enabled) force STANDARD mode to avoid
- *    incorrect colour rendering while in ambient display
- *  - Restore the user-selected mode on screen-on after AOD
  */
 
 package com.xiaomi.settings.display
@@ -38,7 +28,6 @@ class ColorService : Service() {
         private const val TAG = "ColorService"
         private val DEBUG = Log.isLoggable(TAG, Log.DEBUG)
 
-        /** System property set by the device tree for the default colour mode id. */
         private val DEFAULT_COLOR_MODE =
             SystemProperties.getInt("persist.sys.sf.native_mode", 0)
     }
@@ -47,7 +36,6 @@ class ColorService : Service() {
     private lateinit var ambientConfig: AmbientDisplayConfiguration
     private var isDozing = false
 
-    /** Re-applies the current colour mode whenever the setting changes. */
     private val settingObserver = object : ContentObserver(handler) {
         override fun onChange(selfChange: Boolean) {
             if (DEBUG) Log.d(TAG, "SettingObserver: onChange")
@@ -55,7 +43,6 @@ class ColorService : Service() {
         }
     }
 
-    /** Handles screen-on (exit AOD) and screen-off (enter AOD) events. */
     private val screenStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             if (DEBUG) Log.d(TAG, "onReceive: ${intent.action}")
@@ -64,7 +51,6 @@ class ColorService : Service() {
                     if (isDozing) {
                         isDozing = false
                         handler.removeCallbacksAndMessages(null)
-                        // Short delay so the display pipeline is fully awake
                         handler.postDelayed(100) {
                             if (DEBUG) Log.d(TAG, "Exiting AOD — restoring colour mode")
                             setCurrentColorMode()
@@ -90,14 +76,12 @@ class ColorService : Service() {
         super.onCreate()
         if (DEBUG) Log.d(TAG, "onCreate")
         ambientConfig = AmbientDisplayConfiguration(this)
-
         contentResolver.registerContentObserver(
             Settings.System.getUriFor(Settings.System.DISPLAY_COLOR_MODE),
-            /* notifyForDescendants= */ false,
+            false,
             settingObserver,
             UserHandle.USER_CURRENT,
         )
-
         registerReceiver(
             screenStateReceiver,
             IntentFilter().apply {
@@ -105,7 +89,6 @@ class ColorService : Service() {
                 addAction(Intent.ACTION_SCREEN_OFF)
             },
         )
-
         setCurrentColorMode()
     }
 
@@ -123,7 +106,6 @@ class ColorService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    /** Reads the current colour mode from Settings and applies it via the AIDL. */
     private fun setCurrentColorMode() {
         if (isDozing) {
             if (DEBUG) Log.d(TAG, "setCurrentColorMode: skipping — in AOD")
@@ -143,21 +125,6 @@ class ColorService : Service() {
         handler.post { mode.setCurrent() }
     }
 
-    /**
-     * All supported colour modes for the Xiaomi garnet display pipeline.
-     *
-     * Each entry maps a [Settings.System.DISPLAY_COLOR_MODE] id to the
-     * DisplayFeature AIDL (mode, value, cookie) tuple.
-     *
-     * Expert modes additionally require a secondary AIDL call to switch
-     * the panel into its expert colour space path.
-     *
-     * @param id       Settings.System.DISPLAY_COLOR_MODE value
-     * @param mode     IDisplayFeature mode parameter
-     * @param value    IDisplayFeature value parameter
-     * @param cookie   IDisplayFeature cookie parameter
-     * @param isExpert Whether a second AIDL call is required
-     */
     enum class ColorMode(
         val id: Int,
         val mode: Int,
@@ -172,11 +139,9 @@ class ColorService : Service() {
         P3       (268, 26, 2, 0,   isExpert = true),
         SRGB     (267, 26, 3, 0,   isExpert = true);
 
-        /** Applies this colour mode to the display hardware. */
         fun setCurrent() {
             DisplayFeatureWrapper.setFeature(mode, value, cookie)
             if (isExpert) {
-                // Expert modes require a second call to enter the expert gamut path
                 DisplayFeatureWrapper.setFeature(EXPERT_MODE, EXPERT_VALUE, EXPERT_COOKIE)
             }
         }
@@ -186,7 +151,8 @@ class ColorService : Service() {
             private const val EXPERT_VALUE  = 0
             private const val EXPERT_COOKIE = 10
 
-            fun fromId(id: Int): ColorMode? = values().find { it.id == id }
+            // FIX: entries instead of deprecated values()
+            fun fromId(id: Int): ColorMode? = entries.find { it.id == id }
         }
     }
 }

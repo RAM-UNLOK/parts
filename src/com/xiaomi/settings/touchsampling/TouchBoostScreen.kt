@@ -1,15 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Touch Boost sub-screen — Material 3 Expressive.
- *
- * Design: Pixel 9 Settings style
- *   • LargeTopAppBar with spring collapse
- *   • Toggle inside a SettingsBlock (rounded surface card)
- *   • Full-width row is clickable, not just the Switch thumb
- *   • Info card in secondaryContainer below the block
- *   • Toast on enable/disable/failure
  */
 
 package com.xiaomi.settings.touchsampling
@@ -18,6 +9,7 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
@@ -26,6 +18,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -47,7 +40,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        snapAnimationSpec = androidx.compose.animation.core.spring(
+            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioLowBouncy,
+            stiffness    = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        )
+    )
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -79,7 +77,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             SettingsCategoryLabel(stringResource(R.string.htsr_title))
 
             SettingsBlock {
-                // Full-width clickable row that toggles the switch
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -90,19 +87,22 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    // Tonal icon circle
-                    Surface(
-                        modifier = Modifier.size(40.dp),
-                        shape    = MaterialTheme.shapes.extraLarge,
-                        color    = MaterialTheme.colorScheme.secondaryContainer,
+                    // FIX: CircleShape — consistent with SettingsRow
+                    Box(
+                        modifier         = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center,
                     ) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color    = MaterialTheme.colorScheme.secondaryContainer,
+                        ) {}
                         Icon(
                             imageVector        = Icons.Filled.TouchApp,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier
-                                .fillMaxSize()
-                                .padding(8.dp),
+                            modifier           = Modifier.size(24.dp),
                         )
                     }
 
@@ -128,7 +128,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 }
             }
 
-            // ── Info card ─────────────────────────────────────────────────
             Spacer(Modifier.height(8.dp))
             Surface(
                 modifier = Modifier

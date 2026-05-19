@@ -2,10 +2,6 @@
  * SPDX-FileCopyrightText: 2018 The LineageOS Project
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Refactored: GameBar boot receiver removed.
- * All three active subsystems are restored in onLockedBootCompleted
- * so they are available before the user unlocks the device.
  */
 
 package com.xiaomi.settings
@@ -22,7 +18,7 @@ import com.xiaomi.settings.display.ColorService
 import com.xiaomi.settings.thermal.ThermalUtils
 import com.xiaomi.settings.touchsampling.TouchSamplingService
 
-/** Restores all XiaomiParts feature states after device (re)boot. */
+/** Restores all XiaomiParts feature states at locked-boot. */
 class BootCompletedReceiver : BroadcastReceiver() {
 
     companion object {
@@ -31,42 +27,40 @@ class BootCompletedReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (DEBUG) Log.d(TAG, "Boot intent received: ${intent.action}")
-        when (intent.action) {
-            Intent.ACTION_BOOT_COMPLETED        -> onBootCompleted(context)
-            Intent.ACTION_LOCKED_BOOT_COMPLETED -> onLockedBootCompleted(context)
-        }
-    }
-
-    /** Called after full user unlock — reserved for future use. */
-    private fun onBootCompleted(context: Context) {
-        // Nothing extra needed post-unlock; all services start at locked-boot.
+        if (intent.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
+        if (DEBUG) Log.d(TAG, "LOCKED_BOOT_COMPLETED received")
+        onLockedBootCompleted(context)
     }
 
     /**
-     * Called early at locked-boot — starts all background services so that
-     * display, thermal, and touch settings are applied before the user sees
-     * the lock screen.
+     * Called early at locked-boot — starts all background services so display,
+     * thermal, and touch settings are applied before the user sees the lock screen.
+     * Each service start is wrapped in runCatching to prevent a single failure
+     * from stopping the remaining services from starting.
      */
     private fun onLockedBootCompleted(context: Context) {
-        // ── Display colour mode ──────────────────────────────────────────
-        context.startServiceAsUser(
-            Intent(context, ColorService::class.java),
-            UserHandle.CURRENT,
-        )
+        // Display colour mode
+        runCatching {
+            context.startServiceAsUser(
+                Intent(context, ColorService::class.java),
+                UserHandle.CURRENT,
+            )
+        }.onFailure { e -> Log.e(TAG, "Failed to start ColorService", e) }
 
-        // ── Touch boost / high touch sampling rate ───────────────────────
-        context.startServiceAsUser(
-            Intent(context, TouchSamplingService::class.java),
-            UserHandle.CURRENT,
-        )
+        // Touch boost / high touch sampling rate
+        runCatching {
+            context.startServiceAsUser(
+                Intent(context, TouchSamplingService::class.java),
+                UserHandle.CURRENT,
+            )
+        }.onFailure { e -> Log.e(TAG, "Failed to start TouchSamplingService", e) }
 
-        // ── Per-app thermal profiles ─────────────────────────────────────
-        ThermalUtils.getInstance(context).startService()
+        // Per-app thermal profiles
+        runCatching {
+            ThermalUtils.getInstance(context).startService()
+        }.onFailure { e -> Log.e(TAG, "Failed to start ThermalService", e) }
 
-        // ── Force-enable all HDR types (Dolby Vision, HDR10, HLG, HDR10+) ──
-        // This is required on garnet to ensure Dolby Vision content renders
-        // correctly regardless of whether the panel negotiated it at init.
+        // Force-enable all HDR types (Dolby Vision, HDR10, HLG, HDR10+)
         runCatching {
             context.getSystemService(DisplayManager::class.java)
                 ?.overrideHdrTypes(
@@ -78,8 +72,6 @@ class BootCompletedReceiver : BroadcastReceiver() {
                         HdrCapabilities.HDR_TYPE_HDR10_PLUS,
                     ),
                 )
-        }.onFailure { e ->
-            Log.e(TAG, "Failed to override HDR types", e)
-        }
+        }.onFailure { e -> Log.e(TAG, "Failed to override HDR types", e) }
     }
 }

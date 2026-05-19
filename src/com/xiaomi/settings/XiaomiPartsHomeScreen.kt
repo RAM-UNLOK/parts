@@ -4,17 +4,10 @@
  *
  * Home screen — Xiaomi Parts hub.
  *
- * Design: Material 3 Expressive (Android 16 / Pixel 9 Settings style)
- *   • LargeTopAppBar — collapses with spring physics on scroll
- *   • Feature blocks grouped into category sections (identical to Pixel Settings)
- *   • Each setting row: icon in tonal circle, title + subtitle, trailing chevron
- *   • Charging banner: full-width tertiaryContainer pill (animated in/out)
- *
  * Charging detection:
- *   The initial state is read from the sticky ACTION_BATTERY_CHANGED broadcast.
- *   Live updates use ACTION_BATTERY_CHANGED via a dynamically registered
- *   BroadcastReceiver (ACTION_POWER_CONNECTED does NOT work on Android 8+
- *   for background components).
+ *   Initial state from sticky ACTION_BATTERY_CHANGED (EXTRA_PLUGGED default=0).
+ *   Live updates via dynamically registered BroadcastReceiver.
+ *   ACTION_POWER_CONNECTED does NOT work on Android 8+ for background components.
  */
 
 package com.xiaomi.settings
@@ -57,23 +50,21 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    // ── Initial charging state from sticky broadcast ──────────────────────
+    // FIX: EXTRA_PLUGGED default = 0 (correct AOSP sentinel; -1 is never returned)
     var isCharging by remember {
         val sticky = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
-        mutableStateOf(plugged != 0 && plugged != -1)
+        val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+        mutableStateOf(plugged != 0)
     }
 
-    // ── Live updates via dynamic receiver ────────────────────────────────
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_BATTERY_CHANGED) {
-                    val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
-                    val nowCharging = plugged != 0 && plugged != -1
+                    val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+                    val nowCharging = plugged != 0
                     if (nowCharging != isCharging) {
                         isCharging = nowCharging
-                        // Toast so the user gets feedback in the UI
                         val msgRes = if (nowCharging)
                             R.string.thermal_charging_toast_connected
                         else
@@ -119,7 +110,6 @@ fun XiaomiPartsHomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(innerPadding),
         ) {
-            // ── Charging banner ───────────────────────────────────────────
             AnimatedVisibility(
                 visible = isCharging,
                 enter   = expandVertically(spring(Spring.DampingRatioMediumBouncy)),
@@ -128,9 +118,7 @@ fun XiaomiPartsHomeScreen(
                 ChargingBanner(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             }
 
-            // ── Display category ─────────────────────────────────────────
             SettingsCategoryLabel(stringResource(R.string.xiaomi_parts_category_display))
-
             SettingsBlock {
                 SettingsRow(
                     icon    = Icons.Filled.Palette,
@@ -140,9 +128,7 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Performance category ──────────────────────────────────────
             SettingsCategoryLabel(stringResource(R.string.xiaomi_parts_category_performance))
-
             SettingsBlock {
                 SettingsRow(
                     icon    = Icons.Filled.Thermostat,
@@ -159,9 +145,7 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Diagnostics category ──────────────────────────────────────
             SettingsCategoryLabel(stringResource(R.string.xiaomi_parts_category_diagnostics))
-
             SettingsBlock {
                 SettingsRow(
                     icon    = Icons.Filled.Science,
@@ -180,13 +164,6 @@ fun XiaomiPartsHomeScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Reusable MD3 Expressive atoms (Pixel Settings style)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Small primary-coloured category label — identical to Pixel 9 Settings groupings.
- */
 @Composable
 fun SettingsCategoryLabel(label: String, modifier: Modifier = Modifier) {
     Text(
@@ -197,13 +174,6 @@ fun SettingsCategoryLabel(label: String, modifier: Modifier = Modifier) {
     )
 }
 
-/**
- * Rounded surface block that wraps one or more [SettingsRow] items.
- * Matches the card-like grouped sections in Pixel 9 Settings.
- *
- * Uses [MaterialTheme.colorScheme.surfaceContainerHigh] as background so it
- * sits 1 elevation step above the page background without a visible shadow.
- */
 @Composable
 fun SettingsBlock(
     modifier : Modifier = Modifier,
@@ -213,16 +183,13 @@ fun SettingsBlock(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        shape  = MaterialTheme.shapes.extraLarge,   // M3 Expressive squircle
+        shape  = MaterialTheme.shapes.extraLarge,
         color  = MaterialTheme.colorScheme.surfaceContainerHigh,
     ) {
         Column(content = content)
     }
 }
 
-/**
- * Thin divider between rows inside a [SettingsBlock].
- */
 @Composable
 fun SettingsDivider() {
     HorizontalDivider(
@@ -232,10 +199,6 @@ fun SettingsDivider() {
     )
 }
 
-/**
- * Single preference row with leading tonal-circle icon, title + subtitle,
- * and trailing chevron.
- */
 @Composable
 fun SettingsRow(
     icon    : ImageVector,
@@ -252,7 +215,6 @@ fun SettingsRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Tonal icon circle — secondaryContainer fill
         Surface(
             modifier = Modifier
                 .size(40.dp)
@@ -268,7 +230,6 @@ fun SettingsRow(
                     .padding(8.dp),
             )
         }
-
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text  = title,
@@ -281,7 +242,6 @@ fun SettingsRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-
         Icon(
             imageVector        = Icons.AutoMirrored.Filled.KeyboardArrowRight,
             contentDescription = null,
@@ -290,10 +250,6 @@ fun SettingsRow(
         )
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Charging banner
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ChargingBanner(modifier: Modifier = Modifier) {
