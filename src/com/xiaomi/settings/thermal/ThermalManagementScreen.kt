@@ -182,8 +182,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // Toggle card — no duplicate category header
-            PartsCategory(stringResource(R.string.thermal_title))
+            // "Thermal profiles" — distinct sub-label, does NOT repeat the top app bar title
+            PartsCategory(stringResource(R.string.thermal_enable))
 
             PartsCard {
                 Row(
@@ -330,7 +330,7 @@ private fun AppThermalRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        // Fix: ExposedDropdownMenuBox with widthIn(min) so the popup
+        // ExposedDropdownMenuBox with widthIn(min) so the popup
         // is never too narrow to display the profile name on one line.
         ExposedDropdownMenuBox(
             expanded         = expanded,
