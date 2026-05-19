@@ -21,15 +21,14 @@ import android.provider.Settings
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.core.os.postDelayed
+import com.xiaomi.settings.R
 
 class ColorService : Service() {
 
     companion object {
         private const val TAG = "ColorService"
         private val DEBUG = Log.isLoggable(TAG, Log.DEBUG)
-
-        private val DEFAULT_COLOR_MODE =
-            SystemProperties.getInt("persist.sys.sf.native_mode", 0)
+        private val DEFAULT_COLOR_MODE = SystemProperties.getInt("persist.sys.sf.native_mode", 0)
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -78,9 +77,7 @@ class ColorService : Service() {
         ambientConfig = AmbientDisplayConfiguration(this)
         contentResolver.registerContentObserver(
             Settings.System.getUriFor(Settings.System.DISPLAY_COLOR_MODE),
-            false,
-            settingObserver,
-            UserHandle.USER_CURRENT,
+            false, settingObserver, UserHandle.USER_CURRENT,
         )
         registerReceiver(
             screenStateReceiver,
@@ -126,31 +123,30 @@ class ColorService : Service() {
     }
 
     enum class ColorMode(
-        val id: Int,
-        val mode: Int,
-        val value: Int,
-        val cookie: Int,
-        val isExpert: Boolean = false,
+        val id       : Int,
+        val mode     : Int,
+        val value    : Int,
+        val cookie   : Int,
+        val isExpert : Boolean = false,
+        @StringRes val labelRes  : Int,
+        @StringRes val summaryRes: Int,
     ) {
-        VIVID    (258, 0,  2, 255),
-        SATURATED(256, 1,  2, 255),
-        STANDARD (257, 2,  2, 255),
-        ORIGINAL (269, 26, 1, 0,   isExpert = true),
-        P3       (268, 26, 2, 0,   isExpert = true),
-        SRGB     (267, 26, 3, 0,   isExpert = true);
+        VIVID    (258, 0,  2, 255, labelRes = R.string.color_mode_vivid,     summaryRes = R.string.color_mode_vivid_summary),
+        SATURATED(256, 1,  2, 255, labelRes = R.string.color_mode_saturated, summaryRes = R.string.color_mode_saturated_summary),
+        STANDARD (257, 2,  2, 255, labelRes = R.string.color_mode_standard,  summaryRes = R.string.color_mode_standard_summary),
+        ORIGINAL (269, 26, 1, 0,   isExpert = true, labelRes = R.string.color_mode_original, summaryRes = R.string.color_mode_original_summary),
+        P3       (268, 26, 2, 0,   isExpert = true, labelRes = R.string.color_mode_p3,       summaryRes = R.string.color_mode_p3_summary),
+        SRGB     (267, 26, 3, 0,   isExpert = true, labelRes = R.string.color_mode_srgb,     summaryRes = R.string.color_mode_srgb_summary);
 
         fun setCurrent() {
             DisplayFeatureWrapper.setFeature(mode, value, cookie)
-            if (isExpert) {
-                DisplayFeatureWrapper.setFeature(EXPERT_MODE, EXPERT_VALUE, EXPERT_COOKIE)
-            }
+            if (isExpert) DisplayFeatureWrapper.setFeature(EXPERT_MODE, EXPERT_VALUE, EXPERT_COOKIE)
         }
 
         companion object {
             private const val EXPERT_MODE   = 26
             private const val EXPERT_VALUE  = 0
             private const val EXPERT_COOKIE = 10
-
             fun fromId(id: Int): ColorMode? = entries.find { it.id == id }
         }
     }

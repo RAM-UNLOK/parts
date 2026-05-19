@@ -2,11 +2,14 @@
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
  *
- * Display Colours sub-screen — Material 3.
+ * Display Colours sub-screen.
  *
- * Note: applyColorMode() only writes to Settings.System.
- *   ColorService’s ContentObserver fires automatically and calls
- *   mode.setCurrent() on its own Handler — no direct AIDL call here.
+ * M3 tokens:
+ *  Colour    — primaryContainer (selected row tint), surfaceContainerHigh,
+ *               onPrimaryContainer, onSurface, onSurfaceVariant, primary
+ *  Typography — bodyLarge (mode name), bodySmall (mode description)
+ *  Shape     — extraLarge (card), full (radio button)
+ *  Motion    — animateColorAsState spring for row background
  */
 
 package com.xiaomi.settings.display
@@ -18,14 +21,34 @@ import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
+import androidx.compose.material3.RadioButtonDefaults
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -35,9 +58,9 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.R
-import com.xiaomi.settings.SettingsBlock
-import com.xiaomi.settings.SettingsCategoryLabel
-import com.xiaomi.settings.SettingsDivider
+import com.xiaomi.settings.PartsCard
+import com.xiaomi.settings.PartsCategory
+import com.xiaomi.settings.PartsDivider
 
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
@@ -61,18 +84,26 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LargeTopAppBar(
-                title = { Text(stringResource(R.string.display_title)) },
+                title  = {
+                    Text(
+                        text  = stringResource(R.string.display_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
+                            tint               = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    titleContentColor      = MaterialTheme.colorScheme.onSurface,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -85,76 +116,24 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .selectableGroup(),
         ) {
-            SettingsCategoryLabel(stringResource(R.string.color_section_standard))
-            SettingsBlock {
-                ColorModeRow(
-                    label      = stringResource(R.string.color_mode_vivid),
-                    summary    = stringResource(R.string.color_mode_vivid_summary),
-                    selected   = selectedId == ColorService.ColorMode.VIVID.id,
-                    onSelected = {
-                        applyColorMode(context, ColorService.ColorMode.VIVID, it) {
-                            selectedId = ColorService.ColorMode.VIVID.id
-                        }
-                    },
-                )
-                SettingsDivider()
-                ColorModeRow(
-                    label      = stringResource(R.string.color_mode_saturated),
-                    summary    = stringResource(R.string.color_mode_saturated_summary),
-                    selected   = selectedId == ColorService.ColorMode.SATURATED.id,
-                    onSelected = {
-                        applyColorMode(context, ColorService.ColorMode.SATURATED, it) {
-                            selectedId = ColorService.ColorMode.SATURATED.id
-                        }
-                    },
-                )
-                SettingsDivider()
-                ColorModeRow(
-                    label      = stringResource(R.string.color_mode_standard),
-                    summary    = stringResource(R.string.color_mode_standard_summary),
-                    selected   = selectedId == ColorService.ColorMode.STANDARD.id,
-                    onSelected = {
-                        applyColorMode(context, ColorService.ColorMode.STANDARD, it) {
-                            selectedId = ColorService.ColorMode.STANDARD.id
-                        }
-                    },
-                )
+            // Standard colour modes
+            PartsCategory(stringResource(R.string.color_section_standard))
+            PartsCard {
+                ColorMode.VIVID.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                PartsDivider()
+                ColorMode.SATURATED.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                PartsDivider()
+                ColorMode.STANDARD.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
             }
 
-            SettingsCategoryLabel(stringResource(R.string.color_section_expert))
-            SettingsBlock {
-                ColorModeRow(
-                    label      = stringResource(R.string.color_mode_original),
-                    summary    = stringResource(R.string.color_mode_original_summary),
-                    selected   = selectedId == ColorService.ColorMode.ORIGINAL.id,
-                    onSelected = {
-                        applyColorMode(context, ColorService.ColorMode.ORIGINAL, it) {
-                            selectedId = ColorService.ColorMode.ORIGINAL.id
-                        }
-                    },
-                )
-                SettingsDivider()
-                ColorModeRow(
-                    label      = stringResource(R.string.color_mode_p3),
-                    summary    = stringResource(R.string.color_mode_p3_summary),
-                    selected   = selectedId == ColorService.ColorMode.P3.id,
-                    onSelected = {
-                        applyColorMode(context, ColorService.ColorMode.P3, it) {
-                            selectedId = ColorService.ColorMode.P3.id
-                        }
-                    },
-                )
-                SettingsDivider()
-                ColorModeRow(
-                    label      = stringResource(R.string.color_mode_srgb),
-                    summary    = stringResource(R.string.color_mode_srgb_summary),
-                    selected   = selectedId == ColorService.ColorMode.SRGB.id,
-                    onSelected = {
-                        applyColorMode(context, ColorService.ColorMode.SRGB, it) {
-                            selectedId = ColorService.ColorMode.SRGB.id
-                        }
-                    },
-                )
+            // Expert / wide-gamut modes
+            PartsCategory(stringResource(R.string.color_section_expert))
+            PartsCard {
+                ColorMode.ORIGINAL.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                PartsDivider()
+                ColorMode.P3.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                PartsDivider()
+                ColorMode.SRGB.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
             }
 
             Spacer(Modifier.height(24.dp))
@@ -162,28 +141,31 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
     }
 }
 
+/** Convenience alias to keep call-sites tidy. */
+private typealias ColorMode = ColorService.ColorMode
+
 @Composable
-private fun ColorModeRow(
-    label      : String,
-    summary    : String,
-    selected   : Boolean,
-    onSelected : (String) -> Unit,
-    modifier   : Modifier = Modifier,
+private fun ColorMode.Row(
+    selectedId : Int,
+    onSelected : (ColorMode) -> Unit,
 ) {
+    val selected = this.id == selectedId
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
         else
             MaterialTheme.colorScheme.surfaceContainerHigh,
         animationSpec = spring(),
-        label         = "row-bg",
+        label         = "color-row-bg-${this.name}",
     )
+    val label   = stringResource(this.labelRes)
+    val summary = stringResource(this.summaryRes)
 
     Surface(color = bgColor) {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
-                .clickable(role = Role.RadioButton) { onSelected(label) }
+                .clickable(role = Role.RadioButton) { onSelected(this@Row) }
                 .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -216,11 +198,10 @@ private fun ColorModeRow(
     }
 }
 
-private fun applyColorMode(
+private fun applyMode(
     context  : Context,
-    mode     : ColorService.ColorMode,
-    label    : String,
-    onSuccess: () -> Unit,
+    mode     : ColorMode,
+    onSuccess: (ColorMode) -> Unit,
 ) {
     runCatching {
         Settings.System.putIntForUser(
@@ -229,12 +210,9 @@ private fun applyColorMode(
             mode.id,
             UserHandle.USER_CURRENT,
         )
-        onSuccess()
-        Toast.makeText(
-            context,
-            context.getString(R.string.color_mode_applied, label),
-            Toast.LENGTH_SHORT,
-        ).show()
+        onSuccess(mode)
+        val label = context.getString(mode.labelRes)
+        Toast.makeText(context, context.getString(R.string.color_mode_applied, label), Toast.LENGTH_SHORT).show()
     }.onFailure {
         Toast.makeText(context, R.string.color_mode_failed, Toast.LENGTH_SHORT).show()
     }
