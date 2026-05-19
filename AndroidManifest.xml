@@ -76,12 +76,16 @@
              Appears in the main Settings page as "Xiaomi Parts".
              All sub-screens (Display Colours, Thermal, Touch
              Boost) are Compose destinations inside this Activity.
+
+             Theme: NoActionBar — Compose LargeTopAppBar owns the
+             title bar entirely. This prevents the system window
+             title from duplicating the in-Compose header.
              ════════════════════════════════════════════════ -->
         <activity
             android:name=".XiaomiPartsActivity"
             android:label="@string/xiaomi_parts_title"
             android:exported="true"
-            android:theme="@android:style/Theme.DeviceDefault.DayNight">
+            android:theme="@android:style/Theme.DeviceDefault.DayNight.NoActionBar">
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
             </intent-filter>
