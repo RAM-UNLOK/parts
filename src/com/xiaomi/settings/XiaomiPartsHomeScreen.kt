@@ -8,6 +8,9 @@
  *   Initial state from sticky ACTION_BATTERY_CHANGED (EXTRA_PLUGGED default=0).
  *   Live updates via dynamically registered BroadcastReceiver.
  *   ACTION_POWER_CONNECTED does NOT work on Android 8+ for background components.
+ *
+ * Charging toast is shown by ThermalService (works whether UI is open or not).
+ * XiaomiPartsHomeScreen only drives the animated ChargingBanner UI state.
  */
 
 package com.xiaomi.settings
@@ -50,27 +53,22 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    // FIX: EXTRA_PLUGGED default = 0 (correct AOSP sentinel; -1 is never returned)
+    // Read initial charging state from sticky broadcast.
     var isCharging by remember {
         val sticky = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         mutableStateOf(plugged != 0)
     }
 
+    // Live charging state for the animated banner.
+    // Toast is intentionally NOT shown here — ThermalService already shows it
+    // system-wide. Showing it here too would produce duplicate stacked toasts.
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_BATTERY_CHANGED) {
                     val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-                    val nowCharging = plugged != 0
-                    if (nowCharging != isCharging) {
-                        isCharging = nowCharging
-                        val msgRes = if (nowCharging)
-                            R.string.thermal_charging_toast_connected
-                        else
-                            R.string.thermal_charging_toast_disconnected
-                        Toast.makeText(ctx, msgRes, Toast.LENGTH_LONG).show()
-                    }
+                    isCharging = plugged != 0
                 }
             }
         }
