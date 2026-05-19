@@ -4,18 +4,12 @@
  *
  * XiaomiPartsActivity — single entry point injected into Android Settings.
  *
- * Theme: Material 3 Expressive
+ * Theme: Material 3
  *   • dynamicColorScheme() for Material You wallpaper-based colour on API 31+
- *   • expressiveShapes() for the squircle/rounded shape set from M3 Expressive
- *   • expressiveMotion() spring-based animation spec
- *   • Large‑rounded top‑level screen shapes matching Android 16 Settings look
+ *   • Baseline M3 palette fallback on older API
  *
  * Navigation: single-activity Compose NavHost (no Fragments).
  */
-@file:OptIn(
-    androidx.compose.material3.ExperimentalMaterial3Api::class,
-    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
-)
 
 package com.xiaomi.settings
 
@@ -26,7 +20,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
@@ -57,7 +50,7 @@ class XiaomiPartsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            XiaomiPartsExpressiveTheme {
+            XiaomiPartsTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color    = MaterialTheme.colorScheme.background,
@@ -70,16 +63,14 @@ class XiaomiPartsActivity : ComponentActivity() {
 }
 
 /**
- * Material 3 Expressive theme wrapper.
+ * Stable Material 3 theme wrapper.
  *
- * Uses [MaterialExpressiveTheme] which applies:
- *   - Expressive shape tokens (squircle corners, larger radii)
- *   - Expressive motion tokens (spring-based, physically natural)
+ * Uses [MaterialTheme] with:
  *   - Dynamic colour on API 31+ (Material You)
- *   - Baseline M3 palette fallback on older API
+ *   - Baseline M3 dark/light palette fallback on older API
  */
 @Composable
-fun XiaomiPartsExpressiveTheme(content: @Composable () -> Unit) {
+fun XiaomiPartsTheme(content: @Composable () -> Unit) {
     val context   = LocalContext.current
     val darkTheme = isSystemInDarkTheme()
 
@@ -90,7 +81,7 @@ fun XiaomiPartsExpressiveTheme(content: @Composable () -> Unit) {
         else       -> lightColorScheme()
     }
 
-    MaterialExpressiveTheme(
+    MaterialTheme(
         colorScheme = colorScheme,
         content     = content,
     )
