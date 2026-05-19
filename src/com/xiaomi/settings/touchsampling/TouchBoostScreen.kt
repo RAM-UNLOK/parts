@@ -30,7 +30,6 @@ import com.xiaomi.settings.R
 import com.xiaomi.settings.SettingsBlock
 import com.xiaomi.settings.SettingsCategoryLabel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current

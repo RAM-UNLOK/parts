@@ -2,17 +2,10 @@
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
  *
- * Display Colours sub-screen — Material 3 Expressive.
- *
- * Design: Pixel 9 Settings style
- *   • LargeTopAppBar with spring collapse
- *   • Each colour mode group is a SettingsBlock (rounded surface card)
- *   • Radio selection rows inside each block — full-width ripple
- *   • Selected state highlighted via RadioButton + bold text
- *   • Toast on every apply: "Vivid applied" / "Failed to set colour mode"
+ * Display Colours sub-screen — Material 3.
  *
  * Note: applyColorMode() only writes to Settings.System.
- *   ColorService's ContentObserver fires automatically and calls
+ *   ColorService’s ContentObserver fires automatically and calls
  *   mode.setCurrent() on its own Handler — no direct AIDL call here.
  */
 
@@ -46,7 +39,6 @@ import com.xiaomi.settings.SettingsBlock
 import com.xiaomi.settings.SettingsCategoryLabel
 import com.xiaomi.settings.SettingsDivider
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -93,9 +85,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .selectableGroup(),
         ) {
-            // ── Standard modes ────────────────────────────────────────────
             SettingsCategoryLabel(stringResource(R.string.color_section_standard))
-
             SettingsBlock {
                 ColorModeRow(
                     label      = stringResource(R.string.color_mode_vivid),
@@ -131,9 +121,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 )
             }
 
-            // ── Expert / wide-gamut modes ─────────────────────────────────
             SettingsCategoryLabel(stringResource(R.string.color_section_expert))
-
             SettingsBlock {
                 ColorModeRow(
                     label      = stringResource(R.string.color_mode_original),
@@ -174,8 +162,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun ColorModeRow(
     label      : String,
@@ -185,7 +171,7 @@ private fun ColorModeRow(
     modifier   : Modifier = Modifier,
 ) {
     val bgColor by animateColorAsState(
-        targetValue = if (selected)
+        targetValue   = if (selected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
         else
             MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -230,14 +216,6 @@ private fun ColorModeRow(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Writes the chosen colour mode id to Settings.System.
- * ColorService's ContentObserver will fire automatically and call
- * mode.setCurrent() on the service's own Handler — no direct AIDL
- * call is needed here, and none is made.
- */
 private fun applyColorMode(
     context  : Context,
     mode     : ColorService.ColorMode,

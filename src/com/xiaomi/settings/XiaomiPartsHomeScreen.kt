@@ -44,7 +44,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.utils.CitLauncher
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
     onNavigateToDisplay : () -> Unit,
@@ -61,8 +60,6 @@ fun XiaomiPartsHomeScreen(
     }
 
     // Live charging state for the animated banner.
-    // Toast is intentionally NOT shown here — ThermalService already shows it
-    // system-wide. Showing it here too would produce duplicate stacked toasts.
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {

@@ -56,7 +56,6 @@ private data class ThermalScreenState(
     val entries        : List<AppEntry>,
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
     val context      = LocalContext.current
@@ -242,7 +241,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                                         val newState = ThermalUtils.ThermalState.entries
                                                             .firstOrNull { it.id == newStateId }
                                                             ?: ThermalUtils.ThermalState.DEFAULT
-                                                        // Safe lookup by packageName — not fragile index arithmetic
                                                         appEntries = appEntries.map {
                                                             if (it.packageName == entry.packageName)
                                                                 it.copy(state = newState)
@@ -266,9 +264,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                                     }
                                                 },
                                             )
-                                            if (rowIdx < chunk.lastIndex) {
-                                                SettingsDivider()
-                                            }
+                                            if (rowIdx < chunk.lastIndex) SettingsDivider()
                                         }
                                     }
                                 }
@@ -281,7 +277,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
     entry        : AppEntry,
@@ -325,7 +320,7 @@ private fun AppThermalRow(
                     )
                 },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                modifier     = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                modifier     = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
             )
 
             ExposedDropdownMenu(
