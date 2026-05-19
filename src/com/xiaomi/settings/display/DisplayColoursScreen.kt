@@ -10,6 +10,10 @@
  *   • Radio selection rows inside each block — full-width ripple
  *   • Selected state highlighted via RadioButton + bold text
  *   • Toast on every apply: "Vivid applied" / "Failed to set colour mode"
+ *
+ * Note: applyColorMode() only writes to Settings.System.
+ *   ColorService's ContentObserver fires automatically and calls
+ *   mode.setCurrent() on its own Handler — no direct AIDL call here.
  */
 
 package com.xiaomi.settings.display
@@ -180,7 +184,6 @@ private fun ColorModeRow(
     onSelected : (String) -> Unit,
     modifier   : Modifier = Modifier,
 ) {
-    // Animate row background to primaryContainer when selected (Pixel style)
     val bgColor by animateColorAsState(
         targetValue = if (selected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f)
@@ -229,6 +232,12 @@ private fun ColorModeRow(
 
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Writes the chosen colour mode id to Settings.System.
+ * ColorService's ContentObserver will fire automatically and call
+ * mode.setCurrent() on the service's own Handler — no direct AIDL
+ * call is needed here, and none is made.
+ */
 private fun applyColorMode(
     context  : Context,
     mode     : ColorService.ColorMode,
@@ -242,7 +251,6 @@ private fun applyColorMode(
             mode.id,
             UserHandle.USER_CURRENT,
         )
-        ColorService.ColorMode.setCurrent(context, mode)
         onSuccess()
         Toast.makeText(
             context,

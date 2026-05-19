@@ -20,8 +20,6 @@
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
     <!-- Write secure settings for touch polling rate -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
-    <!-- Keep CPU alive while applying profiles at boot -->
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
     <!-- Per-app thermal usage statistics -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
@@ -62,8 +60,6 @@
              and writes the matching profile to sconfig.
              Charging state handled internally via
              ACTION_BATTERY_CHANGED (sticky, works on all APIs).
-             FIX: was android:permission="ThermalService" which
-             blocked BootCompletedReceiver from starting it.
              ════════════════════════════════════════════════ -->
         <service
             android:name=".thermal.ThermalService"

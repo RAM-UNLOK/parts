@@ -33,13 +33,6 @@ class ThermalUtils private constructor(private val context: Context) {
             if (value) startService() else { setDefaultThermalProfile(); stopService() }
         }
 
-    private var value: String = readValue()
-        set(value) {
-            if (field == value) return
-            field = value
-            sharedPrefs.edit().putString(THERMAL_CONTROL, value).apply()
-        }
-
     /** Tracks the current foreground app so we can restore its profile after uncharging. */
     @Volatile
     var currentApp: String = ""
@@ -93,7 +86,6 @@ class ThermalUtils private constructor(private val context: Context) {
         // 1. Explicit user preference
         val savedId = getPackagePreference(packageName)
         if (savedId != ThermalState.DEFAULT.id) {
-            // FIX: entries instead of deprecated values()
             ThermalState.entries.find { it.id == savedId }?.let { return it }
         }
         // 2. Automatic classification
@@ -107,15 +99,15 @@ class ThermalUtils private constructor(private val context: Context) {
                 packageName, PackageManager.GET_META_DATA
             )
             return when {
-                isGameApp(appInfo)     -> ThermalState.GAMING
-                isCameraApp(packageName, pm) -> ThermalState.CAMERA
+                isGameApp(appInfo)            -> ThermalState.GAMING
+                isCameraApp(packageName, pm)  -> ThermalState.CAMERA
                 isBrowserApp(packageName, pm) -> ThermalState.BROWSER
-                isDialerApp(packageName) -> ThermalState.DIALER
-                isVideoApp(packageName) -> ThermalState.VIDEO
-                isStreamingApp(packageName) -> ThermalState.STREAMING
-                isMusicApp(appInfo, pm) -> ThermalState.MUSIC
-                isSocialApp(appInfo)   -> ThermalState.SOCIAL
-                else                   -> ThermalState.DEFAULT
+                isDialerApp(packageName)      -> ThermalState.DIALER
+                isVideoApp(packageName)       -> ThermalState.VIDEO
+                isStreamingApp(packageName)   -> ThermalState.STREAMING
+                isMusicApp(appInfo, pm)       -> ThermalState.MUSIC
+                isSocialApp(appInfo)          -> ThermalState.SOCIAL
+                else                          -> ThermalState.DEFAULT
             }
         }
         return ThermalState.DEFAULT
@@ -179,44 +171,35 @@ class ThermalUtils private constructor(private val context: Context) {
         )
     }
 
-    private fun readValue(): String {
-        return sharedPrefs.getString(THERMAL_CONTROL, DEFAULT_VALUE) ?: DEFAULT_VALUE
-    }
-
     enum class ThermalState(
-        val id    : Int,
+        val id     : Int,
         val sconfig: String,
         val prefix : String,
         @StringRes val label: Int,
     ) {
-        BENCHMARK     (0,  "10", "thermal.benchmark=",   R.string.thermal_benchmark),
-        BROWSER       (1,  "6",  "thermal.browser=",     R.string.thermal_browser),
-        CAMERA        (2,  "4",  "thermal.camera=",      R.string.thermal_camera),
-        DIALER        (3,  "7",  "thermal.dialer=",      R.string.thermal_dialer),
-        GAMING        (4,  "11", "thermal.gaming=",      R.string.thermal_gaming),
-        NAVIGATION    (5,  "2",  "thermal.navigation=",  R.string.thermal_navigation),
-        // FIX: was R.string.thermal_streaming ("Video Call") — now correctly R.string.thermal_video_call
-        VIDEO_CALL    (6,  "14", "thermal.videocall=",   R.string.thermal_video_call),
-        VIDEO_STREAMING(7, "15", "thermal.streaming=",   R.string.thermal_video_streaming),
-        VIDEO         (8,  "12", "thermal.video=",       R.string.thermal_video),
-        SOCIAL        (9,  "20", "thermal.social=",      R.string.thermal_social),
-        MUSIC         (10, "5",  "thermal.music=",       R.string.thermal_music),
-        DEFAULT       (11, "0",  "thermal.default=",     R.string.thermal_default),
-        STREAMING     (12, "9",  "thermal.streamingplus=", R.string.thermal_streaming),
+        BENCHMARK      (0,  "10", "thermal.benchmark=",    R.string.thermal_benchmark),
+        BROWSER        (1,  "6",  "thermal.browser=",      R.string.thermal_browser),
+        CAMERA         (2,  "4",  "thermal.camera=",       R.string.thermal_camera),
+        DIALER         (3,  "7",  "thermal.dialer=",       R.string.thermal_dialer),
+        GAMING         (4,  "11", "thermal.gaming=",       R.string.thermal_gaming),
+        NAVIGATION     (5,  "2",  "thermal.navigation=",   R.string.thermal_navigation),
+        VIDEO_CALL     (6,  "14", "thermal.videocall=",    R.string.thermal_video_call),
+        VIDEO_STREAMING(7,  "15", "thermal.streaming=",    R.string.thermal_video_streaming),
+        VIDEO          (8,  "12", "thermal.video=",        R.string.thermal_video),
+        SOCIAL         (9,  "20", "thermal.social=",       R.string.thermal_social),
+        MUSIC          (10, "5",  "thermal.music=",        R.string.thermal_music),
+        DEFAULT        (11, "0",  "thermal.default=",      R.string.thermal_default),
+        STREAMING      (12, "9",  "thermal.streamingplus=", R.string.thermal_streaming),
     }
 
     companion object {
         private const val TAG = "ThermalUtils"
 
         private const val THERMAL_ENABLED        = "thermal_enabled"
-        private const val THERMAL_CONTROL        = "thermal_control"
         private const val THERMAL_PACKAGE_PREFIX = "thermal_package_"
         private const val THERMAL_SCONFIG        = "/sys/devices/virtual/thermal/thermal_message/sconfig"
         private const val DEFAULT_SCONFIG        = "0"
         private const val SCONFIG_CHARGE         = "27"
-
-        // FIX: entries instead of deprecated values()
-        private val DEFAULT_VALUE = ThermalState.entries.joinToString(":") { it.prefix }
 
         private val VIDEO_PKGS = listOf(
             "com.google.android.youtube",

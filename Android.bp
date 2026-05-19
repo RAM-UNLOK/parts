@@ -46,9 +46,6 @@ android_app {
 
         // SettingsLib (fixes com.android.settingslib.applications.AppUtils)
         "SettingsLib",
-
-        // Tooling preview (no runtime cost in release, but needed for previews)
-        "androidx.compose.ui_ui-tooling-preview",
     ],
 
     required: [
