@@ -1,43 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Touch boost icon — MD3 touch/pointer hand with speed indicator.
-  Filled style, ?attr/colorControlNormal, 24dp × 24dp.
-  SPDX-License-Identifier: Apache-2.0
+    Copyright (C) 2025 Paranoid Android
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24">
-
-    <!-- Finger / pointer hand -->
+    android:viewportWidth="24.0"
+    android:viewportHeight="24.0"
+    android:tint="?android:attr/colorControlNormal">
+    <!-- Finger / touch cursor body -->
     <path
-        android:fillColor="?attr/colorControlNormal"
-        android:pathData="
-M9,11.5 L9,7.5 C9,6.12 10.12,5 11.5,5 C12.88,5 14,6.12 14,7.5
-  L14,11.26 C14.38,11.09 14.71,10.82 14.96,10.48
-  C15.28,10.03 15.48,9.49 15.48,8.91 L15.48,7.5
-  C15.48,5.57 13.91,4 11.98,4 C11.15,4 10.39,4.28 9.78,4.74
-  C8.69,5.56 8,6.7 8,7.5
-  L8,12.31 C7.37,11.8 6.93,11.06 6.93,10.23 L6.93,7.5
-  C6.93,5.57 8.5,4 10.43,4
-  M9,11.5 Z" />
-
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M9,11.24L9,5.5C9,4.12 10.12,3 11.5,3C12.88,3 14,4.12 14,5.5L14,11.24C15.23,11.84 16,13.09 16,14.5C16,16.71 14.21,18.5 12,18.5C9.79,18.5 8,16.71 8,14.5C8,13.09 8.77,11.84 9,11.24ZM11.5,1C9.02,1 7,3.02 7,5.5L7,11.77C5.77,12.81 5,14.36 5,16.09C5,19.4 7.7,22 11.01,22C14.32,22 17,19.4 17,16.09C17,14.36 16.25,12.81 15,11.77L15,5.5C15,3.02 12.98,1 10.5,1L11.5,1Z" />
+    <!-- Ripple arc left -->
     <path
-        android:fillColor="?attr/colorControlNormal"
-        android:pathData="
-M14,13 L14,7.5 C14,6.67 13.33,6 12.5,6
-  C11.67,6 11,6.67 11,7.5
-  L11,13 L10.2,12.84
-  C9.62,12.72 9.05,12.97 8.77,13.47
-  L8.5,14 L12.24,17.5 C12.5,17.74 12.85,17.88 13.21,17.88
-  L16.17,17.88 C16.79,17.88 17.31,17.45 17.42,16.84
-  L17.84,14.63 C17.94,14.12 17.8,13.59 17.46,13.19
-  C17.12,12.79 16.62,12.56 16.1,12.56
-  L14,12.56 Z" />
-
-    <!-- Speed bolt (top right) -->
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M5.85,3.5C4.08,4.72 2.85,6.65 2.6,8.9L4.11,9.07C4.31,7.3 5.25,5.75 6.62,4.74L5.85,3.5Z" />
+    <!-- Ripple arc right -->
     <path
-        android:fillColor="?attr/colorControlNormal"
-        android:pathData="M17.5,2 L15.5,5.5 L17,5.5 L15,9 L19,4.5 L17,4.5 Z" />
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M18.15,3.5L17.38,4.74C18.75,5.75 19.69,7.3 19.89,9.07L21.4,8.9C21.15,6.65 19.92,4.72 18.15,3.5Z" />
 </vector>
