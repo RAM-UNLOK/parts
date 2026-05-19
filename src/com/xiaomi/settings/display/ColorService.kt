@@ -151,7 +151,6 @@ class ColorService : Service() {
             private const val EXPERT_VALUE  = 0
             private const val EXPERT_COOKIE = 10
 
-            // FIX: entries instead of deprecated values()
             fun fromId(id: Int): ColorMode? = entries.find { it.id == id }
         }
     }

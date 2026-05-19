@@ -50,7 +50,6 @@ private data class AppEntry(
     val state       : ThermalUtils.ThermalState,
 )
 
-/** FIX: proper data class replaces fragile Triple for AnimatedContent state diffing. */
 private data class ThermalScreenState(
     val isLoading      : Boolean,
     val serviceEnabled : Boolean,
@@ -146,7 +145,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    // FIX: CircleShape — consistent with SettingsRow
                     Box(
                         modifier         = Modifier
                             .size(40.dp)
@@ -184,7 +182,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // FIX: proper data class instead of Triple for correct Compose state diffing
             val screenState = ThermalScreenState(
                 isLoading      = isLoading,
                 serviceEnabled = enabled,
@@ -237,18 +234,19 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                         modifier = Modifier.padding(bottom = 8.dp)
                                     ) {
                                         chunk.forEachIndexed { rowIdx, entry ->
-                                            val globalIdx = chunkIdx * 5 + rowIdx
                                             AppThermalRow(
                                                 entry         = entry,
                                                 onStateChange = { newStateId ->
                                                     runCatching {
                                                         thermalUtils.writePackage(entry.packageName, newStateId)
-                                                        // FIX: entries instead of deprecated values()
                                                         val newState = ThermalUtils.ThermalState.entries
                                                             .firstOrNull { it.id == newStateId }
                                                             ?: ThermalUtils.ThermalState.DEFAULT
-                                                        appEntries = appEntries.toMutableList().also {
-                                                            it[globalIdx] = entry.copy(state = newState)
+                                                        // Safe lookup by packageName — not fragile index arithmetic
+                                                        appEntries = appEntries.map {
+                                                            if (it.packageName == entry.packageName)
+                                                                it.copy(state = newState)
+                                                            else it
                                                         }
                                                         Toast.makeText(
                                                             context,
@@ -335,7 +333,6 @@ private fun AppThermalRow(
                 onDismissRequest = { expanded = false },
                 shape            = MaterialTheme.shapes.extraLarge,
             ) {
-                // FIX: entries instead of deprecated values()
                 ThermalUtils.ThermalState.entries.forEach { state ->
                     DropdownMenuItem(
                         text        = { Text(stringResource(state.label), style = MaterialTheme.typography.bodyMedium) },

@@ -27,9 +27,9 @@ import vendor.xiaomi.hw.touchfeature.ITouchFeature
 /** Maintains the high touch sampling rate state across screen-on events. */
 class TouchSamplingService : Service() {
 
-    private var mTouchFeature             : ITouchFeature? = null
-    private var mScreenUnlockReceiver     : BroadcastReceiver? = null
-    private var mPreferenceChangeListener : SharedPreferences.OnSharedPreferenceChangeListener? = null
+    private var touchFeature: ITouchFeature? = null
+    private var screenUnlockReceiver: BroadcastReceiver? = null
+    private var preferenceChangeListener: SharedPreferences.OnSharedPreferenceChangeListener? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -48,10 +48,10 @@ class TouchSamplingService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         Log.d(TAG, "TouchSamplingService stopped")
-        runCatching { if (mScreenUnlockReceiver != null) unregisterReceiver(mScreenUnlockReceiver) }
+        runCatching { if (screenUnlockReceiver != null) unregisterReceiver(screenUnlockReceiver) }
         runCatching {
             getSharedPreferences(SHAREDHTSR, Context.MODE_PRIVATE)
-                .unregisterOnSharedPreferenceChangeListener(mPreferenceChangeListener)
+                .unregisterOnSharedPreferenceChangeListener(preferenceChangeListener)
         }
     }
 
@@ -64,7 +64,7 @@ class TouchSamplingService : Service() {
             val binder = android.os.Binder.allowBlocking(
                 android.os.ServiceManager.waitForDeclaredService(fqName),
             )
-            mTouchFeature = ITouchFeature.Stub.asInterface(binder)
+            touchFeature = ITouchFeature.Stub.asInterface(binder)
             if (DEBUG) Log.d(TAG, "TouchFeature AIDL connected")
         }.onFailure { e ->
             Log.w(TAG, "Failed to bind TouchFeature AIDL: $e")
@@ -73,7 +73,7 @@ class TouchSamplingService : Service() {
 
     /** Re-applies the touch sampling rate when the screen turns on or the user unlocks. */
     private fun registerScreenUnlockReceiver() {
-        mScreenUnlockReceiver = object : BroadcastReceiver() {
+        screenUnlockReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 if (intent.action == Intent.ACTION_USER_PRESENT ||
                     intent.action == Intent.ACTION_SCREEN_ON) {
@@ -83,7 +83,7 @@ class TouchSamplingService : Service() {
             }
         }
         registerReceiver(
-            mScreenUnlockReceiver,
+            screenUnlockReceiver,
             IntentFilter().apply {
                 addAction(Intent.ACTION_USER_PRESENT)
                 addAction(Intent.ACTION_SCREEN_ON)
@@ -94,13 +94,13 @@ class TouchSamplingService : Service() {
     /** Reacts to SharedPreferences changes so the service stays in sync with the UI. */
     private fun registerPreferenceChangeListener() {
         val sharedPref = getSharedPreferences(SHAREDHTSR, Context.MODE_PRIVATE)
-        mPreferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+        preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
             if (key == HTSR_STATE) {
                 Log.d(TAG, "Preference $key changed — reapplying touch sampling rate")
                 applyTouchSamplingRate(if (prefs.getBoolean(key, false)) 1 else 0)
             }
         }
-        sharedPref.registerOnSharedPreferenceChangeListener(mPreferenceChangeListener)
+        sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
     }
 
     private fun applyTouchSamplingRateFromPreferences() {
@@ -123,23 +123,22 @@ class TouchSamplingService : Service() {
      *   202 = SAMPLE_RATE_EXT   (extended polling rate toggle)
      */
     private fun applyTouchSamplingRate(state: Int) {
-        if (mTouchFeature == null) {
+        val tf = touchFeature ?: run {
             Log.w(TAG, "TouchFeature AIDL not available — skipping rate apply")
             return
         }
-        runCatching { mTouchFeature!!.setTouchMode(0, TOUCH_GAME_MODE, state) }
-        runCatching { mTouchFeature!!.setTouchMode(0, 202, state) }
-        runCatching { mTouchFeature!!.setTouchMode(0, 1, state) }
-        runCatching { mTouchFeature!!.setTouchMode(0, 3, if (state == 1) 34 else 0) }
-        runCatching { mTouchFeature!!.setTouchMode(0, 2, if (state == 1) 99 else 0) }
-        runCatching { mTouchFeature!!.setTouchMode(0, 7, if (state == 1) 0 else 1) }
+        runCatching { tf.setTouchMode(0, 0,   state) }
+        runCatching { tf.setTouchMode(0, 202, state) }
+        runCatching { tf.setTouchMode(0, 1,   state) }
+        runCatching { tf.setTouchMode(0, 3,   if (state == 1) 34 else 0) }
+        runCatching { tf.setTouchMode(0, 2,   if (state == 1) 99 else 0) }
+        runCatching { tf.setTouchMode(0, 7,   if (state == 1) 0  else 1) }
         if (DEBUG) Log.d(TAG, "Touch sampling rate applied: state=$state")
     }
 
     companion object {
-        private const val TAG            = "TouchSamplingService"
-        private val DEBUG                = Log.isLoggable(TAG, Log.DEBUG)
-        private const val TOUCH_GAME_MODE = 0
+        private const val TAG   = "TouchSamplingService"
+        private val DEBUG       = Log.isLoggable(TAG, Log.DEBUG)
 
         /** SharedPreferences file name — must match TouchBoostScreen. */
         const val SHAREDHTSR = "htsr_prefs"

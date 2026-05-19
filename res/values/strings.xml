@@ -7,11 +7,11 @@
     <!-- Application label -->
     <string name="app_name">Xiaomi Parts</string>
 
-    <!-- ── Xiaomi Parts Hub ─────────────────────────────────────── -->
+    <!-- ── Xiaomi Parts Hub ─────────────────────────────── -->
     <string name="xiaomi_parts_title">Xiaomi Parts</string>
     <string name="xiaomi_parts_summary">Display colours, thermal management &amp; touch boost</string>
 
-    <!-- ── Display Colours ─────────────────────────────────────── -->
+    <!-- ── Display Colours ──────────────────────────────── -->
     <string name="display_title">Display Colours</string>
     <string name="display_summary">Adjust colour profile for the screen</string>
     <string name="color_mode_vivid">Vivid</string>
@@ -20,8 +20,6 @@
     <string name="color_mode_original">Original (Expert)</string>
     <string name="color_mode_p3">DCI-P3 (Expert)</string>
     <string name="color_mode_srgb">sRGB (Expert)</string>
-    <string name="color_mode_applied_success">Colour mode applied: %1$s</string>
-    <string name="color_mode_applied_failure">Failed to apply colour mode</string>
     <string name="color_section_standard">Standard</string>
     <string name="color_section_expert">Expert (Wide Gamut)</string>
     <string name="color_mode_applied">%1$s colour mode applied</string>
@@ -33,7 +31,7 @@
     <string name="color_mode_p3_summary">DCI-P3 wide colour gamut</string>
     <string name="color_mode_srgb_summary">Standard sRGB — most accurate for web content</string>
 
-    <!-- ── Thermal Management ───────────────────────────────────── -->
+    <!-- ── Thermal Management ───────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
     <string name="thermal_summary">Per-app thermal profile configuration</string>
     <string name="thermal_enable">Use thermal profiles</string>
@@ -70,13 +68,13 @@
     <string name="thermal_default">Default</string>
     <string name="thermal_streaming">Streaming</string>
 
-    <!-- ── Charging Thermal ──────────────────────────────────────── -->
+    <!-- ── Charging Thermal ──────────────────────────────── -->
     <string name="thermal_charging_active">Charging profile active</string>
     <string name="thermal_charging_active_desc">thermal-charge.conf is applied while plugged in</string>
     <string name="thermal_charging_toast_connected">&#x1F50B; Charger connected &#x2014; thermal-charge.conf applied</string>
     <string name="thermal_charging_toast_disconnected">Charger removed &#x2014; resuming normal thermal profiles</string>
 
-    <!-- ── Touch Boost ────────────────────────────────────────── -->
+    <!-- ── Touch Boost ──────────────────────────────────── -->
     <string name="htsr_title">Touch Boost</string>
     <string name="htsr_summary">Touch sampling rate settings</string>
     <string name="htsr_enable_title">Enhanced Touch Responsiveness</string>
@@ -86,18 +84,18 @@
     <string name="htsr_disabled_toast">Touch boost disabled</string>
     <string name="htsr_failed_toast">Failed to change touch boost state</string>
 
-    <!-- ── Xiaomi CIT ───────────────────────────────────────────── -->
+    <!-- ── Xiaomi CIT ───────────────────────────────────── -->
     <string name="cit_title">Xiaomi CIT</string>
     <string name="cit_summary">Hardware test and calibration tools</string>
     <string name="cit_not_found">Xiaomi CIT app is not installed on this device</string>
     <string name="cit_launched">Opening Xiaomi CIT…</string>
 
-    <!-- ── Categories ──────────────────────────────────────────── -->
+    <!-- ── Categories ──────────────────────────────────── -->
     <string name="xiaomi_parts_category_display">Display</string>
     <string name="xiaomi_parts_category_performance">Performance</string>
     <string name="xiaomi_parts_category_diagnostics">Diagnostics</string>
 
-    <!-- ── Common ──────────────────────────────────────────────── -->
+    <!-- ── Common ───────────────────────────────────────── -->
     <string name="back">Back</string>
     <string name="cancel">Cancel</string>
 

@@ -26,15 +26,12 @@
 
     <application
         android:label="@string/app_name"
-        android:persistent="true"
         android:defaultToDeviceProtectedStorage="true"
         android:directBootAware="true">
 
         <!-- ════════════════════════════════════════════════
              Boot receiver — restores all feature states at
-             locked-boot (before user unlock). BOOT_COMPLETED
-             removed: its handler was a no-op and the extra
-             wakelock at full boot was unnecessary.
+             locked-boot (before user unlock).
              ════════════════════════════════════════════════ -->
         <receiver
             android:name=".BootCompletedReceiver"

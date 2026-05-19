@@ -33,11 +33,6 @@ class ThermalUtils private constructor(private val context: Context) {
             if (value) startService() else { setDefaultThermalProfile(); stopService() }
         }
 
-    /** Tracks the current foreground app so we can restore its profile after uncharging. */
-    @Volatile
-    var currentApp: String = ""
-        private set
-
     fun startService() {
         if (!enabled) return
         runCatching {
@@ -52,7 +47,6 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     fun setThermalProfile(packageName: String) {
-        currentApp = packageName
         setThermalProfileInternal(packageName)
     }
 
@@ -174,22 +168,21 @@ class ThermalUtils private constructor(private val context: Context) {
     enum class ThermalState(
         val id     : Int,
         val sconfig: String,
-        val prefix : String,
         @StringRes val label: Int,
     ) {
-        BENCHMARK      (0,  "10", "thermal.benchmark=",    R.string.thermal_benchmark),
-        BROWSER        (1,  "6",  "thermal.browser=",      R.string.thermal_browser),
-        CAMERA         (2,  "4",  "thermal.camera=",       R.string.thermal_camera),
-        DIALER         (3,  "7",  "thermal.dialer=",       R.string.thermal_dialer),
-        GAMING         (4,  "11", "thermal.gaming=",       R.string.thermal_gaming),
-        NAVIGATION     (5,  "2",  "thermal.navigation=",   R.string.thermal_navigation),
-        VIDEO_CALL     (6,  "14", "thermal.videocall=",    R.string.thermal_video_call),
-        VIDEO_STREAMING(7,  "15", "thermal.streaming=",    R.string.thermal_video_streaming),
-        VIDEO          (8,  "12", "thermal.video=",        R.string.thermal_video),
-        SOCIAL         (9,  "20", "thermal.social=",       R.string.thermal_social),
-        MUSIC          (10, "5",  "thermal.music=",        R.string.thermal_music),
-        DEFAULT        (11, "0",  "thermal.default=",      R.string.thermal_default),
-        STREAMING      (12, "9",  "thermal.streamingplus=", R.string.thermal_streaming),
+        BENCHMARK      (0,  "10", R.string.thermal_benchmark),
+        BROWSER        (1,  "6",  R.string.thermal_browser),
+        CAMERA         (2,  "4",  R.string.thermal_camera),
+        DIALER         (3,  "7",  R.string.thermal_dialer),
+        GAMING         (4,  "11", R.string.thermal_gaming),
+        NAVIGATION     (5,  "2",  R.string.thermal_navigation),
+        VIDEO_CALL     (6,  "14", R.string.thermal_video_call),
+        VIDEO_STREAMING(7,  "15", R.string.thermal_video_streaming),
+        VIDEO          (8,  "12", R.string.thermal_video),
+        SOCIAL         (9,  "20", R.string.thermal_social),
+        MUSIC          (10, "5",  R.string.thermal_music),
+        DEFAULT        (11, "0",  R.string.thermal_default),
+        STREAMING      (12, "9",  R.string.thermal_streaming),
     }
 
     companion object {
@@ -209,7 +202,6 @@ class ThermalUtils private constructor(private val context: Context) {
         )
         private val STREAMING_PKGS = listOf(
             "tv.twitch",
-            "com.twitch",
             "com.google.android.youtube.creator",
         )
 

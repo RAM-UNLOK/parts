@@ -44,10 +44,4 @@ object CitLauncher {
             Log.e(TAG, "Unable to launch CIT app — is it installed?", e)
         }.getOrDefault(false)
     }
-
-    /** Returns true if the CIT app is installed on this device. */
-    fun isInstalled(context: Context): Boolean = runCatching {
-        context.packageManager.getPackageInfo(CIT_PACKAGE, 0)
-        true
-    }.getOrDefault(false)
 }

@@ -7,6 +7,8 @@ package com.xiaomi.settings.touchsampling
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -41,9 +43,9 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec = androidx.compose.animation.core.spring(
-            dampingRatio = androidx.compose.animation.core.Spring.DampingRatioLowBouncy,
-            stiffness    = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        snapAnimationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
         )
     )
 
@@ -87,7 +89,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    // FIX: CircleShape — consistent with SettingsRow
                     Box(
                         modifier         = Modifier
                             .size(40.dp)
