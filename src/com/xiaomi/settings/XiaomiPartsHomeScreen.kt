@@ -18,8 +18,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -39,7 +41,6 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.TouchApp
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -97,20 +98,18 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
                 title = {
                     Text(
                         text  = stringResource(R.string.xiaomi_parts_title),
                         style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    titleContentColor      = MaterialTheme.colorScheme.onSurface,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -148,7 +147,6 @@ fun XiaomiPartsHomeScreen(
                     summary = stringResource(R.string.thermal_summary),
                     onClick = onNavigateToThermal,
                 )
-                PartsDivider()
                 PartsRow(
                     icon    = Icons.Filled.TouchApp,
                     title   = stringResource(R.string.htsr_title),
@@ -176,9 +174,10 @@ fun XiaomiPartsHomeScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared M3 components
+// Shared M3 components  (Clover Settings design language)
 // ─────────────────────────────────────────────────────────────────────────────
 
+/** Section label — primary colour, label-medium, left-padded. */
 @Composable
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
@@ -189,31 +188,35 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * Tonal card block — surfaceContainer fill, extraLarge corners, no stroke.
+ * Matches Clover ContextualCardStyle (cardBackgroundColor = materialColorSurfaceContainer,
+ * cardCornerRadius = extraLarge, cardElevation = 0dp).
+ */
 @Composable
 fun PartsCard(
     modifier : Modifier = Modifier,
     content  : @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
-        modifier = modifier
+        modifier       = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         shape          = MaterialTheme.shapes.extraLarge,
-        color          = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color          = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 0.dp,
-        content = { Column(content = content) },
-    )
+    ) {
+        Column(content = content)
+    }
 }
 
-@Composable
-fun PartsDivider(modifier: Modifier = Modifier) {
-    HorizontalDivider(
-        modifier  = modifier.padding(start = 72.dp),
-        thickness = 0.5.dp,
-        color     = MaterialTheme.colorScheme.outlineVariant,
-    )
-}
-
+/**
+ * Single preference row inside a PartsCard.
+ *
+ * Icon container: Box with secondaryContainer background drawn via
+ * Modifier.background() — avoids the blank-icon issue where Surface tint
+ * merges with the window background on some dynamic colour schemes.
+ */
 @Composable
 fun PartsRow(
     icon     : ImageVector,
@@ -227,23 +230,24 @@ fun PartsRow(
         modifier = modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        Surface(
-            modifier = Modifier
+        // Use Box+background instead of Surface+clip to guarantee the
+        // secondaryContainer colour is never transparent.
+        Box(
+            modifier         = Modifier
                 .size(40.dp)
-                .clip(CircleShape),
-            color = MaterialTheme.colorScheme.secondaryContainer,
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.secondaryContainer),
+            contentAlignment = Alignment.Center,
         ) {
             Icon(
                 imageVector        = icon,
                 contentDescription = null,
                 tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier           = Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
+                modifier           = Modifier.size(22.dp),
             )
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -258,13 +262,16 @@ fun PartsRow(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        if (trailing != null) trailing()
-        else Icon(
-            imageVector        = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-            contentDescription = null,
-            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier           = Modifier.size(20.dp),
-        )
+        if (trailing != null) {
+            trailing()
+        } else {
+            Icon(
+                imageVector        = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = null,
+                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier           = Modifier.size(20.dp),
+            )
+        }
     }
 }
 
@@ -307,7 +314,6 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
     }
 }
 
-// Legacy aliases
+// Legacy aliases kept for any future callers
 @Composable fun SettingsCategoryLabel(label: String, modifier: Modifier = Modifier) = PartsCategory(label, modifier)
 @Composable fun SettingsBlock(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) = PartsCard(modifier, content)
-@Composable fun SettingsDivider(modifier: Modifier = Modifier) = PartsDivider(modifier)

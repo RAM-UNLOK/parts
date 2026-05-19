@@ -1,16 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Thermal Management sub-screen.
- *
- * M3 tokens:
- *  Colour    — background, surfaceContainerHigh, secondaryContainer,
- *               onSecondaryContainer, onSurface, onSurfaceVariant
- *  Typography — headlineMedium (title), bodyLarge (row title), bodySmall (summary)
- *               bodyMedium (app label), labelSmall (chip label), headlineSmall (dialog title)
- *  Shape     — extraLarge (cards + dialog + dropdown)
- *  Motion    — fadeIn/fadeOut tween for app-list animated content
  */
 
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -30,10 +20,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -42,6 +34,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -61,7 +55,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -82,10 +75,10 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
-import com.xiaomi.settings.PartsDivider
 import com.xiaomi.settings.R
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -151,14 +144,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
                 title = {
                     Text(
                         text  = stringResource(R.string.thermal_title),
                         style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
                 navigationIcon = {
@@ -166,7 +158,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Icon(
                             imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
-                            tint               = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
@@ -175,14 +166,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Icon(
                             imageVector        = Icons.Filled.RestartAlt,
                             contentDescription = stringResource(R.string.thermal_reset),
-                            tint               = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    titleContentColor      = MaterialTheme.colorScheme.onSurface,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -193,6 +182,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
+            // Toggle card — no duplicate category header
             PartsCategory(stringResource(R.string.thermal_title))
 
             PartsCard {
@@ -202,19 +192,22 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         .clickable(role = Role.Switch) {
                             toggleService(context, thermalUtils, !enabled) { enabled = it }
                         }
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Surface(
-                        modifier = Modifier.size(40.dp).clip(CircleShape),
-                        color    = MaterialTheme.colorScheme.secondaryContainer,
+                    Box(
+                        modifier         = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector        = Icons.Filled.Thermostat,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.fillMaxSize().padding(8.dp),
+                            modifier           = Modifier.size(22.dp),
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
@@ -304,7 +297,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                                 ).show()
                                             }
                                         }
-                                        if (rowIdx < chunk.lastIndex) PartsDivider()
                                     }
                                 }
                             }
@@ -325,22 +317,25 @@ private fun AppThermalRow(
     Row(
         modifier              = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 10.dp),
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         AppIcon(entry.icon, Modifier.size(36.dp).clip(CircleShape))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text     = entry.label,
-                style    = MaterialTheme.typography.bodyMedium,
-                color    = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-            )
-        }
+        Text(
+            text     = entry.label,
+            style    = MaterialTheme.typography.bodyMedium,
+            color    = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.weight(1f),
+        )
+        // Fix: ExposedDropdownMenuBox with widthIn(min) so the popup
+        // is never too narrow to display the profile name on one line.
         ExposedDropdownMenuBox(
             expanded         = expanded,
             onExpandedChange = { expanded = it },
+            modifier         = Modifier.widthIn(min = 140.dp),
         ) {
             FilterChip(
                 selected     = entry.state != ThermalUtils.ThermalState.DEFAULT,
@@ -350,19 +345,29 @@ private fun AppThermalRow(
                         text     = stringResource(entry.state.label),
                         style    = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                modifier     = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                modifier     = Modifier
+                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    .widthIn(min = 140.dp),
             )
+            // width(IntrinsicSize.Max) makes the popup as wide as its widest item
             ExposedDropdownMenu(
                 expanded         = expanded,
                 onDismissRequest = { expanded = false },
                 shape            = MaterialTheme.shapes.extraLarge,
+                modifier         = Modifier.width(IntrinsicSize.Max),
             ) {
                 ThermalUtils.ThermalState.entries.forEach { state ->
                     DropdownMenuItem(
-                        text        = { Text(stringResource(state.label), style = MaterialTheme.typography.bodyMedium) },
+                        text        = {
+                            Text(
+                                text  = stringResource(state.label),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        },
                         onClick     = { onStateChange(state.id); expanded = false },
                         leadingIcon = if (state == entry.state) ({
                             RadioButton(selected = true, onClick = null, modifier = Modifier.size(18.dp))

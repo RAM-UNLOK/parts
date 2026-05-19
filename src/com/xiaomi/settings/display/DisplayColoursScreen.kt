@@ -13,6 +13,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -52,7 +53,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
-import com.xiaomi.settings.PartsDivider
 import com.xiaomi.settings.R
 
 @Composable
@@ -74,14 +74,13 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
                 title  = {
                     Text(
                         text  = stringResource(R.string.display_title),
                         style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
                 navigationIcon = {
@@ -89,14 +88,12 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         Icon(
                             imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
-                            tint               = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    titleContentColor      = MaterialTheme.colorScheme.onSurface,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -109,21 +106,18 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .selectableGroup(),
         ) {
+            // No duplicate PartsCategory here — LargeTopAppBar IS the screen header.
             PartsCategory(stringResource(R.string.color_section_standard))
             PartsCard {
                 ColorMode.VIVID.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
-                PartsDivider()
                 ColorMode.SATURATED.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                PartsDivider()
                 ColorMode.STANDARD.Row(selectedId)  { applyMode(context, it) { selectedId = it.id } }
             }
 
             PartsCategory(stringResource(R.string.color_section_expert))
             PartsCard {
                 ColorMode.ORIGINAL.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                PartsDivider()
                 ColorMode.P3.Row(selectedId)       { applyMode(context, it) { selectedId = it.id } }
-                PartsDivider()
                 ColorMode.SRGB.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
             }
 
@@ -144,46 +138,47 @@ private fun ColorMode.Row(
         targetValue   = if (selected)
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
         else
-            MaterialTheme.colorScheme.surfaceContainerHigh,
+            MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = spring(),
         label         = "color-row-bg-${this.name}",
     )
     val label   = stringResource(this.labelRes)
     val summary = stringResource(this.summaryRes)
 
-    Surface(color = bgColor) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(role = Role.RadioButton) { onSelected(this@Row) }
-                .padding(horizontal = 16.dp, vertical = 16.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            RadioButton(
-                selected = selected,
-                onClick  = null,
-                colors   = RadioButtonDefaults.colors(
-                    selectedColor   = MaterialTheme.colorScheme.primary,
-                    unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                ),
+    // Use Modifier.background() for the selection tint — avoids Surface
+    // layering issues with dynamic colour on the first row.
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(bgColor)
+            .clickable(role = Role.RadioButton) { onSelected(this@Row) }
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment     = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+    ) {
+        RadioButton(
+            selected = selected,
+            onClick  = null,
+            colors   = RadioButtonDefaults.colors(
+                selectedColor   = MaterialTheme.colorScheme.primary,
+                unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            ),
+        )
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text       = label,
+                style      = MaterialTheme.typography.bodyLarge,
+                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+                color      = if (selected)
+                    MaterialTheme.colorScheme.primary
+                else
+                    MaterialTheme.colorScheme.onSurface,
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text       = label,
-                    style      = MaterialTheme.typography.bodyLarge,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    color      = if (selected)
-                        MaterialTheme.colorScheme.onPrimaryContainer
-                    else
-                        MaterialTheme.colorScheme.onSurface,
-                )
-                Text(
-                    text  = summary,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            Text(
+                text  = summary,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

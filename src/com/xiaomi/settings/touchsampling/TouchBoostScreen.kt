@@ -1,16 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Touch Boost sub-screen.
- *
- * M3 tokens:
- *  Colour    — background, surfaceContainerHigh, secondaryContainer,
- *               onSecondaryContainer, onSurface, onSurfaceVariant
- *  Typography — headlineMedium (title), bodyLarge (toggle title),
- *               bodySmall (summary + info text)
- *  Shape     — extraLarge (card), large (info surface), circle (icon container)
- *  Motion    — spring-based exitUntilCollapsed TopAppBar collapse
  */
 
 @file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -21,8 +11,10 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -59,7 +51,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
-import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 
 @Composable
@@ -81,14 +72,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
                 title = {
                     Text(
                         text  = stringResource(R.string.htsr_title),
                         style = MaterialTheme.typography.headlineMedium,
-                        color = MaterialTheme.colorScheme.onSurface,
                     )
                 },
                 navigationIcon = {
@@ -96,14 +86,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         Icon(
                             imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
-                            tint               = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    titleContentColor      = MaterialTheme.colorScheme.onSurface,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -114,8 +102,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            PartsCategory(stringResource(R.string.htsr_title))
-
+            // No duplicate category header — LargeTopAppBar is the screen title.
             PartsCard {
                 Row(
                     modifier = Modifier
@@ -123,19 +110,22 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         .clickable(role = Role.Switch) {
                             toggleHtsr(context, prefs, !enabled) { enabled = it }
                         }
-                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Surface(
-                        modifier = Modifier.size(40.dp).clip(CircleShape),
-                        color    = MaterialTheme.colorScheme.secondaryContainer,
+                    Box(
+                        modifier         = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector        = Icons.Filled.TouchApp,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.fillMaxSize().padding(8.dp),
+                            modifier           = Modifier.size(22.dp),
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
@@ -157,8 +147,9 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(12.dp))
 
+            // Info surface — secondaryContainer tonal block, large shape
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
