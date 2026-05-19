@@ -1,17 +1,6 @@
 /*
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
- *
- * Thermal Management sub-screen — Material 3 Expressive.
- *
- * Design: Pixel 9 Settings style
- *   • LargeTopAppBar (collapse + reset action)
- *   • Master switch in a standalone SettingsBlock
- *   • Per-app list each row inside a SettingsBlock (rounded card)
- *   • Profile selector: FilterChip anchor → ExposedDropdownMenu
- *     (uses ExposedDropdownMenuAnchorType — not deprecated MenuAnchorType)
- *   • AnimatedContent between loading / disabled / list states
- *   • Toast on every profile change, reset, toggle, and failure
  */
 
 package com.xiaomi.settings.thermal
@@ -29,7 +18,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -62,6 +50,13 @@ private data class AppEntry(
     val state       : ThermalUtils.ThermalState,
 )
 
+/** FIX: proper data class replaces fragile Triple for AnimatedContent state diffing. */
+private data class ThermalScreenState(
+    val isLoading      : Boolean,
+    val serviceEnabled : Boolean,
+    val entries        : List<AppEntry>,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
@@ -78,7 +73,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         isLoading  = false
     }
 
-    // ── Reset confirmation dialog ─────────────────────────────────────────
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
@@ -139,7 +133,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // ── Master toggle block ───────────────────────────────────────
             SettingsCategoryLabel(stringResource(R.string.thermal_title))
 
             SettingsBlock {
@@ -153,18 +146,25 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    Surface(
-                        modifier = Modifier.size(40.dp),
-                        shape    = MaterialTheme.shapes.extraLarge,
-                        color    = MaterialTheme.colorScheme.secondaryContainer,
+                    // FIX: CircleShape — consistent with SettingsRow
+                    Box(
+                        modifier         = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
+                        contentAlignment = Alignment.Center,
                     ) {
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color    = MaterialTheme.colorScheme.secondaryContainer,
+                        ) {}
                         Icon(
                             imageVector        = Icons.Filled.Thermostat,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.fillMaxSize().padding(8.dp),
+                            modifier           = Modifier.size(24.dp),
                         )
                     }
+
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text  = stringResource(R.string.thermal_enable),
@@ -184,15 +184,21 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // ── App list ──────────────────────────────────────────────────
+            // FIX: proper data class instead of Triple for correct Compose state diffing
+            val screenState = ThermalScreenState(
+                isLoading      = isLoading,
+                serviceEnabled = enabled,
+                entries        = appEntries,
+            )
+
             AnimatedContent(
-                targetState    = Triple(isLoading, enabled, appEntries),
+                targetState    = screenState,
                 transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(120)) },
                 label          = "thermal-app-list",
                 modifier       = Modifier.fillMaxSize(),
-            ) { (loading, serviceEnabled, entries) ->
+            ) { state ->
                 when {
-                    loading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    state.isLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator(strokeWidth = 3.dp)
                             Spacer(Modifier.height(12.dp))
@@ -204,7 +210,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         }
                     }
 
-                    !serviceEnabled -> Box(
+                    !state.serviceEnabled -> Box(
                         modifier         = Modifier.fillMaxSize().alpha(0.45f),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -216,14 +222,15 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
 
                     else -> {
-                        SettingsCategoryLabel(stringResource(R.string.thermal_apps_category))
-
                         LazyColumn(
                             modifier       = Modifier.fillMaxSize(),
                             contentPadding = PaddingValues(bottom = 24.dp),
                         ) {
-                            // Group entries into blocks of ~5 for visual grouping
-                            val chunks = entries.chunked(5)
+                            item {
+                                SettingsCategoryLabel(stringResource(R.string.thermal_apps_category))
+                            }
+
+                            val chunks = state.entries.chunked(5)
                             chunks.forEachIndexed { chunkIdx, chunk ->
                                 item(key = "block-$chunkIdx") {
                                     SettingsBlock(
@@ -236,7 +243,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                                 onStateChange = { newStateId ->
                                                     runCatching {
                                                         thermalUtils.writePackage(entry.packageName, newStateId)
-                                                        val newState = ThermalUtils.ThermalState.values()
+                                                        // FIX: entries instead of deprecated values()
+                                                        val newState = ThermalUtils.ThermalState.entries
                                                             .firstOrNull { it.id == newStateId }
                                                             ?: ThermalUtils.ThermalState.DEFAULT
                                                         appEntries = appEntries.toMutableList().also {
@@ -275,10 +283,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Per-app row
-// ─────────────────────────────────────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
@@ -294,13 +298,11 @@ private fun AppThermalRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // App icon
         AppIcon(
             drawable = entry.icon,
             modifier = Modifier.size(36.dp).clip(CircleShape),
         )
 
-        // App label
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text     = entry.label,
@@ -310,7 +312,6 @@ private fun AppThermalRow(
             )
         }
 
-        // Profile chip + dropdown
         ExposedDropdownMenuBox(
             expanded         = expanded,
             onExpandedChange = { expanded = it },
@@ -334,11 +335,12 @@ private fun AppThermalRow(
                 onDismissRequest = { expanded = false },
                 shape            = MaterialTheme.shapes.extraLarge,
             ) {
-                ThermalUtils.ThermalState.values().forEach { state ->
+                // FIX: entries instead of deprecated values()
+                ThermalUtils.ThermalState.entries.forEach { state ->
                     DropdownMenuItem(
-                        text         = { Text(stringResource(state.label), style = MaterialTheme.typography.bodyMedium) },
-                        onClick      = { onStateChange(state.id); expanded = false },
-                        leadingIcon  = if (state == entry.state) ({
+                        text        = { Text(stringResource(state.label), style = MaterialTheme.typography.bodyMedium) },
+                        onClick     = { onStateChange(state.id); expanded = false },
+                        leadingIcon = if (state == entry.state) ({
                             RadioButton(selected = true, onClick = null, modifier = Modifier.size(18.dp))
                         }) else null,
                     )
@@ -348,8 +350,6 @@ private fun AppThermalRow(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-
 @Composable
 private fun AppIcon(drawable: Drawable, modifier: Modifier = Modifier) {
     val bmp: ImageBitmap = remember(drawable) { drawable.toImageBitmap() }
@@ -357,7 +357,11 @@ private fun AppIcon(drawable: Drawable, modifier: Modifier = Modifier) {
 }
 
 private fun Drawable.toImageBitmap(): ImageBitmap {
-    val bmp = Bitmap.createBitmap(intrinsicWidth.coerceAtLeast(1), intrinsicHeight.coerceAtLeast(1), Bitmap.Config.ARGB_8888)
+    val bmp = Bitmap.createBitmap(
+        intrinsicWidth.coerceAtLeast(1),
+        intrinsicHeight.coerceAtLeast(1),
+        Bitmap.Config.ARGB_8888,
+    )
     val canvas = Canvas(bmp)
     setBounds(0, 0, canvas.width, canvas.height)
     draw(canvas)
