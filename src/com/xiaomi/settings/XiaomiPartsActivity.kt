@@ -12,7 +12,10 @@
  *
  * Navigation: single-activity Compose NavHost (no Fragments).
  */
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
+@file:OptIn(
+    androidx.compose.material3.ExperimentalMaterial3Api::class,
+    androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class,
+)
 
 package com.xiaomi.settings
 
