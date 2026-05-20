@@ -6,10 +6,13 @@
  * ThermalService — background service that applies thermal profiles.
  *
  * Charging detection:
- *   ACTION_BATTERY_CHANGED is sticky — initial state is read immediately via
- *   registerReceiver(null, filter) without registering a persistent receiver.
- *   Live updates use a dynamically registered receiver.
- *   EXTRA_PLUGGED > 0 means any charger (AC=1, USB=2, Wireless=4) is connected.
+ *   Initial state: ACTION_BATTERY_CHANGED sticky broadcast read once via
+ *     registerReceiver(null, filter) — reliable on all API levels.
+ *   Live updates: ACTION_POWER_CONNECTED / ACTION_POWER_DISCONNECTED —
+ *     these are the correct intents for plug/unplug events. Do NOT use
+ *     ACTION_BATTERY_CHANGED for live dynamic receiver updates; it is only
+ *     guaranteed to deliver the last sticky value at registration, not on
+ *     subsequent changes.
  *
  * applyProfile() priority (highest → lowest):
  *   1. Charging  → sconfig=27  (cannot be overridden by any app)
@@ -31,7 +34,6 @@ import android.os.BatteryManager
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.widget.Toast
 import com.xiaomi.settings.R
 import com.xiaomi.settings.utils.dlog
 
@@ -59,7 +61,7 @@ class ThermalService : Service() {
 
     /**
      * Backing field — allows setting initial charging state at startup without
-     * triggering side-effects (applyProfile + toast) before receivers are registered.
+     * triggering side-effects (applyProfile) before receivers are registered.
      */
     private var _isCharging = false
 
@@ -70,7 +72,6 @@ class ThermalService : Service() {
             _isCharging = value
             dlog(TAG, "Charging: $value")
             applyProfile()
-            showChargerToast(value)
         }
 
     private val taskListener = object : TaskStackListener() {
@@ -85,12 +86,10 @@ class ThermalService : Service() {
     private val broadcastReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
             when (intent.action) {
-                Intent.ACTION_SCREEN_OFF      -> screenOn = false
-                Intent.ACTION_SCREEN_ON       -> screenOn = true
-                Intent.ACTION_BATTERY_CHANGED -> {
-                    val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-                    isCharging = plugged != 0
-                }
+                Intent.ACTION_SCREEN_OFF        -> screenOn    = false
+                Intent.ACTION_SCREEN_ON         -> screenOn    = true
+                Intent.ACTION_POWER_CONNECTED   -> isCharging  = true
+                Intent.ACTION_POWER_DISCONNECTED -> isCharging = false
             }
         }
     }
@@ -104,26 +103,30 @@ class ThermalService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         dlog(TAG, "onStartCommand")
 
-        // Read INITIAL charging state from sticky broadcast — no reflection needed.
+        // Read INITIAL charging state from sticky broadcast — reliable on all APIs.
         val stickyIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = stickyIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         // Write directly to backing field to skip setter side-effects during init.
         _isCharging = plugged != 0
         dlog(TAG, "Initial charging state: $_isCharging (plugged=$plugged)")
 
+        // Use POWER_CONNECTED/DISCONNECTED for live updates — ACTION_BATTERY_CHANGED
+        // is a sticky broadcast and does NOT reliably fire on re-plug/unplug via a
+        // dynamic receiver on modern Android.
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_SCREEN_OFF)
             addAction(Intent.ACTION_SCREEN_ON)
-            addAction(Intent.ACTION_BATTERY_CHANGED)
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
         }
-        registerReceiver(broadcastReceiver, filter)
+        // RECEIVER_NOT_EXPORTED required on API 33+ for non-system-protected broadcasts.
+        registerReceiver(broadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
 
         runCatching {
             ActivityTaskManager.getService().registerTaskStackListener(taskListener)
         }
 
         applyProfile()
-        if (_isCharging) showChargerToast(true)
 
         return START_STICKY
     }
@@ -150,32 +153,14 @@ class ThermalService : Service() {
             when {
                 _isCharging             -> {
                     val ok = thermalUtils.setChargingThermalProfile()
-                    if (!ok) showToast(getString(R.string.thermal_apply_failed))
+                    if (!ok) dlog(TAG, "setChargingThermalProfile failed")
                 }
                 !screenOn               -> thermalUtils.setDefaultThermalProfile()
                 currentApp.isNotEmpty() -> thermalUtils.setThermalProfile(currentApp)
-                // currentApp is still "" — TaskStackListener hasn't fired yet.
-                // Skip: writing sconfig=0 for a nameless app is wasteful and
-                // would show a spurious log. The listener fires within ms of boot.
                 else                    -> dlog(TAG, "applyProfile: skipped — no foreground app yet")
             }
         }.onFailure { e ->
             dlog(TAG, "applyProfile failed: ${e.message}")
-            showToast(getString(R.string.thermal_apply_failed))
-        }
-    }
-
-    private fun showChargerToast(pluggedIn: Boolean) {
-        val msg = if (pluggedIn)
-            getString(R.string.thermal_charging_toast_connected)
-        else
-            getString(R.string.thermal_charging_toast_disconnected)
-        showToast(msg)
-    }
-
-    private fun showToast(message: String) {
-        mainHandler.post {
-            Toast.makeText(applicationContext, message, Toast.LENGTH_LONG).show()
         }
     }
 
