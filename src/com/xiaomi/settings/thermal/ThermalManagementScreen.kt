@@ -35,6 +35,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -674,18 +676,18 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * Width of the profile chip button shown on every app row.
+ * Fixed height for the profile chip. Width is NOT fixed — it uses
+ * widthIn(min, max) so every profile name fits without ellipsizing
+ * while still keeping chips visually consistent:
  *
- * Fixed at 120.dp so every row is identical regardless of profile name
- * length. "Video Streaming" (longest) fits at labelMedium with the icon
- * at 16dp. "Default" (shortest) is centred in the same box.
+ *   min = 96.dp  — "Music" / "Video" won't produce a tiny sliver
+ *   max = 148.dp — "Video Streaming" fits comfortably at labelSmall
  *
- * Why NOT FilledTonalButton with no width:
- *   It sizes to text → rows are all different widths → looks like a
- *   messy dropdown, not a consistent selection control.
+ * The chip wraps its content and centres it within these bounds.
  */
-private val CHIP_WIDTH  = 120.dp
 private val CHIP_HEIGHT = 36.dp
+private val CHIP_MIN_W  = 96.dp
+private val CHIP_MAX_W  = 148.dp
 
 @Composable
 private fun AppThermalRow(
@@ -725,10 +727,10 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // ── Fixed-width profile chip ──────────────────────────────────────
-        // Surface + clickable: gives full control over size, shape, and
-        // colour without the variable-width behaviour of FilledTonalButton.
-        // All chips are exactly CHIP_WIDTH × CHIP_HEIGHT; text is centred.
+        // ── Adaptive-width profile chip ───────────────────────────────────
+        // widthIn(min, max) + wrapContentWidth lets the chip grow from
+        // CHIP_MIN_W to CHIP_MAX_W based on the text — never truncates,
+        // but also never balloons past 148.dp.
         Surface(
             onClick        = {
                 if (chargingLocked) {
@@ -741,13 +743,18 @@ private fun AppThermalRow(
                     showDialog = true
                 }
             },
-            modifier       = Modifier.size(width = CHIP_WIDTH, height = CHIP_HEIGHT),
-            shape          = RoundedCornerShape(50),   // pill shape
+            modifier       = Modifier
+                .height(CHIP_HEIGHT)
+                .widthIn(min = CHIP_MIN_W, max = CHIP_MAX_W)
+                .wrapContentWidth(),
+            shape          = RoundedCornerShape(50),
             color          = MaterialTheme.colorScheme.secondaryContainer,
             contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
         ) {
             Row(
-                modifier              = Modifier.fillMaxSize(),
+                modifier              = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 12.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment     = Alignment.CenterVertically,
             ) {
@@ -762,7 +769,6 @@ private fun AppThermalRow(
                     text      = stringResource(entry.state.label),
                     style     = MaterialTheme.typography.labelSmall,
                     maxLines  = 1,
-                    overflow  = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                 )
             }
