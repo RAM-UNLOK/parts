@@ -109,7 +109,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surfaceContainer,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),

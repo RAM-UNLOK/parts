@@ -84,7 +84,7 @@ fun XiaomiPartsHomeScreen(
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    // ── Charging state ──────────────────────────────────────────────────────
+    // ── Charging state ──────────────────────────────────────────────────────────────────────
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
@@ -113,7 +113,7 @@ fun XiaomiPartsHomeScreen(
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    // ── Thermal-enabled state ───────────────────────────────────────────────
+    // ── Thermal-enabled state ───────────────────────────────────────────────────
     var thermalEnabled by remember { mutableStateOf(thermalUtils.enabled) }
     DisposableEffect(Unit) {
         val prefListener = android.content.SharedPreferences
@@ -125,7 +125,7 @@ fun XiaomiPartsHomeScreen(
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(prefListener) }
     }
 
-    // ── Scroll behaviour ────────────────────────────────────────────────────
+    // ── Scroll behaviour ────────────────────────────────────────────────────────────
     // LargeTopAppBar is correct for the home/root screen.
     // exitUntilCollapsedScrollBehavior is the correct pairing for Large:
     // the bar collapses fully on scroll-down and stays hidden until the
@@ -138,7 +138,7 @@ fun XiaomiPartsHomeScreen(
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
-    // ── Section entrance animation states ───────────────────────────────────
+    // ── Section entrance animation states ───────────────────────────────────────────
     val visDisplay     = remember { MutableTransitionState(false).apply { targetState = true } }
     val visPerformance = remember { MutableTransitionState(false).apply { targetState = true } }
     val visDiagnostics = remember { MutableTransitionState(false).apply { targetState = true } }
@@ -156,7 +156,7 @@ fun XiaomiPartsHomeScreen(
                     // forces 32 sp even when collapsed.
                     Text(text = stringResource(R.string.xiaomi_parts_title))
                 },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     // containerColor must match Scaffold.containerColor exactly.
                     // Color.Transparent was causing a flash: the app bar
                     // background was the raw window/theme colour, not the
@@ -192,7 +192,7 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Display section ─────────────────────────────────────────────
+            // ── Display section ────────────────────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDisplay,
                 enter = fadeIn(tween(280)) +
@@ -216,7 +216,7 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Performance section ─────────────────────────────────────────
+            // ── Performance section ─────────────────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visPerformance,
                 enter = fadeIn(tween(280, delayMillis = 60)) +
@@ -254,7 +254,7 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Diagnostics section ─────────────────────────────────────────
+            // ── Diagnostics section ─────────────────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDiagnostics,
                 enter = fadeIn(tween(280, delayMillis = 120)) +
