@@ -89,7 +89,10 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        // M3 Expressive: surfaceContainer matches HomeScreen and
+        // ThermalManagementScreen — consistent background tone across all screens.
+        // Do NOT use surface (M2 pattern).
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -101,7 +104,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 },
                 // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    // surfaceContainer: matches Scaffold background so the
+                    // top bar is flush with the screen when not scrolled.
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -122,9 +127,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 standardModes.forEachIndexed { index, mode ->
                     mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                     if (index < standardModes.lastIndex) {
-                        // DividerDefaults.Thickness = 1.dp (M3 spec).
-                        // Explicit 0.5.dp was sub-pixel on xxhdpi+ and could
-                        // render as invisible. Colour: outlineVariant per M3 list spec.
                         HorizontalDivider(
                             modifier = Modifier.padding(
                                 horizontal = PartsTokens.contentPaddingHorizontal,
@@ -164,9 +166,6 @@ private fun ColorMode.Row(
 ) {
     val selected = this.id == selectedId
 
-    // Selected rows: secondaryContainer highlight.
-    // Unselected rows: Color.Transparent so they are flush with the
-    // surfaceContainer card background.
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
             MaterialTheme.colorScheme.secondaryContainer

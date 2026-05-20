@@ -85,7 +85,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        // M3 Expressive: surfaceContainer matches HomeScreen and
+        // ThermalManagementScreen — consistent background tone across all screens.
+        // Do NOT use surface (M2 pattern).
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -97,7 +100,9 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 },
                 // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    // surfaceContainer: matches Scaffold background so the
+                    // top bar is flush with the screen when not scrolled.
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -162,8 +167,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             // Info banner — secondaryContainer: correct M3 role for informational
             // tip banners. tertiaryContainer is reserved for battery/charging
-            // context. cardShape (28 dp) matches all other cards in the app.
-            // All spacing via PartsTokens — no hardcoded dp values.
+            // context. cardShape (28 dp) matches all other cards in the app.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
