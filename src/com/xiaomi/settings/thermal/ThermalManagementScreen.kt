@@ -12,7 +12,10 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -35,10 +38,22 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.LiveTv
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Phone
+import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Thermostat
+import androidx.compose.material.icons.filled.SportsEsports
+import androidx.compose.material.icons.filled.Stream
+import androidx.compose.material.icons.filled.TuneRounded
+import androidx.compose.material.icons.filled.VideoCall
+import androidx.compose.material.icons.filled.Web
+import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -66,20 +81,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.spring
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
@@ -95,13 +109,63 @@ private data class AppEntry(
     val state:       ThermalUtils.ThermalState,
 )
 
-/** Semantic colour for each thermal state, derived from the M3 colour scheme. */
+/**
+ * Semantic dot/icon colour for each thermal state using M3 colour roles.
+ * Adapts automatically to both light and dark themes.
+ *
+ * Mapping rationale:
+ *   DEFAULT         -> outline      (neutral; no special profile)
+ *   BENCHMARK       -> error        (red = maximum stress / heat)
+ *   BROWSER         -> primary      (calm, everyday use)
+ *   CAMERA          -> tertiary     (creative, distinct accent)
+ *   DIALER          -> secondary    (communication)
+ *   GAMING          -> error        (red = high-performance / heat)
+ *   NAVIGATION      -> primary      (blue = directional / maps)
+ *   VIDEO_CALL      -> secondary    (real-time communication)
+ *   VIDEO_STREAMING -> tertiary     (rich media consumption)
+ *   VIDEO           -> tertiary     (media playback)
+ *   SOCIAL          -> primary      (blue = connected)
+ *   MUSIC           -> secondary    (background / relaxed)
+ *   STREAMING       -> tertiary     (live content)
+ */
 @Composable
 private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
-    ThermalUtils.ThermalState.DEFAULT     -> MaterialTheme.colorScheme.outline
-    ThermalUtils.ThermalState.POWERSAVE   -> MaterialTheme.colorScheme.tertiary
-    ThermalUtils.ThermalState.BALANCED    -> MaterialTheme.colorScheme.primary
-    ThermalUtils.ThermalState.PERFORMANCE -> MaterialTheme.colorScheme.error
+    ThermalUtils.ThermalState.DEFAULT         -> MaterialTheme.colorScheme.outline
+    ThermalUtils.ThermalState.BENCHMARK       -> MaterialTheme.colorScheme.error
+    ThermalUtils.ThermalState.BROWSER         -> MaterialTheme.colorScheme.primary
+    ThermalUtils.ThermalState.CAMERA          -> MaterialTheme.colorScheme.tertiary
+    ThermalUtils.ThermalState.DIALER          -> MaterialTheme.colorScheme.secondary
+    ThermalUtils.ThermalState.GAMING          -> MaterialTheme.colorScheme.error
+    ThermalUtils.ThermalState.NAVIGATION      -> MaterialTheme.colorScheme.primary
+    ThermalUtils.ThermalState.VIDEO_CALL      -> MaterialTheme.colorScheme.secondary
+    ThermalUtils.ThermalState.VIDEO_STREAMING -> MaterialTheme.colorScheme.tertiary
+    ThermalUtils.ThermalState.VIDEO           -> MaterialTheme.colorScheme.tertiary
+    ThermalUtils.ThermalState.SOCIAL          -> MaterialTheme.colorScheme.primary
+    ThermalUtils.ThermalState.MUSIC           -> MaterialTheme.colorScheme.secondary
+    ThermalUtils.ThermalState.STREAMING       -> MaterialTheme.colorScheme.tertiary
+    else                                      -> MaterialTheme.colorScheme.outline
+}
+
+/**
+ * Per-state vector icon for dropdown menu items.
+ * Each icon unambiguously represents its use-case so the list is
+ * scannable without reading the label text.
+ */
+private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
+    ThermalUtils.ThermalState.DEFAULT         -> Icons.Filled.TuneRounded
+    ThermalUtils.ThermalState.BENCHMARK       -> Icons.Filled.BugReport
+    ThermalUtils.ThermalState.BROWSER         -> Icons.Filled.Web
+    ThermalUtils.ThermalState.CAMERA          -> Icons.Filled.CameraAlt
+    ThermalUtils.ThermalState.DIALER          -> Icons.Filled.Phone
+    ThermalUtils.ThermalState.GAMING          -> Icons.Filled.SportsEsports
+    ThermalUtils.ThermalState.NAVIGATION      -> Icons.Filled.Map
+    ThermalUtils.ThermalState.VIDEO_CALL      -> Icons.Filled.VideoCall
+    ThermalUtils.ThermalState.VIDEO_STREAMING -> Icons.Filled.LiveTv
+    ThermalUtils.ThermalState.VIDEO           -> Icons.Filled.PlayCircle
+    ThermalUtils.ThermalState.SOCIAL          -> Icons.Filled.People
+    ThermalUtils.ThermalState.MUSIC           -> Icons.AutoMirrored.Filled.VolumeUp
+    ThermalUtils.ThermalState.STREAMING       -> Icons.Filled.Stream
+    else                                      -> Icons.Filled.TuneRounded
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -249,7 +313,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector        = Icons.Filled.Thermostat,
+                                imageVector        = Icons.Filled.TuneRounded,
                                 contentDescription = null,
                                 tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier           = Modifier.size(PartsTokens.leadingIconSize),
@@ -340,9 +404,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-// Missing import needed for alpha modifier
-import androidx.compose.ui.draw.alpha
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
@@ -351,7 +412,6 @@ private fun AppThermalRow(
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
 
-    // Animate the chevron 180° when the dropdown opens.
     val chevronRotation by animateFloatAsState(
         targetValue   = if (expanded) 180f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -388,11 +448,6 @@ private fun AppThermalRow(
             expanded         = expanded,
             onExpandedChange = { expanded = it },
         ) {
-            // ── Chip ────────────────────────────────────────────────────────
-            // ElevatedFilterChip lifts off the card surface so it reads
-            // as an interactive control rather than plain text.
-            // The colour dot gives instant scannable state feedback without
-            // requiring the user to read the label text.
             ElevatedFilterChip(
                 selected     = entry.state != ThermalUtils.ThermalState.DEFAULT,
                 onClick      = { expanded = true },
@@ -405,8 +460,6 @@ private fun AppThermalRow(
                     )
                 },
                 leadingIcon  = {
-                    // Colour dot = instant semantic state indicator.
-                    // 8dp circle whose colour maps to the thermal level.
                     Box(
                         modifier = Modifier
                             .size(8.dp)
@@ -416,7 +469,7 @@ private fun AppThermalRow(
                 },
                 trailingIcon = {
                     Icon(
-                        imageVector        = Icons.Filled.ExpandMore,
+                        imageVector        = Icons.Outlined.ExpandMore,
                         contentDescription = null,
                         modifier           = Modifier
                             .size(18.dp)
@@ -434,9 +487,6 @@ private fun AppThermalRow(
                 ),
             )
 
-            // ── Dropdown menu ───────────────────────────────────────────────
-            // No Surface wrapper — ExposedDropdownMenu owns its own
-            // surfaceContainer background + M3 elevation shadow.
             ExposedDropdownMenu(
                 expanded         = expanded,
                 onDismissRequest = { expanded = false },
@@ -453,14 +503,11 @@ private fun AppThermalRow(
                         },
                         onClick      = { onStateChange(state.id); expanded = false },
                         leadingIcon  = {
-                            // Colour dot for every item — same semantic
-                            // mapping as the chip, so the colour language
-                            // is consistent throughout the UI.
-                            Box(
-                                modifier = Modifier
-                                    .size(10.dp)
-                                    .clip(CircleShape)
-                                    .background(state.dotColor()),
+                            Icon(
+                                imageVector        = state.stateIcon(),
+                                contentDescription = null,
+                                modifier           = Modifier.size(22.dp),
+                                tint               = state.dotColor(),
                             )
                         },
                         trailingIcon = if (isSelected) ({
