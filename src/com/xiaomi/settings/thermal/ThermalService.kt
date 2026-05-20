@@ -19,7 +19,7 @@
  *   1. Charging      → sconfig=27  (Xiaomi charging thermal)
  *   2. Screen off    → sconfig=0   (default, low-power)
  *   3. Foreground app known → per-app sconfig from ThermalUtils
- *   4. No foreground app yet → skip (TaskStackListener hasn’t fired)
+ *   4. No foreground app yet → skip (TaskStackListener hasn't fired)
  */
 
 package com.xiaomi.settings.thermal
@@ -97,10 +97,6 @@ class ThermalService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         dlog(TAG, "onStartCommand")
 
-        // Initialise ChargingMonitor. The onChange lambda receives a full
-        // BatteryInfo snapshot (isCharging + plugType + level + temp).
-        // Currently we branch only on isCharging; plugType is available for
-        // future per-charger-type thermal configuration.
         chargingMonitor = ChargingMonitor(this) { info ->
             dlog(TAG, "Charging changed: ${info.isCharging} via ${info.plugType} " +
                       "level=${info.level}% temp=${info.tempTenthsC / 10.0}°C")
@@ -129,7 +125,9 @@ class ThermalService : Service() {
     override fun onDestroy() {
         dlog(TAG, "onDestroy")
         thermalUtils.setDefaultThermalProfile()
-        chargingMonitor.stop()
+        // Pass final = true so the ChargingMonitor HandlerThread is quit
+        // and does not leak after the service is destroyed.
+        chargingMonitor.stop(final = true)
         unregisterReceiver(screenReceiver)
         runCatching { ActivityTaskManager.getService().unregisterTaskStackListener(taskListener) }
         super.onDestroy()
@@ -145,9 +143,6 @@ class ThermalService : Service() {
      *   2. Screen off    → sconfig=0
      *   3. App known     → per-app sconfig via ThermalUtils
      *   4. No app yet    → skip; TaskStackListener will fire shortly
-     *
-     * Future extension: branch on chargingMonitor.batteryInfo.plugType to
-     * apply different sconfigss for wireless vs wired charging.
      */
     private fun applyProfile() {
         runCatching {

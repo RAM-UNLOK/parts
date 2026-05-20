@@ -62,7 +62,7 @@ object PartsTokens {
 
     // ─ Loading / empty-state helpers ────────────────────────────────────
     /** Top padding for a centred loading spinner or empty-state label. */
-    val loadingTopPadding    = 80.dp
+    val loadingTopPadding      = 80.dp
     /** Top padding for the "thermal disabled" hint text. */
     val disabledHintTopPadding = 48.dp
 
@@ -92,8 +92,10 @@ object PartsTokens {
 
     // ─ Elevation ─────────────────────────────────────────────────────────
     /**
-     * Cards are tonally elevated via surfaceContainerLow colour role;
-     * physical shadow elevation stays at 0 to match Pixel Settings.
+     * Cards use surfaceContainerLow colour role for tonal elevation.
+     * No physical shadow — matches Pixel Settings visual language.
+     * Passed as tonalElevation = 0.dp to Surface; the colour role itself
+     * encodes the correct tonal value without an overlay.
      */
     val cardElevation = 0.dp
 
@@ -117,9 +119,4 @@ object PartsTokens {
      * Used for the selected background on a radio/checkbox row.
      */
     const val selectedStateLayerAlpha = 0.12f
-    /**
-     * Alpha for secondary text (title, description) rendered inside a
-     * coloured container (e.g. tertiaryContainer banner).
-     */
-    const val containerSubtitleAlpha  = 0.75f
 }

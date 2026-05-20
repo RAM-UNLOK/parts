@@ -30,7 +30,16 @@ class ThermalUtils private constructor(private val context: Context) {
             if (field == value) return
             field = value
             sharedPrefs.edit().putBoolean(THERMAL_ENABLED, value).apply()
-            if (value) startService() else { setDefaultThermalProfile(); stopService() }
+            if (value) {
+                startService()
+            } else {
+                // Stop the service first — its onDestroy() writes the default
+                // profile as part of its own teardown. We then write it again
+                // as a belt-and-suspenders guarantee in case the service was
+                // not running at the time this setter was called.
+                stopService()
+                setDefaultThermalProfile()
+            }
         }
 
     fun startService() {
@@ -51,7 +60,7 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     /**
-     * Apply charging thermal profile (sconfig=27).
+     * Apply charging thermal profile.
      * This is the highest-priority profile — overrides all app profiles.
      * Called by ThermalService whenever charger is connected.
      */
@@ -61,12 +70,14 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     /**
-     * Reset to default thermal profile (sconfig=0).
+     * Reset to default thermal profile.
      * Used when: screen is off, thermal is disabled, or service is stopping.
+     * References ThermalState.DEFAULT.sconfig as the single source of truth
+     * so this stays correct if the default sconfig value ever changes.
      */
     fun setDefaultThermalProfile() {
-        writeSconfig(DEFAULT_SCONFIG)
-        dlog(TAG, "Default profile applied (sconfig=$DEFAULT_SCONFIG)")
+        writeSconfig(ThermalState.DEFAULT.sconfig)
+        dlog(TAG, "Default profile applied (sconfig=${ThermalState.DEFAULT.sconfig})")
     }
 
     private fun setThermalProfileInternal(packageName: String) {
@@ -103,6 +114,8 @@ class ThermalUtils private constructor(private val context: Context) {
                 isSocialApp(appInfo)                                      -> ThermalState.SOCIAL
                 else                                                      -> ThermalState.DEFAULT
             }
+        }.onFailure { e ->
+            dlog(TAG, "classifyApp($packageName) failed: ${e.message}")
         }
         return ThermalState.DEFAULT
     }
@@ -197,11 +210,8 @@ class ThermalUtils private constructor(private val context: Context) {
         private const val THERMAL_PACKAGE_PREFIX = "thermal_package_"
         private const val THERMAL_SCONFIG        = "/sys/devices/virtual/thermal/thermal_message/sconfig"
 
-        /** sconfig=0  → normal/default thermal configuration */
-        const val DEFAULT_SCONFIG = "0"
-
         /** sconfig=27 → Xiaomi charging thermal configuration (highest priority) */
-        const val SCONFIG_CHARGE  = "27"
+        const val SCONFIG_CHARGE = "27"
 
         private val VIDEO_PKGS = listOf(
             "com.google.android.youtube",

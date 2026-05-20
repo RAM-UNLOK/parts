@@ -69,8 +69,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
-    // DampingRatioNoBouncy + StiffnessMedium gives the standard snappy
-    // collapse feel. LowBouncy caused the bar to overshoot and wobble.
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -83,12 +81,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
-                title = {
-                    Text(
-                        text  = stringResource(R.string.htsr_title),
-                        style = MaterialTheme.typography.headlineLarge,
-                    )
-                },
+                // No explicit style on the title Text — LargeTopAppBar manages
+                // the headlineMedium → titleLarge transition internally on scroll.
+                // Overriding it breaks the animated size/weight transition.
+                title = { Text(text = stringResource(R.string.htsr_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -163,16 +159,14 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // Info banner — use secondaryContainer so it is visually distinct
-            // from the surfaceContainer scaffold background. surfaceContainerHigh
-            // blended into surfaceContainer with zero perceived separation.
+            // Info banner — secondaryContainer is visually distinct from the
+            // surfaceContainer scaffold background.
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                shape          = PartsTokens.bannerShape,
-                color          = MaterialTheme.colorScheme.secondaryContainer,
-                tonalElevation = PartsTokens.cardElevation,
+                shape = PartsTokens.bannerShape,
+                color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
                 Row(
                     modifier              = Modifier.padding(
@@ -210,9 +204,7 @@ private fun toggleHtsr(
     runCatching {
         // Write pref first — TouchSamplingService listens to this key via
         // OnSharedPreferenceChangeListener and applies the hardware change
-        // while already running. The explicit start/stop below ensures the
-        // service is actually alive when the user enables HTSR mid-session
-        // (BootCompletedReceiver only starts it on boot when already enabled).
+        // while already running.
         prefs.edit().putBoolean(TouchSamplingService.HTSR_STATE, target).apply()
 
         val serviceIntent = Intent(context, TouchSamplingService::class.java)

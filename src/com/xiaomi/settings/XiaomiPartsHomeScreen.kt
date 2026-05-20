@@ -140,12 +140,10 @@ fun XiaomiPartsHomeScreen(
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
-                title = {
-                    Text(
-                        text  = stringResource(R.string.xiaomi_parts_title),
-                        style = MaterialTheme.typography.headlineLarge,
-                    )
-                },
+                // No explicit style on the title Text — LargeTopAppBar manages
+                // the headlineMedium → titleLarge transition internally on scroll.
+                // Overriding it breaks the animated size/weight transition.
+                title = { Text(text = stringResource(R.string.xiaomi_parts_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = Color.Transparent,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -202,9 +200,6 @@ fun XiaomiPartsHomeScreen(
                     ),
                     onClick = onNavigateToThermal,
                 )
-                // Divider between Thermal and Touch rows — matches Pixel
-                // Settings which separates rows inside a card with a 0.5dp
-                // outlineVariant line inset by the content horizontal margin.
                 HorizontalDivider(
                     modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
                     thickness = 0.5.dp,
@@ -258,13 +253,15 @@ fun PartsCard(
     modifier: Modifier = Modifier,
     content:  @Composable ColumnScope.() -> Unit,
 ) {
+    // tonalElevation is intentionally omitted — surfaceContainerLow already
+    // encodes the correct M3 tonal value. Passing 0.dp would be a no-op and
+    // misleadingly implies elevation is meaningful here.
     Surface(
-        modifier       = modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        shape          = PartsTokens.cardShape,
-        color          = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = PartsTokens.cardElevation,
+        shape = PartsTokens.cardShape,
+        color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
         Column(content = content)
     }
@@ -332,10 +329,9 @@ fun PartsRow(
 @Composable
 private fun ChargingBanner(modifier: Modifier = Modifier) {
     Surface(
-        modifier       = modifier.fillMaxWidth(),
-        shape          = PartsTokens.bannerShape,
-        color          = MaterialTheme.colorScheme.tertiaryContainer,
-        tonalElevation = PartsTokens.cardElevation,
+        modifier = modifier.fillMaxWidth(),
+        shape    = PartsTokens.bannerShape,
+        color    = MaterialTheme.colorScheme.tertiaryContainer,
     ) {
         Row(
             modifier = Modifier.padding(
