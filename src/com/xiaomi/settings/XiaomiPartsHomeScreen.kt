@@ -56,20 +56,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
+import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
-    onNavigateToDisplay : () -> Unit,
-    onNavigateToThermal : () -> Unit,
-    onNavigateToTouch   : () -> Unit,
+    onNavigateToDisplay: () -> Unit,
+    onNavigateToThermal: () -> Unit,
+    onNavigateToTouch:   () -> Unit,
 ) {
     val context = LocalContext.current
 
@@ -99,7 +100,8 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        // background is the correct M3 role for screen-level containers
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -109,7 +111,8 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    // transparent so scaffold background shows through while expanded
+                    containerColor         = Color.Transparent,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -127,11 +130,15 @@ fun XiaomiPartsHomeScreen(
                 enter   = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)),
                 exit    = shrinkVertically(spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)),
             ) {
-                ChargingBanner(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                ChargingBanner(
+                    Modifier.padding(
+                        horizontal = PartsTokens.bannerPaddingHorizontal,
+                        vertical   = PartsTokens.bannerPaddingVertical,
+                    )
+                )
             }
 
             PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
-
             PartsCard {
                 PartsRow(
                     icon    = Icons.Filled.Palette,
@@ -141,10 +148,9 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
             PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
-
             PartsCard {
                 PartsRow(
                     icon    = Icons.Filled.Thermostat,
@@ -160,10 +166,9 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
             PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
-
             PartsCard {
                 PartsRow(
                     icon    = Icons.Filled.Science,
@@ -176,7 +181,7 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(PartsTokens.listBottomPadding))
         }
     }
 }
@@ -187,22 +192,27 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
         text     = label,
         style    = MaterialTheme.typography.labelMedium,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 16.dp, top = 20.dp, bottom = 6.dp),
+        modifier = modifier.padding(
+            start  = PartsTokens.contentPaddingHorizontal,
+            top    = PartsTokens.categoryTopPadding,
+            bottom = PartsTokens.categoryBottomPadding,
+        ),
     )
 }
 
 @Composable
 fun PartsCard(
-    modifier : Modifier = Modifier,
-    content  : @Composable ColumnScope.() -> Unit,
+    modifier: Modifier = Modifier,
+    content:  @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
         modifier       = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = PartsTokens.contentPaddingHorizontal),
         shape          = MaterialTheme.shapes.extraLarge,
+        // surfaceContainer = the standard M3 tonal surface for list/card containers
         color          = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 0.dp,
+        tonalElevation = PartsTokens.cardElevation,
     ) {
         Column(content = content)
     }
@@ -210,24 +220,27 @@ fun PartsCard(
 
 @Composable
 fun PartsRow(
-    icon     : ImageVector,
-    title    : String,
-    summary  : String,
-    onClick  : () -> Unit,
-    modifier : Modifier = Modifier,
-    trailing : @Composable (() -> Unit)? = null,
+    icon:     ImageVector,
+    title:    String,
+    summary:  String,
+    onClick:  () -> Unit,
+    modifier: Modifier = Modifier,
+    trailing: @Composable (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(
+                horizontal = PartsTokens.contentPaddingHorizontal,
+                vertical   = PartsTokens.rowPaddingVertical,
+            ),
         verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
     ) {
         Box(
             modifier         = Modifier
-                .size(40.dp)
+                .size(PartsTokens.leadingIconContainerSize)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.secondaryContainer),
             contentAlignment = Alignment.Center,
@@ -236,7 +249,7 @@ fun PartsRow(
                 imageVector        = icon,
                 contentDescription = null,
                 tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier           = Modifier.size(22.dp),
+                modifier           = Modifier.size(PartsTokens.leadingIconSize),
             )
         }
         Column(modifier = Modifier.weight(1f)) {
@@ -258,7 +271,7 @@ fun PartsRow(
                 imageVector        = Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = null,
                 tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier           = Modifier.size(20.dp),
+                modifier           = Modifier.size(PartsTokens.trailingIconSize),
             )
         }
     }
@@ -269,19 +282,23 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
     Surface(
         modifier       = modifier.fillMaxWidth(),
         shape          = MaterialTheme.shapes.extraLarge,
+        // tertiaryContainer = M3 role for positive/contextual status banners
         color          = MaterialTheme.colorScheme.tertiaryContainer,
-        tonalElevation = 0.dp,
+        tonalElevation = PartsTokens.cardElevation,
     ) {
         Row(
-            modifier              = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+            modifier = Modifier.padding(
+                horizontal = PartsTokens.bannerInnerPaddingH,
+                vertical   = PartsTokens.bannerInnerPaddingV,
+            ),
             verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
         ) {
             Icon(
                 imageVector        = Icons.Filled.BatteryChargingFull,
                 contentDescription = null,
                 tint               = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier           = Modifier.size(24.dp),
+                modifier           = Modifier.size(PartsTokens.bannerIconSize),
             )
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -292,7 +309,9 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
                 Text(
                     text  = stringResource(R.string.thermal_charging_active_desc),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.8f),
+                    // containerSubtitleAlpha: M3 secondary text inside a coloured container
+                    color = MaterialTheme.colorScheme.onTertiaryContainer
+                        .copy(alpha = PartsTokens.containerSubtitleAlpha),
                 )
             }
         }

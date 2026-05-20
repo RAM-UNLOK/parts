@@ -46,13 +46,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
+import com.xiaomi.settings.ui.PartsTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,7 +75,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -92,7 +93,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    containerColor         = Color.Transparent,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -112,13 +113,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         .clickable(role = Role.Switch) {
                             toggleHtsr(context, prefs, !enabled) { enabled = it }
                         }
-                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                        .padding(
+                            horizontal = PartsTokens.contentPaddingHorizontal,
+                            vertical   = PartsTokens.rowPaddingVertical,
+                        ),
                     verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                 ) {
                     Box(
                         modifier         = Modifier
-                            .size(40.dp)
+                            .size(PartsTokens.leadingIconContainerSize)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.secondaryContainer),
                         contentAlignment = Alignment.Center,
@@ -127,7 +131,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                             imageVector        = Icons.Filled.TouchApp,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.size(22.dp),
+                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
@@ -149,45 +153,47 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(12.dp))
+            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
+            // Info banner — surfaceContainerHigh is the M3 role for
+            // informational chips/banners that are not actionable.
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = PartsTokens.contentPaddingHorizontal),
                 shape          = MaterialTheme.shapes.large,
-                color          = MaterialTheme.colorScheme.secondaryContainer,
-                tonalElevation = 0.dp,
+                color          = MaterialTheme.colorScheme.surfaceContainerHigh,
+                tonalElevation = PartsTokens.cardElevation,
             ) {
                 Row(
-                    modifier              = Modifier.padding(16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier              = Modifier.padding(PartsTokens.contentPaddingHorizontal),
+                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
                     verticalAlignment     = Alignment.Top,
                 ) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier           = Modifier.size(20.dp),
+                        tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier           = Modifier.size(PartsTokens.leadingIconSize),
                     )
                     Text(
                         text  = stringResource(R.string.htsr_info_body),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(PartsTokens.listBottomPadding))
         }
     }
 }
 
 private fun toggleHtsr(
-    context  : Context,
-    prefs    : android.content.SharedPreferences,
-    target   : Boolean,
-    onResult : (Boolean) -> Unit,
+    context:  Context,
+    prefs:    android.content.SharedPreferences,
+    target:   Boolean,
+    onResult: (Boolean) -> Unit,
 ) {
     runCatching {
         prefs.edit().putBoolean(TouchSamplingService.HTSR_STATE, target).apply()

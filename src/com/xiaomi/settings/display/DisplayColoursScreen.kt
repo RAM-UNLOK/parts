@@ -44,15 +44,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
+import com.xiaomi.settings.ui.PartsTokens
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,10 +75,10 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LargeTopAppBar(
-                title  = {
+                title = {
                     Text(
                         text  = stringResource(R.string.display_title),
                         style = MaterialTheme.typography.headlineMedium,
@@ -92,7 +93,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    containerColor         = Color.Transparent,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -106,24 +107,22 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
         ) {
             PartsCategory(stringResource(R.string.color_section_standard))
-
             PartsCard(modifier = Modifier.selectableGroup()) {
                 ColorMode.VIVID.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.SATURATED.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.STANDARD.Row(selectedId)  { applyMode(context, it) { selectedId = it.id } }
             }
 
-            Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
             PartsCategory(stringResource(R.string.color_section_expert))
-
             PartsCard(modifier = Modifier.selectableGroup()) {
                 ColorMode.ORIGINAL.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.P3.Row(selectedId)       { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.SRGB.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.height(PartsTokens.listBottomPadding))
         }
     }
 }
@@ -132,13 +131,14 @@ private typealias ColorMode = ColorService.ColorMode
 
 @Composable
 private fun ColorMode.Row(
-    selectedId : Int,
-    onSelected : (ColorMode) -> Unit,
+    selectedId: Int,
+    onSelected: (ColorMode) -> Unit,
 ) {
     val selected = this.id == selectedId
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+            // selectedStateLayerAlpha = 0.24f — standard M3 selected state layer
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = PartsTokens.selectedStateLayerAlpha)
         else
             MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = spring(),
@@ -152,9 +152,12 @@ private fun ColorMode.Row(
             .fillMaxWidth()
             .background(bgColor)
             .clickable(role = Role.RadioButton) { onSelected(this@Row) }
-            .padding(horizontal = 16.dp, vertical = 14.dp),
+            .padding(
+                horizontal = PartsTokens.contentPaddingHorizontal,
+                vertical   = PartsTokens.rowPaddingVertical,
+            ),
         verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
     ) {
         RadioButton(
             selected = selected,
@@ -184,8 +187,8 @@ private fun ColorMode.Row(
 }
 
 private fun applyMode(
-    context  : Context,
-    mode     : ColorMode,
+    context:   Context,
+    mode:      ColorMode,
     onSuccess: (ColorMode) -> Unit,
 ) {
     runCatching {
