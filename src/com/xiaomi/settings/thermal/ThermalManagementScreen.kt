@@ -36,7 +36,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BugReport
@@ -58,11 +57,10 @@ import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -146,8 +144,12 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
 }
 
 /**
- * Banner shown only while a charger is physically connected.
- * Communicates that per-app profiles are temporarily overridden.
+ * Charging-override banner shown inside the Thermal screen while a charger
+ * is physically connected.
+ *
+ * Colour role: tertiaryContainer / onTertiaryContainer — battery/charging
+ * semantic, matching the ChargingBanner on the HomeScreen. Was previously
+ * secondaryContainer which conflicted with the info-tip banner role.
  */
 @Composable
 private fun ChargingInfoBanner() {
@@ -156,7 +158,7 @@ private fun ChargingInfoBanner() {
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .clip(PartsTokens.cardShape)
-            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .background(MaterialTheme.colorScheme.tertiaryContainer)
             .padding(
                 horizontal = PartsTokens.contentPaddingHorizontal,
                 vertical   = PartsTokens.rowPaddingVertical,
@@ -167,7 +169,7 @@ private fun ChargingInfoBanner() {
         Icon(
             imageVector        = Icons.Filled.BatteryChargingFull,
             contentDescription = null,
-            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
             modifier           = Modifier
                 .padding(top = 2.dp)
                 .size(18.dp),
@@ -176,17 +178,24 @@ private fun ChargingInfoBanner() {
             Text(
                 text  = stringResource(R.string.thermal_charging_active),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
             Text(
                 text  = stringResource(R.string.thermal_charging_info_body),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                color = MaterialTheme.colorScheme.onTertiaryContainer,
             )
         }
     }
 }
 
+/**
+ * Thermal Management screen.
+ *
+ * Back navigation: removed the [navigationIcon] back button entirely.
+ * Android's predictive-back gesture handles navigation back natively.
+ * [onBack] is kept in the signature for NavHost popBackStack compatibility.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
@@ -198,7 +207,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     var enabled         by remember { mutableStateOf(thermalUtils.enabled) }
     var showResetDialog by remember { mutableStateOf(false) }
 
-    // Seeded synchronously from the sticky battery broadcast, updated live.
     var isCharging by remember { mutableStateOf(false) }
     DisposableEffect(Unit) {
         val monitor = ChargingMonitor(context) { info ->
@@ -254,7 +262,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        // surface: consistent with all other screens in the Parts flow.
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -264,14 +273,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    }
-                },
+                // No navigationIcon — back handled by predictive-back gesture.
                 actions = {
                     IconButton(onClick = { showResetDialog = true }) {
                         Icon(
@@ -281,7 +283,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -386,9 +388,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
-                // Charging banner — only shown while a charger is physically connected.
-                // When not charging this item collapses to nothing so no stale info
-                // is ever shown to the user.
                 if (isCharging) {
                     item(key = "charging-info") {
                         Spacer(Modifier.height(PartsTokens.categoryTopPadding))
@@ -409,13 +408,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 entry          = entry,
                                 chargingLocked = isCharging,
                                 onStateChange  = onStateChange@{ newStateId ->
-                                    // Guard: if the charging-locked toast path sent us -1,
-                                    // or if isCharging flipped between the chip tap and
-                                    // this lambda executing, show the toast and stop.
-                                    // return@onStateChange is the correct label here —
-                                    // return@AppThermalRow would exit the forEachIndexed
-                                    // iteration instead, letting execution fall through
-                                    // into the runCatching block and writing -1 to disk.
                                     if (isCharging) {
                                         Toast.makeText(
                                             context,
@@ -479,6 +471,24 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
+/**
+ * Per-app thermal profile row.
+ *
+ * The profile picker uses a [FilledTonalButton] as the dropdown anchor
+ * instead of an [ElevatedFilterChip]. Rationale:
+ *
+ * - Filter chips are for multi-select filtering of a list. A profile
+ *   picker is a single-value selection action — it is semantically a
+ *   button that opens a menu, not a chip that toggles state.
+ * - [FilledTonalButton] with a trailing [ExpandMore] chevron is the
+ *   correct M3 pattern for a compact button-anchored dropdown menu,
+ *   matching the Pixel Settings "more options" pattern.
+ * - The chevron rotates 180° with spring(StiffnessMediumLow) on open/close
+ *   providing the M3 Expressive motion cue.
+ * - The [ExposedDropdownMenuBox] is kept as the positioning container;
+ *   [menuAnchor] with [ExposedDropdownMenuAnchorType.PrimaryNotEditable]
+ *   is applied to the button so the popup anchors beneath it correctly.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
@@ -488,6 +498,7 @@ private fun AppThermalRow(
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
 
+    // Chevron rotation: 0° closed, 180° open. Spring gives it a physical feel.
     val chevronRotation by animateFloatAsState(
         targetValue   = if (expanded) 180f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -504,8 +515,7 @@ private fun AppThermalRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PartsTokens.appRowIconSpacing),
     ) {
-        // App icon — same size as the leading icon container used everywhere else
-        // so columns stay optically aligned across all rows.
+        // App icon
         Image(
             bitmap             = entry.icon,
             contentDescription = null,
@@ -522,65 +532,52 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // Dropdown occupies a fixed column on the trailing side.
-        // fillMaxWidth is intentionally NOT used here — the chip is right-aligned
-        // and only as wide as it needs to be, mirroring Pixel Settings dropdowns.
-        // The menu popup itself opens IntrinsicSize.Max so every item fits.
+        // Profile picker: FilledTonalButton anchors the dropdown menu.
+        // IntrinsicSize.Max on the menu lets every item render at full width.
         ExposedDropdownMenuBox(
             expanded         = expanded && !chargingLocked,
             onExpandedChange = { if (!chargingLocked) expanded = it },
         ) {
-            ElevatedFilterChip(
-                selected     = entry.state != ThermalUtils.ThermalState.DEFAULT,
-                onClick      = {
+            FilledTonalButton(
+                onClick = {
                     if (chargingLocked) {
-                        // Delegate to the caller so the toast fires from the
-                        // onStateChange lambda with the correct return label.
-                        onStateChange(-1)
+                        onStateChange(-1) // routes to charging-locked toast in caller
                     } else {
-                        expanded = true
+                        expanded = !expanded
                     }
                 },
-                label        = {
-                    Text(
-                        text     = stringResource(entry.state.label),
-                        style    = MaterialTheme.typography.labelMedium,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                leadingIcon  = {
-                    Box(
-                        modifier = Modifier
-                            .size(8.dp)
-                            .clip(CircleShape)
-                            .background(entry.state.dotColor()),
-                    )
-                },
-                trailingIcon = {
-                    Icon(
-                        imageVector        = Icons.Outlined.ExpandMore,
-                        contentDescription = null,
-                        modifier           = Modifier
-                            .size(18.dp)
-                            .rotate(chevronRotation),
-                    )
-                },
-                modifier = Modifier
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                colors = FilterChipDefaults.elevatedFilterChipColors(
-                    selectedContainerColor    = MaterialTheme.colorScheme.secondaryContainer,
-                    selectedLabelColor        = MaterialTheme.colorScheme.onSecondaryContainer,
-                    selectedLeadingIconColor  = MaterialTheme.colorScheme.onSecondaryContainer,
-                    selectedTrailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                ),
-            )
+                modifier      = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            ) {
+                // Leading profile icon — tinted with the profile's dot colour
+                // so the user can identify the current mode at a glance.
+                Icon(
+                    imageVector        = entry.state.stateIcon(),
+                    contentDescription = null,
+                    modifier           = Modifier.size(16.dp),
+                    tint               = entry.state.dotColor(),
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text     = stringResource(entry.state.label),
+                    style    = MaterialTheme.typography.labelMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Spacer(Modifier.width(4.dp))
+                // Chevron rotates 180° when menu is open.
+                Icon(
+                    imageVector        = Icons.Outlined.ExpandMore,
+                    contentDescription = null,
+                    modifier           = Modifier
+                        .size(16.dp)
+                        .rotate(chevronRotation),
+                )
+            }
 
             ExposedDropdownMenu(
                 expanded         = expanded && !chargingLocked,
                 onDismissRequest = { expanded = false },
-                // IntrinsicSize.Max lets the menu grow to its widest item
-                // instead of being clipped to the chip width.
                 modifier         = Modifier.width(IntrinsicSize.Max),
             ) {
                 ThermalUtils.ThermalState.entries.forEach { state ->
