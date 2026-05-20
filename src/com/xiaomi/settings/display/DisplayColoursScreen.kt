@@ -56,13 +56,6 @@ import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 
-/**
- * Display Colours sub-screen.
- *
- * Back navigation: the [navigationIcon] IconButton is intentionally absent.
- * Android's predictive-back gesture handles back natively on Android 13+.
- * [onBack] is kept in the signature for NavHost popBackStack compatibility.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
@@ -89,10 +82,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // M3 Expressive: surfaceContainer matches HomeScreen and
-        // ThermalManagementScreen — consistent background tone across all screens.
-        // Do NOT use surface (M2 pattern).
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -102,12 +92,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    // surfaceContainer: matches Scaffold background so the
-                    // top bar is flush with the screen when not scrolled.
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
             )
