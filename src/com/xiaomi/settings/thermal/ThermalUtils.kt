@@ -50,15 +50,23 @@ class ThermalUtils private constructor(private val context: Context) {
         setThermalProfileInternal(packageName)
     }
 
-    fun setChargingThermalProfile(): Boolean {
-        return runCatching {
-            writeLine(THERMAL_SCONFIG, SCONFIG_CHARGE)
-            dlog(TAG, "Charging profile applied (sconfig=$SCONFIG_CHARGE)")
-        }.isSuccess
+    /**
+     * Apply charging thermal profile (sconfig=27).
+     * This is the highest-priority profile — overrides all app profiles.
+     * Called by ThermalService whenever charger is connected.
+     */
+    fun setChargingThermalProfile() {
+        writeSconfig(SCONFIG_CHARGE)
+        dlog(TAG, "Charging profile applied (sconfig=$SCONFIG_CHARGE)")
     }
 
+    /**
+     * Reset to default thermal profile (sconfig=0).
+     * Used when: screen is off, thermal is disabled, or service is stopping.
+     */
     fun setDefaultThermalProfile() {
         writeSconfig(DEFAULT_SCONFIG)
+        dlog(TAG, "Default profile applied (sconfig=$DEFAULT_SCONFIG)")
     }
 
     private fun setThermalProfileInternal(packageName: String) {
@@ -69,7 +77,7 @@ class ThermalUtils private constructor(private val context: Context) {
 
     private fun writeSconfig(sconfig: String) {
         runCatching { writeLine(THERMAL_SCONFIG, sconfig) }
-            .onFailure { dlog(TAG, "writeSconfig failed: ${it.message}") }
+            .onFailure { dlog(TAG, "writeSconfig($sconfig) failed: ${it.message}") }
     }
 
     fun getStateForPackage(packageName: String): ThermalState {
@@ -100,7 +108,6 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     private fun isGameApp(appInfo: ApplicationInfo): Boolean {
-        // FLAG_IS_GAME is deprecated since API 26; CATEGORY_GAME is the modern replacement.
         return appInfo.category == ApplicationInfo.CATEGORY_GAME
     }
 
@@ -143,11 +150,13 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     fun resetProfiles() {
-        val editor = sharedPrefs.edit()
-        sharedPrefs.all.keys
-            .filter { it.startsWith(THERMAL_PACKAGE_PREFIX) }
-            .forEach { editor.remove(it) }
-        editor.apply()
+        sharedPrefs.edit()
+            .also { editor ->
+                sharedPrefs.all.keys
+                    .filter { it.startsWith(THERMAL_PACKAGE_PREFIX) }
+                    .forEach { editor.remove(it) }
+            }
+            .apply()
     }
 
     private fun getPackagePreference(packageName: String): Int {
@@ -183,8 +192,12 @@ class ThermalUtils private constructor(private val context: Context) {
         private const val THERMAL_ENABLED        = "thermal_enabled"
         private const val THERMAL_PACKAGE_PREFIX = "thermal_package_"
         private const val THERMAL_SCONFIG        = "/sys/devices/virtual/thermal/thermal_message/sconfig"
-        private const val DEFAULT_SCONFIG        = "0"
-        private const val SCONFIG_CHARGE         = "27"
+
+        /** sconfig=0  → normal/default thermal configuration */
+        const val DEFAULT_SCONFIG = "0"
+
+        /** sconfig=27 → Xiaomi charging thermal configuration (highest priority) */
+        const val SCONFIG_CHARGE  = "27"
 
         private val VIDEO_PKGS = listOf(
             "com.google.android.youtube",

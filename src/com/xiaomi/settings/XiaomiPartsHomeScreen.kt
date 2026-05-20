@@ -62,6 +62,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import com.xiaomi.settings.thermal.ThermalUtils
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
 
@@ -72,35 +73,60 @@ fun XiaomiPartsHomeScreen(
     onNavigateToThermal: () -> Unit,
     onNavigateToTouch:   () -> Unit,
 ) {
-    val context = LocalContext.current
+    val context      = LocalContext.current
+    val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
+    // ── Charging state ──────────────────────────────────────────────────────
+    // Initial value from sticky broadcast (synchronous, no allocation).
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         mutableStateOf(plugged != 0)
     }
+
+    // Live updates — same dual-path strategy as ThermalService:
+    //   • POWER_CONNECTED / POWER_DISCONNECTED for immediate response
+    //   • BATTERY_CHANGED for USB connections that don't fire POWER_CONNECTED
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 when (intent.action) {
                     Intent.ACTION_POWER_CONNECTED    -> isCharging = true
                     Intent.ACTION_POWER_DISCONNECTED -> isCharging = false
+                    Intent.ACTION_BATTERY_CHANGED    -> {
+                        val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
+                        isCharging  = plugged != 0
+                    }
                 }
             }
         }
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
+            addAction(Intent.ACTION_BATTERY_CHANGED)
         }
         context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         onDispose { context.unregisterReceiver(receiver) }
+    }
+
+    // ── Thermal enabled state ────────────────────────────────────────────────
+    // Observed via the same SharedPreferences that ThermalUtils writes to,
+    // so toggling in ThermalManagementScreen is reflected here immediately.
+    var thermalEnabled by remember { mutableStateOf(thermalUtils.enabled) }
+    DisposableEffect(Unit) {
+        val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener
+            { _, key ->
+                if (key == "thermal_enabled") thermalEnabled = thermalUtils.enabled
+            }
+        val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
+        prefs.registerOnSharedPreferenceChangeListener(prefListener)
+        onDispose { prefs.unregisterOnSharedPreferenceChangeListener(prefListener) }
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surfaceContainer matches Theme.Settings.Home.Expressive colorBackground
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
@@ -124,8 +150,11 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            // Banner only shows when charger is connected AND thermal is
+            // actually managing profiles — avoids misleading the user when
+            // thermal management has been disabled.
             AnimatedVisibility(
-                visible = isCharging,
+                visible = isCharging && thermalEnabled,
                 enter   = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)),
                 exit    = shrinkVertically(spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)),
             ) {
@@ -154,7 +183,12 @@ fun XiaomiPartsHomeScreen(
                 PartsRow(
                     icon    = Icons.Filled.Thermostat,
                     title   = stringResource(R.string.thermal_title),
-                    summary = stringResource(R.string.thermal_summary),
+                    // Live summary: reflects current enabled state so the
+                    // user can see at a glance without entering the sub-screen.
+                    summary = stringResource(
+                        if (thermalEnabled) R.string.thermal_summary_active
+                        else               R.string.thermal_summary_disabled
+                    ),
                     onClick = onNavigateToThermal,
                 )
                 PartsRow(
@@ -189,7 +223,6 @@ fun XiaomiPartsHomeScreen(
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
         text     = label,
-        // labelLarge matches expressive Settings section headers
         style    = MaterialTheme.typography.labelLarge,
         color    = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(
@@ -209,10 +242,7 @@ fun PartsCard(
         modifier       = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        // 28dp expressive card shape
         shape          = PartsTokens.cardShape,
-        // surfaceContainerLow = slightly lighter than the page surfaceContainer bg,
-        // creating the subtle card lift the expressive theme uses
         color          = MaterialTheme.colorScheme.surfaceContainerLow,
         tonalElevation = PartsTokens.cardElevation,
     ) {
