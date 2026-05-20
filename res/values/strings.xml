@@ -23,7 +23,8 @@
     <string name="touch_boost_title">Touch Boost</string>
     <string name="touch_boost_summary">Higher polling rate, snappier touch</string>
 
-    <!-- ── Charging banner / toast (HomeScreen) ──────────────────── -->
+    <!-- ── Charging banner / toast — HomeScreen UI ──────────────── -->
+    <!-- Used by the BroadcastReceiver in XiaomiPartsHomeScreen.kt      -->
     <string name="charging_connected">⚡ Charging profile on</string>
     <string name="charging_disconnected">🔋 Per-app profiles resumed</string>
 
@@ -93,6 +94,12 @@
     <string name="thermal_charging_info_body">A charge-optimised thermal profile is active while plugged in. Per-app profiles are paused and resume automatically once unplugged.</string>
     <string name="thermal_charging_override_hint">Charging override active — profiles resume when unplugged.</string>
     <string name="thermal_charging_locked_hint">🔒 Locked while charging</string>
+    <!--
+        Used by ThermalService.applyProfile() background service toast
+        (separate from the HomeScreen BroadcastReceiver toast above).
+    -->
+    <string name="thermal_charging_toast_connected">⚡ Charging profile on</string>
+    <string name="thermal_charging_toast_disconnected">🔋 Per-app profiles resumed</string>
 
     <!-- ── Touch Boost ────────────────────────────────────────────── -->
     <string name="htsr_title">Touch Boost</string>
@@ -105,8 +112,8 @@
     <string name="htsr_failed_toast">❌ Touch boost failed</string>
 
     <!-- ── Xiaomi CIT ─────────────────────────────────────────────── -->
-    <!-- CIT is an external diagnostics app shipped on Xiaomi devices. -->
-    <!-- The row in HomeScreen launches it via explicit intent.        -->
+    <!-- CIT is an external diagnostics app shipped on Xiaomi devices.  -->
+    <!-- The row in HomeScreen launches it via explicit intent.          -->
     <string name="cit_title">Xiaomi CIT</string>
     <string name="cit_summary">Hardware diagnostics and calibration</string>
     <string name="cit_not_found">❌ CIT app not installed</string>
