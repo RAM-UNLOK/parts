@@ -264,7 +264,7 @@ private fun ThermalProfileDialog(
         ) {
             Column(
                 modifier = Modifier
-                    // Width: 80% of screen, min 280dp, max 480dp — M3 dialog width spec.
+                    // Width: 88% of screen — M3 dialog width spec.
                     .fillMaxWidth(0.88f)
                     .clip(dialogShape)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
@@ -313,14 +313,17 @@ private fun ThermalProfileDialog(
                 )
 
                 // ── Scrollable profile list ───────────────────────────────
-                // Max 5 items visible before scroll kicks in (~56dp per row).
+                // Max ~5 items visible before scroll kicks in (~56dp per row).
+                // coerceAtMost is required here: Dp implements Comparable<Dp>
+                // but minOf() is NOT overloaded for Dp inline value class and
+                // will not compile. coerceAtMost() is the correct idiom.
                 LazyColumn(
                     modifier       = Modifier
                         .fillMaxWidth()
-                        .height(minOf(
-                            (ThermalUtils.ThermalState.entries.size * 56).dp,
-                            320.dp,   // cap at ~5.7 rows
-                        )),
+                        .height(
+                            (ThermalUtils.ThermalState.entries.size * 56).dp
+                                .coerceAtMost(320.dp)
+                        ),
                     contentPadding = PaddingValues(vertical = 8.dp),
                 ) {
                     items(
