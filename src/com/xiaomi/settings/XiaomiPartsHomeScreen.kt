@@ -84,7 +84,6 @@ fun XiaomiPartsHomeScreen(
     var lastToastTime      by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
-        // Seed initial state from sticky battery broadcast.
         val stickyIntent = context.registerReceiver(
             null,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
@@ -106,7 +105,6 @@ fun XiaomiPartsHomeScreen(
                 isCharging         = plugged
                 showChargingBanner = plugged
 
-                // Debounce: ignore events within TOAST_DEBOUNCE_MS of the last one.
                 if (now - lastToastTime < TOAST_DEBOUNCE_MS) return
                 lastToastTime = now
 
@@ -140,7 +138,11 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        // surfaceContainer gives the Scaffold the correct Monet tonal
+        // background — one step above window background so cards on top
+        // (surfaceContainer) are flush and look like part of the page,
+        // not floating panels with hairline ghost borders.
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -151,7 +153,7 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -165,7 +167,6 @@ fun XiaomiPartsHomeScreen(
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
 
-            // ── Charging banner ─────────────────────────────────────────
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
@@ -215,7 +216,6 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Display category ──────────────────────────────────────
             item(key = "display-label") {
                 PartsCategory(stringResource(R.string.display_category))
             }
@@ -231,7 +231,6 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Performance category ─────────────────────────────────
             item(key = "perf-label") {
                 PartsCategory(stringResource(R.string.performance_category))
             }
@@ -253,16 +252,11 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Diagnostics category ────────────────────────────────
             item(key = "diag-label") {
                 PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
             }
             item(key = "diag-card") {
                 PartsCard {
-                    // CitLauncher uses:
-                    //   package  = "com.miui.cit"
-                    //   activity = "com.miui.cit.home.HomeActivity"
-                    // Returns true on success, false if not installed.
                     PartsRow(
                         icon    = Icons.Filled.BugReport,
                         title   = stringResource(R.string.cit_title),
@@ -307,6 +301,20 @@ fun PartsCategory(
     )
 }
 
+/**
+ * Standard card container for preference rows.
+ *
+ * Uses [MaterialTheme.colorScheme.surfaceContainerHigh] as the card colour.
+ *
+ * Colour token rationale:
+ *   The Scaffold background is surfaceContainer.  Cards must sit visibly
+ *   above the background so the page has depth.  surfaceContainerHigh is
+ *   exactly one tonal step above surfaceContainer — enough contrast to
+ *   distinguish the card from the page without creating a harsh border or
+ *   looking like a floating panel.  This eliminates the hairline ghost-
+ *   border artefact that appeared when the card and background were the
+ *   same near-identical tonal value.
+ */
 @Composable
 fun PartsCard(
     modifier: Modifier = Modifier,
@@ -317,7 +325,9 @@ fun PartsCard(
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
         shape          = PartsTokens.cardShape,
-        color          = MaterialTheme.colorScheme.surfaceContainerLow,
+        // One tonal step above the surfaceContainer Scaffold background.
+        // Provides clean visual lift without any explicit border.
+        color          = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 0.dp,
     ) {
         Column { content() }
@@ -327,11 +337,6 @@ fun PartsCard(
 /**
  * Standard preference row with leading icon container, title, summary,
  * and an optional trailing slot (defaults to [ChevronRight]).
- *
- * @param showDivider When true a [HorizontalDivider] is rendered below this
- *   row using [DividerDefaults.Thickness] (1 dp) and
- *   [MaterialTheme.colorScheme.outlineVariant] — M3 list-divider spec.
- *   Pass false for the last (or only) row in a [PartsCard].
  */
 @Composable
 fun PartsRow(

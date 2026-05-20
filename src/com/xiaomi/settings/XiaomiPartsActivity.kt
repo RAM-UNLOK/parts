@@ -27,35 +27,29 @@ import com.xiaomi.settings.ui.XiaomiPartsTheme
 class XiaomiPartsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // enableEdgeToEdge() sets the status/nav bars transparent via
+        // WindowCompat.setDecorFitsSystemWindows(false).  We call it before
+        // super.onCreate so the window flags are applied before the first
+        // measure/layout pass.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Clear the XML windowBackground (which is ?colorBackground — correct
+        // for the launch frame) so that Compose's Scaffold surface colour is
+        // the ONLY painter once the Compose tree is ready.  Without this the
+        // XML background and the Scaffold colour both paint in sequence,
+        // occasionally causing a single-frame colour mismatch on slow devices.
+        //
+        // android.R.color.transparent is correct here: we are clearing the
+        // *window drawable* after Compose has taken ownership, not setting
+        // the initial launch colour (that is handled by ?colorBackground in
+        // styles.xml which runs before this line executes).
+        window.setBackgroundDrawableResource(android.R.color.transparent)
 
         setContent {
             XiaomiPartsTheme {
                 val navController = rememberNavController()
 
-                // ── M3 Expressive route transitions ───────────────────────────
-                //
-                // Pattern: slideInHorizontally + fadeIn (enter/popEnter)
-                //          slideOutHorizontally + fadeOut (exit/popExit)
-                //
-                // Direction:
-                //   Forward  (enter)  — slide in from +X (right edge → centre)
-                //   Forward  (exit)   — slide out to   -X (centre → left edge)
-                //   Back     (pop enter) — slide in from -X (left edge → centre)
-                //   Back     (pop exit)  — slide out to  +X (centre → right edge)
-                //
-                // This matches the Android 15 AOSP Settings navigation motion
-                // and the M3 Expressive spec for horizontal container transforms.
-                //
-                // EaseOutCubic: decelerating curve — element moves fast at the
-                // start and slows to rest, matching M3 "Emphasized Decelerate"
-                // easing for entering elements and M3 "Emphasized Accelerate"
-                // (approximated by EaseOutCubic on reverse) for exiting.
-                //
-                // Duration: PartsTokens.MotionDurationRoute (350 ms enter,
-                // 250 ms exit) — asymmetric so the outgoing screen exits fast
-                // and the incoming screen arrives deliberately.
                 NavHost(
                     navController    = navController,
                     startDestination = "home",
@@ -65,7 +59,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationRoute,
                                 easing         = EaseOutCubic,
                             ),
-                            initialOffsetX = { it },           // from right
+                            initialOffsetX = { it },
                         ) + fadeIn(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationEnter,
@@ -79,7 +73,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationExit,
                                 easing         = EaseOutCubic,
                             ),
-                            targetOffsetX = { -it / 3 },       // subtle push left
+                            targetOffsetX = { -it / 3 },
                         ) + fadeOut(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationExit,
@@ -93,7 +87,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationRoute,
                                 easing         = EaseOutCubic,
                             ),
-                            initialOffsetX = { -it / 3 },      // gentle return from left
+                            initialOffsetX = { -it / 3 },
                         ) + fadeIn(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationEnter,
@@ -107,7 +101,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationExit,
                                 easing         = EaseOutCubic,
                             ),
-                            targetOffsetX = { it },            // slide out to right
+                            targetOffsetX = { it },
                         ) + fadeOut(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationExit,

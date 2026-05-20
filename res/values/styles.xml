@@ -6,29 +6,23 @@
 <resources>
 
     <!--
-        Expressive window theme for XiaomiPartsActivity.
+        XiaomiParts.Theme — window theme for XiaomiPartsActivity.
 
-        Mirrors Theme.Settings.Home.Expressive from Clover/AOSP Settings:
-          - windowBackground transparent so Compose's dynamic Material You
-            surface colour owns the window from the very first frame.
-          - Transparent status + nav bars for edge-to-edge Compose layout.
-          - enforceNavigationBarContrast / enforceStatusBarContrast = false
-            prevents the system from overlaying a semi-transparent scrim over
-            the nav bar / status bar on API 29+. Without this the system scrim
-            conflicts with Compose's WindowInsets handling, causing a
-            double-tinted bar on light theme devices.
-          - windowSoftInputMode = adjustResize so the Compose keyboard-
-            avoidance (WindowInsets.ime) works correctly without the legacy
-            resize mode conflicting with imePadding().
+        Key change from previous version:
+          windowBackground is now ?android:attr/colorBackground instead of
+          @android:color/transparent.  The transparent background caused the
+          window to show through to the system wallpaper (near-black on dark
+          wallpapers) before Compose had a chance to paint its first frame.
+          ?android:attr/colorBackground inherits the device Monet/dynamic
+          colour so the window already has the correct surface colour at
+          launch.  Compose's Scaffold then paints over it with the identical
+          MaterialTheme.colorScheme.surface token — no flash, no mismatch.
 
-        Reference: The-Clover-Project/packages_apps_Settings
-                   res/values/themes_expressive.xml
-                   Theme.Settings.Home.Expressive
+        All edge-to-edge and bar-transparency items are preserved.
     -->
     <style name="XiaomiParts.Theme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
-        <!-- Compose owns all painting — transparent window background. -->
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowIsTranslucent">false</item>
+        <!-- Window background inherits Monet colorBackground (not transparent). -->
+        <item name="android:windowBackground">?android:attr/colorBackground</item>
 
         <!-- Edge-to-edge: system draws bars but they are transparent. -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
@@ -45,6 +39,32 @@
 
         <!-- Keyboard avoidance: let Compose WindowInsets.ime handle this. -->
         <item name="android:windowSoftInputMode">adjustResize</item>
+    </style>
+
+    <!--
+        XiaomiParts.Settings.HeaderTheme — context theme used by AOSP Settings
+        when inflating the Xiaomi Parts preference tile on the homepage.
+
+        Why this exists:
+          The Settings app inflates preference tiles via a LayoutInflater whose
+          context theme is the one declared on the <activity> / <activity-alias>
+          in the manifest.  If the theme does not extend a Material3 base that
+          includes a preferenceTheme, the tile is drawn with the raw
+          Theme.DeviceDefault card style — no Monet palette, square corners.
+
+          By inheriting Theme.Material3.DynamicColors.DayNight we pull the
+          full Monet/dynamic colour palette (primary, surface, secondaryContainer
+          etc.) into the tile's View context.  The preferenceTheme override
+          points to PreferenceThemeOverlay.v2.Material which applies M3 card
+          background (colorSurface), 28 dp corner radius, and correct
+          padding/typography to every Preference item.
+
+        This theme is NOT used for XiaomiPartsActivity itself — only for the
+        Settings header tile inflation context.
+    -->
+    <style name="XiaomiParts.Settings.HeaderTheme"
+           parent="@style/Theme.Material3.DynamicColors.DayNight">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v2.Material</item>
     </style>
 
 </resources>
