@@ -132,7 +132,6 @@ private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
     ThermalUtils.ThermalState.SOCIAL          -> MaterialTheme.colorScheme.primary
     ThermalUtils.ThermalState.MUSIC           -> MaterialTheme.colorScheme.secondary
     ThermalUtils.ThermalState.STREAMING       -> MaterialTheme.colorScheme.tertiary
-    else                                      -> MaterialTheme.colorScheme.outline
 }
 
 /**
@@ -152,7 +151,6 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.SOCIAL          -> Icons.Filled.People
     ThermalUtils.ThermalState.MUSIC           -> Icons.AutoMirrored.Filled.VolumeUp
     ThermalUtils.ThermalState.STREAMING       -> Icons.Filled.Stream
-    else                                      -> Icons.Rounded.Tune
 }
 
 /**
@@ -164,9 +162,6 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
  *                        user understands what will happen when they plug in.
  *   isCharging = true  → BatteryChargingFull icon + secondaryContainer tint.
  *                        Communicates that the override is live right now.
- *
- * Mirrors the TouchBoost info banner style exactly (icon + headline +
- * body, full-width card with contentPaddingHorizontal).
  */
 @Composable
 private fun ChargingInfoBanner(isCharging: Boolean) {
@@ -184,8 +179,6 @@ private fun ChargingInfoBanner(isCharging: Boolean) {
         Icons.Filled.BatteryChargingFull
     else
         Icons.Filled.Info
-
-    val headline = stringResource(R.string.thermal_charging_active)
 
     Row(
         modifier = Modifier
@@ -210,7 +203,7 @@ private fun ChargingInfoBanner(isCharging: Boolean) {
         )
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text  = headline,
+                text  = stringResource(R.string.thermal_charging_active),
                 style = MaterialTheme.typography.labelLarge,
                 color = contentColor,
             )
@@ -234,9 +227,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     var enabled         by remember { mutableStateOf(thermalUtils.enabled) }
     var showResetDialog by remember { mutableStateOf(false) }
 
-    // Live charging state — seeded from ChargingMonitor's current value,
-    // then updated via DisposableEffect so it tracks plug/unplug events
-    // for the lifetime of this composable only (no leaks on back-nav).
     var isCharging by remember { mutableStateOf(false) }
 
     DisposableEffect(Unit) {
@@ -425,10 +415,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
-                // ── Charging info banner ─────────────────────────────────────
-                // Always shown when thermals are enabled. Switches between
-                // idle-info style (not charging) and active-override style
-                // (charging) based on live ChargingMonitor state.
                 item(key = "charging-info") {
                     Spacer(Modifier.height(PartsTokens.categoryTopPadding))
                     ChargingInfoBanner(isCharging = isCharging)
