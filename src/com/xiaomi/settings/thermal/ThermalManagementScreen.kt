@@ -77,11 +77,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
-import com.xiaomi.settings.partsScrollBehavior
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -138,8 +140,16 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         )
     }
 
-    val scrollBehavior = remember { partsScrollBehavior() }
-    val listState      = rememberLazyListState()
+    // TopAppBarDefaults.exitUntilCollapsedScrollBehavior is @Composable;
+    // call it directly at the composable call site, never inside remember{}.
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        snapAnimationSpec  = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessHigh,
+        ),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+    )
+    val listState = rememberLazyListState()
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -205,7 +215,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 return@LazyColumn
             }
 
-            // ── Toggle section ──────────────────────────────────────────────────────────
+            // ── Toggle section ──────────────────────────────────────────────
             item(key = "toggle-label") {
                 PartsCategory(stringResource(R.string.thermal_enable))
             }
@@ -259,7 +269,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
 
             if (!enabled) {
-                // ── Disabled hint ────────────────────────────────────────────────────────
+                // ── Disabled hint ───────────────────────────────────────────
                 item(key = "disabled-hint") {
                     Box(
                         modifier         = Modifier
@@ -276,7 +286,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
-                // ── Per-app profiles section ────────────────────────────────────────────
+                // ── Per-app profiles section ────────────────────────────────
                 item(key = "apps-label") {
                     PartsCategory(stringResource(R.string.thermal_apps_category))
                 }
@@ -325,9 +335,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-// ────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
 // Per-app row with profile dropdown
-// ────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -437,9 +447,9 @@ private fun ThermalDropdownItem(
     )
 }
 
-// ────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
 // Helpers
-// ────────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────
 
 private fun toggleService(
     context:      Context,

@@ -14,6 +14,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -79,9 +80,16 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         )
     }
 
-    val scrollBehavior = remember { partsScrollBehavior() }
+    // TopAppBarDefaults.exitUntilCollapsedScrollBehavior is @Composable;
+    // call it directly at the composable call site, never inside remember{}.
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        snapAnimationSpec  = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessHigh,
+        ),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+    )
 
-    // Card entrance animations: Standard card 0 ms delay, Expert card 80 ms.
     val visStandard = remember { MutableTransitionState(false).apply { targetState = true } }
     val visExpert   = remember { MutableTransitionState(false).apply { targetState = true } }
 
@@ -124,7 +132,10 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             AnimatedVisibility(
                 visibleState = visStandard,
                 enter = fadeIn(tween(280)) +
-                        slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 5 },
+                        slideInVertically(
+                            animationSpec  = tween(280, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it / 5 },
+                        ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.color_section_standard))
@@ -146,7 +157,10 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             AnimatedVisibility(
                 visibleState = visExpert,
                 enter = fadeIn(tween(280, delayMillis = 80)) +
-                        slideInVertically(tween(280, delayMillis = 80, easing = FastOutSlowInEasing)) { it / 5 },
+                        slideInVertically(
+                            animationSpec  = tween(280, delayMillis = 80, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it / 5 },
+                        ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.color_section_expert))
@@ -185,8 +199,7 @@ private fun ColorMode.Row(
         else
             MaterialTheme.colorScheme.surfaceContainerLow,
         // StiffnessMediumLow (400): snappy enough to feel responsive,
-        // slow enough to read as a deliberate colour transition — not
-        // an accidental flicker.
+        // slow enough to read as a deliberate colour change, not a flicker.
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label         = "color-row-bg-${this.name}",
     )

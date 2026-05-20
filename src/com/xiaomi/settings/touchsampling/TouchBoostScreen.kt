@@ -12,6 +12,9 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
@@ -61,7 +64,6 @@ import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
-import com.xiaomi.settings.partsScrollBehavior
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,9 +76,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
-    val scrollBehavior = remember { partsScrollBehavior() }
+    // TopAppBarDefaults.exitUntilCollapsedScrollBehavior is @Composable;
+    // call it directly at the composable call site, never inside remember{}.
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        snapAnimationSpec  = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessHigh,
+        ),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+    )
 
-    // Card entrance: toggle card at 0 ms, info banner at 100 ms.
     val visToggle = remember { MutableTransitionState(false).apply { targetState = true } }
     val visBanner = remember { MutableTransitionState(false).apply { targetState = true } }
 
@@ -116,7 +125,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             AnimatedVisibility(
                 visibleState = visToggle,
                 enter = fadeIn(tween(280)) +
-                        slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 5 },
+                        slideInVertically(
+                            animationSpec  = tween(280, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it / 5 },
+                        ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.htsr_category))
@@ -174,7 +186,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             AnimatedVisibility(
                 visibleState = visBanner,
                 enter = fadeIn(tween(280, delayMillis = 100)) +
-                        slideInVertically(tween(280, delayMillis = 100, easing = FastOutSlowInEasing)) { it / 5 },
+                        slideInVertically(
+                            animationSpec  = tween(280, delayMillis = 100, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it / 5 },
+                        ),
             ) {
                 Surface(
                     modifier = Modifier

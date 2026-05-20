@@ -17,6 +17,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -54,7 +55,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -75,24 +75,6 @@ import com.xiaomi.settings.thermal.ThermalUtils
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
 
-// Shared scroll-behavior factory used by every screen in the app.
-// snapAnimationSpec  — StiffnessHigh (1000) + NoBouncy: crisp snap with
-//                      no overshoot when the user lifts their finger
-//                      mid-collapse. Default is an overdamped low-
-//                      stiffness spring that feels sluggish.
-// flingAnimationSpec — exponentialDecay(2f): fast but natural deceleration
-//                      on a fling; stops the bar from floating lazily
-//                      after a quick swipe.
-@OptIn(ExperimentalMaterial3Api::class)
-fun partsScrollBehavior(): TopAppBarScrollBehavior =
-    TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec  = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessHigh,
-        ),
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
-    )
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
@@ -103,7 +85,7 @@ fun XiaomiPartsHomeScreen(
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    // ── Charging state ──────────────────────────────────────────────────────────────────
+    // ── Charging state ──────────────────────────────────────────────────────
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
@@ -132,7 +114,7 @@ fun XiaomiPartsHomeScreen(
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    // ── Thermal-enabled state ──────────────────────────────────────────────────────────
+    // ── Thermal-enabled state ───────────────────────────────────────────────
     var thermalEnabled by remember { mutableStateOf(thermalUtils.enabled) }
     DisposableEffect(Unit) {
         val prefListener = android.content.SharedPreferences
@@ -144,11 +126,20 @@ fun XiaomiPartsHomeScreen(
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(prefListener) }
     }
 
-    val scrollBehavior = remember { partsScrollBehavior() }
+    // ── Scroll behaviour ────────────────────────────────────────────────────
+    // TopAppBarDefaults.exitUntilCollapsedScrollBehavior is @Composable, so
+    // it must be called directly in a @Composable scope, NOT inside remember{}.
+    // The scroll state is remembered internally by the M3 implementation.
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        snapAnimationSpec  = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessHigh,
+        ),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+    )
 
-    // ── Section entrance animation state ──────────────────────────────────────────────
-    // Three section cards stagger-in with 60 ms delay between each.
-    // MutableTransitionState(false) starts invisible; setting to true
+    // ── Section entrance animation states ───────────────────────────────────
+    // MutableTransitionState(false) starts invisible; setting targetState = true
     // triggers the enter animation exactly once on first composition.
     val visDisplay     = remember { MutableTransitionState(false).apply { targetState = true } }
     val visPerformance = remember { MutableTransitionState(false).apply { targetState = true } }
@@ -179,9 +170,9 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Charging banner — no bounce (DampingRatioNoBouncy): functional
-            // status indicators should not overshoot; only playful UI elements
-            // (FAB, empty-state illustrations) warrant a bouncy spring.
+            // Charging banner — DampingRatioNoBouncy: functional status
+            // indicators must not overshoot. Only playful UI (FAB, empty-state
+            // illustrations) warrant a bouncy spring.
             AnimatedVisibility(
                 visible = isCharging && thermalEnabled,
                 enter   = expandVertically(
@@ -199,11 +190,14 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Display section ─────────────────────────────────────────────────────
+            // ── Display section ─────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDisplay,
                 enter = fadeIn(tween(280)) +
-                        slideInVertically(tween(280, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 5 },
+                        slideInVertically(
+                            animationSpec = tween(280, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it / 5 },
+                        ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
@@ -220,11 +214,14 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Performance section ──────────────────────────────────────────────────
+            // ── Performance section ─────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visPerformance,
                 enter = fadeIn(tween(280, delayMillis = 60)) +
-                        slideInVertically(tween(280, delayMillis = 60, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 5 },
+                        slideInVertically(
+                            animationSpec = tween(280, delayMillis = 60, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it / 5 },
+                        ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
@@ -255,11 +252,14 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Diagnostics section ──────────────────────────────────────────────────
+            // ── Diagnostics section ─────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDiagnostics,
                 enter = fadeIn(tween(280, delayMillis = 120)) +
-                        slideInVertically(tween(280, delayMillis = 120, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 5 },
+                        slideInVertically(
+                            animationSpec = tween(280, delayMillis = 120, easing = FastOutSlowInEasing),
+                            initialOffsetY = { it / 5 },
+                        ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
