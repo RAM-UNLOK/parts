@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2025 Paranoid Android
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+
+    <!--
+        Base window style for XiaomiPartsActivity.
+
+        Inherits Theme.DeviceDefault.NoActionBar for correct system
+        chrome (status bar, nav bar, insets) but overrides the window
+        background to transparent so Compose's MaterialTheme.colorScheme
+        .surface (dynamic Material You colour) paints the entire window.
+
+        Without this, the dark DeviceDefault window background bleeds
+        through for ~1 frame before Compose draws, causing a visible
+        dark flash and breaking dynamic colour sync.
+    -->
+    <style name="XiaomiParts.Theme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowIsTranslucent">false</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+</resources>
