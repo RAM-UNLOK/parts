@@ -24,6 +24,13 @@
  *   2. Screen off    → sconfig=0   (default, low-power)
  *   3. Foreground app known → per-app sconfig from ThermalUtils
  *   4. No foreground app yet → skip (TaskStackListener hasn't fired)
+ *
+ * RECEIVER_NOT_EXPORTED must NOT be used here: ACTION_SCREEN_ON/OFF,
+ * ACTION_POWER_CONNECTED/DISCONNECTED, and ACTION_BATTERY_CHANGED are all
+ * system-protected broadcasts delivered exclusively by the OS. Passing
+ * RECEIVER_NOT_EXPORTED to registerReceiver() for system broadcasts triggers
+ * a StrictMode warning on AOSP 16 and can silently drop the registration on
+ * some Xiaomi kernels.
  */
 
 package com.xiaomi.settings.thermal
@@ -135,8 +142,12 @@ class ThermalService : Service() {
             // POWER_CONNECTED may not fire immediately) are also detected.
             addAction(Intent.ACTION_BATTERY_CHANGED)
         }
-        // RECEIVER_NOT_EXPORTED required on API 33+ for non-system broadcasts.
-        registerReceiver(broadcastReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        // System-protected broadcasts must be registered WITHOUT
+        // RECEIVER_NOT_EXPORTED — the OS sends them to all registered
+        // receivers regardless of the export flag, and NOT_EXPORTED causes
+        // a StrictMode violation on AOSP 16 for system broadcast actions.
+        @Suppress("UnspecifiedRegisterReceiverFlag")
+        registerReceiver(broadcastReceiver, filter)
 
         runCatching {
             ActivityTaskManager.getService().registerTaskStackListener(taskListener)

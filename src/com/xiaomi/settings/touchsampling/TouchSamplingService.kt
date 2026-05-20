@@ -10,6 +10,12 @@
  *
  * SharedPreferences key: HTSR_STATE in the SHAREDHTSR file.
  * The service is started at locked-boot via BootCompletedReceiver.
+ *
+ * RECEIVER_NOT_EXPORTED must NOT be used for ACTION_SCREEN_ON and
+ * ACTION_USER_PRESENT: they are system-protected broadcasts sent exclusively
+ * by the OS. Registering them with NOT_EXPORTED can silently drop the
+ * registration on some Xiaomi kernels and triggers a StrictMode warning
+ * on AOSP 16.
  */
 
 package com.xiaomi.settings.touchsampling
@@ -82,13 +88,17 @@ class TouchSamplingService : Service() {
                 }
             }
         }
+        // ACTION_SCREEN_ON and ACTION_USER_PRESENT are system-protected broadcasts.
+        // Do NOT pass RECEIVER_NOT_EXPORTED — the OS delivers these to all
+        // registered receivers and the flag can silently prevent receipt on
+        // some kernels.
+        @Suppress("UnspecifiedRegisterReceiverFlag")
         registerReceiver(
             screenUnlockReceiver,
             IntentFilter().apply {
                 addAction(Intent.ACTION_USER_PRESENT)
                 addAction(Intent.ACTION_SCREEN_ON)
             },
-            Context.RECEIVER_NOT_EXPORTED,
         )
     }
 

@@ -166,11 +166,16 @@ class ThermalUtils private constructor(private val context: Context) {
         )
     }
 
+    // DEFAULT is declared first so ThermalState.entries returns it at index 0,
+    // which places it at the top of the per-app profile dropdown in the UI.
+    // All numeric IDs are stable — reordering the declaration does not change
+    // any stored SharedPreferences values.
     enum class ThermalState(
         val id     : Int,
         val sconfig: String,
         @param:StringRes val label: Int,
     ) {
+        DEFAULT        (11, "0",  R.string.thermal_default),
         BENCHMARK      (0,  "10", R.string.thermal_benchmark),
         BROWSER        (1,  "6",  R.string.thermal_browser),
         CAMERA         (2,  "4",  R.string.thermal_camera),
@@ -182,7 +187,6 @@ class ThermalUtils private constructor(private val context: Context) {
         VIDEO          (8,  "12", R.string.thermal_video),
         SOCIAL         (9,  "20", R.string.thermal_social),
         MUSIC          (10, "5",  R.string.thermal_music),
-        DEFAULT        (11, "0",  R.string.thermal_default),
         STREAMING      (12, "9",  R.string.thermal_streaming),
     }
 
