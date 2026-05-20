@@ -13,27 +13,16 @@
         Compose's Scaffold then paints over it with the identical
         MaterialTheme.colorScheme.surfaceContainer token — no black
         flash, no mismatch on first frame.
-
-        All edge-to-edge and bar-transparency items are preserved.
     -->
     <style name="XiaomiParts.Theme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
-        <!-- Window background inherits Monet colorBackground (not transparent). -->
         <item name="android:windowBackground">?android:attr/colorBackground</item>
-
-        <!-- Edge-to-edge: system draws bars but they are transparent. -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-
-        <!-- Prevent system scrim overlay over transparent bars (API 29+). -->
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:enforceStatusBarContrast">false</item>
-
-        <!-- Allow content to extend under system bars. -->
         <item name="android:clipToPadding">false</item>
         <item name="android:clipChildren">false</item>
-
-        <!-- Keyboard avoidance: let Compose WindowInsets.ime handle this. -->
         <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
 
@@ -41,35 +30,27 @@
         XiaomiParts.Settings.HeaderTheme — context theme used by AOSP Settings
         when inflating the Xiaomi Parts preference tile on the homepage.
 
-        Parent: Theme.Material3.DynamicColors.DayNight
-          Pulls the full Monet/dynamic colour palette into the tile's View
-          context so all M3 colour roles (primary, surface, secondaryContainer
-          etc.) resolve to the correct wallpaper-derived tones on Android 12+.
+        Parent: Theme.MaterialComponents.DayNight.NoActionBar
+          This is the correct platform-available MDC base theme that pulls
+          the full Monet/dynamic colour palette on Android 12+. Do NOT use
+          Theme.Material3.DynamicColors.DayNight — that is an androidx alias
+          not present in the platform aapt2 resource namespace and will
+          cause a build failure.
 
-        preferenceTheme: PreferenceThemeOverlay.Material3  (M3 Expressive)
-          This is the correct M3 overlay — NOT PreferenceThemeOverlay.v2.Material
-          which is Material Design 2 (4dp corners, M2 colour tokens, M2 type).
+        preferenceTheme: PreferenceThemeOverlay.v2.Material3
+          Platform-available M3 overlay from com.google.android.material.
+          Do NOT use PreferenceThemeOverlay.Material3 (androidx.preference
+          artifact — absent from platform builds).
 
-          PreferenceThemeOverlay.Material3 delivers:
-            • Shape  — M3 ShapeKeyTokens extraLarge (28dp corner radius),
-                        matching M3 Expressive card spec.
+          PreferenceThemeOverlay.v2.Material3 delivers:
+            • Shape  — M3 ExtraLarge (28dp corner radius)
             • Colour — M3 colour roles: colorSurface, colorOnSurface,
-                        colorOutline, secondaryContainer, etc. All
-                        Monet-derived on Android 12+.
-            • Type   — M3 typography scale: bodyLarge 16sp for tile title,
-                        bodyMedium 14sp for summary, labelMedium 12sp tracked
-                        for category headers.
-
-        This theme is NOT used for XiaomiPartsActivity itself — only for
-        the Settings header tile inflation context via .XiaomiPartsSettingsTile
-        activity-alias in AndroidManifest.xml.
+                        colorOutline, secondaryContainer, etc.
+            • Type   — M3 typography: bodyLarge title, bodyMedium summary
     -->
     <style name="XiaomiParts.Settings.HeaderTheme"
-           parent="@style/Theme.Material3.DynamicColors.DayNight">
-        <!-- M3 Expressive preference overlay — 28dp corners, M3 colour roles,
-             M3 type scale. Do NOT use PreferenceThemeOverlay.v2.Material
-             (that is Material Design 2). -->
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.Material3</item>
+           parent="@style/Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v2.Material3</item>
     </style>
 
 </resources>
