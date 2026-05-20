@@ -5,23 +5,21 @@
  *
  * ThermalService — background service that applies thermal profiles.
  *
- * Charging detection strategy (system-app pattern):
- * ────────────────────────────────────────
- * This app runs as android.uid.system, so it has direct access to
- * BatteryManager.isCharging() without needing a BroadcastReceiver.
+ * Charging detection (system-app pattern):
+ * ───────────────────────────────────
+ * Uses ChargingMonitor which wraps BatteryManager + the ACTION_BATTERY_CHANGED
+ * sticky broadcast. No dynamic BroadcastReceiver for battery events: eliminates
+ * the RECEIVER_NOT_EXPORTED / StrictMode issue and the Xiaomi MTP/ADB missed-
+ * event problem.
  *
- * ChargingMonitor wraps BatteryManager.isCharging() with a low-frequency
- * Handler poller (every 3 s, only while screen is on). This:
- *   • Eliminates the RECEIVER_NOT_EXPORTED / StrictMode issue on AOSP 16.
- *   • Catches USB-only connections that do not fire ACTION_POWER_CONNECTED
- *     on some Xiaomi kernels (MTP / ADB mode).
- *   • Has no race window — state is read synchronously on start().
+ * ChargingMonitor.BatteryInfo exposes plugType (AC / USB / WIRELESS / DOCK)
+ * for future per-charger-type sconfig differentiation.
  *
  * applyProfile() priority (highest → lowest):
  *   1. Charging      → sconfig=27  (Xiaomi charging thermal)
  *   2. Screen off    → sconfig=0   (default, low-power)
  *   3. Foreground app known → per-app sconfig from ThermalUtils
- *   4. No foreground app yet → skip (TaskStackListener hasn't fired)
+ *   4. No foreground app yet → skip (TaskStackListener hasn’t fired)
  */
 
 package com.xiaomi.settings.thermal
@@ -57,13 +55,11 @@ class ThermalService : Service() {
             field = value
             dlog(TAG, "Screen: $value")
             if (value) {
-                // Screen turned on: immediately re-read charging state and
-                // restart the poller so USB connections during screen-off
-                // are picked up within one poll cycle.
+                // Screen on: immediately re-read charging state and restart
+                // the poller. Catches USB connections made during screen-off.
                 chargingMonitor.start()
             } else {
-                // Screen turned off: stop the poller to avoid waking the
-                // CPU every 3 s while the display is dark.
+                // Screen off: stop poller — no reason to wake CPU in the dark.
                 chargingMonitor.stop()
             }
             applyProfile()
@@ -78,11 +74,11 @@ class ThermalService : Service() {
         }
     }
 
-    // Only ACTION_SCREEN_ON/OFF remain here — charging is handled by
-    // ChargingMonitor. These two are genuine system-only broadcasts that
-    // cannot originate from third-party apps.
-    // @Suppress is intentional: system broadcasts must NOT use
-    // RECEIVER_NOT_EXPORTED — that flag is for app-to-app broadcasts only.
+    // Only ACTION_SCREEN_ON/OFF remain here. Charging is handled by
+    // ChargingMonitor with no BroadcastReceiver at all.
+    // @Suppress is intentional: these are genuine system-only broadcasts that
+    // cannot originate from third-party apps. NOT_EXPORTED is incorrect for
+    // system broadcasts and causes StrictMode on AOSP 16.
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
             when (intent.action) {
@@ -101,15 +97,17 @@ class ThermalService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         dlog(TAG, "onStartCommand")
 
-        // Initialise ChargingMonitor. The onChange callback fires on the main
-        // thread whenever the charging state flips, which calls applyProfile().
-        chargingMonitor = ChargingMonitor(this) { isCharging ->
-            dlog(TAG, "Charging state changed: $isCharging")
+        // Initialise ChargingMonitor. The onChange lambda receives a full
+        // BatteryInfo snapshot (isCharging + plugType + level + temp).
+        // Currently we branch only on isCharging; plugType is available for
+        // future per-charger-type thermal configuration.
+        chargingMonitor = ChargingMonitor(this) { info ->
+            dlog(TAG, "Charging changed: ${info.isCharging} via ${info.plugType} " +
+                      "level=${info.level}% temp=${info.tempTenthsC / 10.0}°C")
             applyProfile()
         }
         chargingMonitor.start()
 
-        // Register for screen on/off only — no battery receivers needed.
         @Suppress("UnspecifiedRegisterReceiverFlag")
         registerReceiver(
             screenReceiver,
@@ -147,13 +145,16 @@ class ThermalService : Service() {
      *   2. Screen off    → sconfig=0
      *   3. App known     → per-app sconfig via ThermalUtils
      *   4. No app yet    → skip; TaskStackListener will fire shortly
+     *
+     * Future extension: branch on chargingMonitor.batteryInfo.plugType to
+     * apply different sconfigss for wireless vs wired charging.
      */
     private fun applyProfile() {
         runCatching {
             when {
-                chargingMonitor.isCharging  -> thermalUtils.setChargingThermalProfile()
-                !screenOn                   -> thermalUtils.setDefaultThermalProfile()
-                currentApp.isNotEmpty()     -> thermalUtils.setThermalProfile(currentApp)
+                chargingMonitor.isCharging   -> thermalUtils.setChargingThermalProfile()
+                !screenOn                    -> thermalUtils.setDefaultThermalProfile()
+                currentApp.isNotEmpty()      -> thermalUtils.setThermalProfile(currentApp)
                 else -> dlog(TAG, "applyProfile: skipped — no foreground app yet")
             }
         }.onFailure { e ->
