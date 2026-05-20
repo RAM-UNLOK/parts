@@ -251,9 +251,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         )
     }
 
+    // snapAnimationSpec: uses PartsTokens.MotionDampingRatio (= Spring.DampingRatioNoBouncy)
+    // for consistency with all other animated elements in the Parts flow.
+    // Spring.StiffnessHigh is intentionally kept as a raw literal here —
+    // it is a scroll-physics parameter, not a UI motion constant, and
+    // does not belong in PartsTokens.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
+            dampingRatio = PartsTokens.MotionDampingRatio,
             stiffness    = Spring.StiffnessHigh,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
@@ -483,8 +488,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
  * - [FilledTonalButton] with a trailing [ExpandMore] chevron is the
  *   correct M3 pattern for a compact button-anchored dropdown menu,
  *   matching the Pixel Settings "more options" pattern.
- * - The chevron rotates 180° with spring(StiffnessMediumLow) on open/close
- *   providing the M3 Expressive motion cue.
+ * - The chevron rotates 180° with spring(PartsTokens.MotionStiffnessMediumLow)
+ *   on open/close providing the M3 Expressive motion cue.
  * - The [ExposedDropdownMenuBox] is kept as the positioning container;
  *   [menuAnchor] with [ExposedDropdownMenuAnchorType.PrimaryNotEditable]
  *   is applied to the button so the popup anchors beneath it correctly.
@@ -498,10 +503,12 @@ private fun AppThermalRow(
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
 
-    // Chevron rotation: 0° closed, 180° open. Spring gives it a physical feel.
+    // Chevron rotation: 0° closed, 180° open.
+    // Uses PartsTokens.MotionStiffnessMediumLow for consistency with all
+    // other spring animations across the Parts flow.
     val chevronRotation by animateFloatAsState(
         targetValue   = if (expanded) 180f else 0f,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        animationSpec = spring(stiffness = PartsTokens.MotionStiffnessMediumLow),
         label         = "chevron-rotation-${entry.packageName}",
     )
 
