@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.xiaomi.settings
 
 import android.content.BroadcastReceiver
@@ -41,8 +39,8 @@ import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -70,6 +68,7 @@ import com.xiaomi.settings.utils.CitLauncher
 // Home screen
 // ─────────────────────────────────────────────────────────────────────────────
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
     onNavigateToDisplay : () -> Unit,
@@ -118,8 +117,8 @@ fun XiaomiPartsHomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState()),
         ) {
             AnimatedVisibility(
                 visible = isCharging,
@@ -130,6 +129,7 @@ fun XiaomiPartsHomeScreen(
             }
 
             PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
+
             PartsCard {
                 PartsRow(
                     icon    = Icons.Filled.Palette,
@@ -139,7 +139,10 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
+            Spacer(Modifier.height(8.dp))
+
             PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
+
             PartsCard {
                 PartsRow(
                     icon    = Icons.Filled.Thermostat,
@@ -155,7 +158,10 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
+            Spacer(Modifier.height(8.dp))
+
             PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
+
             PartsCard {
                 PartsRow(
                     icon    = Icons.Filled.Science,
@@ -190,8 +196,7 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
 
 /**
  * Tonal card block — surfaceContainer fill, extraLarge corners, no stroke.
- * Matches Clover ContextualCardStyle (cardBackgroundColor = materialColorSurfaceContainer,
- * cardCornerRadius = extraLarge, cardElevation = 0dp).
+ * Matches Clover ContextualCardStyle.
  */
 @Composable
 fun PartsCard(
@@ -212,10 +217,6 @@ fun PartsCard(
 
 /**
  * Single preference row inside a PartsCard.
- *
- * Icon container: Box with secondaryContainer background drawn via
- * Modifier.background() — avoids the blank-icon issue where Surface tint
- * merges with the window background on some dynamic colour schemes.
  */
 @Composable
 fun PartsRow(
@@ -234,8 +235,6 @@ fun PartsRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        // Use Box+background instead of Surface+clip to guarantee the
-        // secondaryContainer colour is never transparent.
         Box(
             modifier         = Modifier
                 .size(40.dp)
@@ -313,7 +312,3 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
         }
     }
 }
-
-// Legacy aliases kept for any future callers
-@Composable fun SettingsCategoryLabel(label: String, modifier: Modifier = Modifier) = PartsCategory(label, modifier)
-@Composable fun SettingsBlock(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) = PartsCard(modifier, content)

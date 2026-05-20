@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.xiaomi.settings.thermal
 
 import android.content.Context
@@ -14,9 +12,6 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,6 +40,7 @@ import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
@@ -90,6 +86,7 @@ private data class AppEntry(
     val state       : ThermalUtils.ThermalState,
 )
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
     val context      = LocalContext.current
@@ -135,8 +132,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    // Single LazyListState shared with the scroll behaviour so the top bar
-    // collapses correctly as the unified list scrolls.
     val listState: LazyListState = rememberLazyListState()
 
     Scaffold(
@@ -174,139 +169,142 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             )
         },
     ) { innerPadding ->
-        // ── Single LazyColumn owns ALL scrollable content ──────────────────
-        // Toggle row + category label + app list are all items in ONE list.
-        // This prevents the toggle from being pinned/stuck and stops sections
-        // from breaking when the inner LazyColumn fights the outer Column.
-        when {
-            isLoading -> Box(
-                modifier         = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    CircularProgressIndicator(strokeWidth = 3.dp)
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        text  = stringResource(R.string.thermal_loading),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-
-            else -> LazyColumn(
-                state          = listState,
-                modifier       = Modifier
-                    .fillMaxSize()
-                    .padding(innerPadding),
-                contentPadding = PaddingValues(bottom = 24.dp),
-            ) {
-                // ── Service toggle ─────────────────────────────────────────
-                item(key = "toggle-label") {
-                    PartsCategory(stringResource(R.string.thermal_enable))
-                }
-                item(key = "toggle-card") {
-                    PartsCard {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(role = Role.Switch) {
-                                    toggleService(context, thermalUtils, !enabled) { enabled = it }
-                                }
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            Box(
-                                modifier         = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector        = Icons.Filled.Thermostat,
-                                    contentDescription = null,
-                                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier           = Modifier.size(22.dp),
-                                )
-                            }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text  = stringResource(R.string.thermal_enable),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Text(
-                                    text  = stringResource(R.string.thermal_enable_summary),
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Switch(
-                                checked         = enabled,
-                                onCheckedChange = { toggleService(context, thermalUtils, it) { enabled = it } },
-                            )
-                        }
-                    }
-                }
-
-                // ── Per-app profiles section (only when service is on) ─────
-                if (!enabled) {
-                    item(key = "disabled-hint") {
-                        Box(
-                            modifier         = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 48.dp)
-                                .alpha(0.4f),
-                            contentAlignment = Alignment.Center,
-                        ) {
+        LazyColumn(
+            state          = listState,
+            modifier       = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 24.dp),
+        ) {
+            // Loading spinner as a list item so nestedScroll is never broken
+            if (isLoading) {
+                item(key = "loading") {
+                    Box(
+                        modifier         = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 80.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            CircularProgressIndicator(strokeWidth = 3.dp)
+                            Spacer(Modifier.height(12.dp))
                             Text(
-                                text  = stringResource(R.string.thermal_disabled_hint),
-                                style = MaterialTheme.typography.bodyMedium,
+                                text  = stringResource(R.string.thermal_loading),
+                                style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
-                } else {
-                    item(key = "apps-label") {
-                        PartsCategory(stringResource(R.string.thermal_apps_category))
+                }
+                return@LazyColumn
+            }
+
+            // Service toggle
+            item(key = "toggle-label") {
+                PartsCategory(stringResource(R.string.thermal_enable))
+            }
+            item(key = "toggle-card") {
+                PartsCard {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(role = Role.Switch) {
+                                toggleService(context, thermalUtils, !enabled) { enabled = it }
+                            }
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Box(
+                            modifier         = Modifier
+                                .size(40.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.secondaryContainer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Filled.Thermostat,
+                                contentDescription = null,
+                                tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier           = Modifier.size(22.dp),
+                            )
+                        }
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text  = stringResource(R.string.thermal_enable),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Text(
+                                text  = stringResource(R.string.thermal_enable_summary),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked         = enabled,
+                            onCheckedChange = { toggleService(context, thermalUtils, it) { enabled = it } },
+                        )
                     }
-                    appEntries.chunked(5).forEachIndexed { idx, chunk ->
-                        item(key = "block-$idx") {
-                            PartsCard(Modifier.padding(bottom = 8.dp)) {
-                                chunk.forEach { entry ->
-                                    AppThermalRow(entry) { newStateId ->
-                                        runCatching {
-                                            thermalUtils.writePackage(entry.packageName, newStateId)
-                                            val ns = ThermalUtils.ThermalState.entries
-                                                .firstOrNull { it.id == newStateId }
-                                                ?: ThermalUtils.ThermalState.DEFAULT
-                                            appEntries = appEntries.map {
-                                                if (it.packageName == entry.packageName) it.copy(state = ns) else it
-                                            }
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(
-                                                    R.string.thermal_profile_applied,
-                                                    entry.label,
-                                                    context.getString(ns.label),
-                                                ),
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        }.onFailure {
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.thermal_profile_failed, entry.label),
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
+                }
+            }
+
+            // Per-app profiles
+            if (!enabled) {
+                item(key = "disabled-hint") {
+                    Box(
+                        modifier         = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 48.dp)
+                            .alpha(0.4f),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text  = stringResource(R.string.thermal_disabled_hint),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            } else {
+                item(key = "apps-label") {
+                    PartsCategory(stringResource(R.string.thermal_apps_category))
+                }
+                appEntries.chunked(5).forEachIndexed { idx, chunk ->
+                    item(key = "block-$idx") {
+                        PartsCard {
+                            chunk.forEach { entry ->
+                                AppThermalRow(entry) { newStateId ->
+                                    runCatching {
+                                        thermalUtils.writePackage(entry.packageName, newStateId)
+                                        val ns = ThermalUtils.ThermalState.entries
+                                            .firstOrNull { it.id == newStateId }
+                                            ?: ThermalUtils.ThermalState.DEFAULT
+                                        appEntries = appEntries.map {
+                                            if (it.packageName == entry.packageName) it.copy(state = ns) else it
                                         }
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(
+                                                R.string.thermal_profile_applied,
+                                                entry.label,
+                                                context.getString(ns.label),
+                                            ),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }.onFailure {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.thermal_profile_failed, entry.label),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
                                     }
                                 }
                             }
                         }
+                    }
+                    item(key = "block-spacer-$idx") {
+                        Spacer(Modifier.height(8.dp))
                     }
                 }
             }
@@ -314,6 +312,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
     entry        : AppEntry,
@@ -349,7 +348,8 @@ private fun AppThermalRow(
                         text     = stringResource(entry.state.label),
                         style    = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+                        softWrap = false,
+                        overflow = TextOverflow.Clip,
                     )
                 },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
@@ -367,8 +367,11 @@ private fun AppThermalRow(
                     DropdownMenuItem(
                         text        = {
                             Text(
-                                text  = stringResource(state.label),
-                                style = MaterialTheme.typography.bodyMedium,
+                                text     = stringResource(state.label),
+                                style    = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                softWrap = false,
+                                overflow = TextOverflow.Clip,
                             )
                         },
                         onClick     = { onStateChange(state.id); expanded = false },

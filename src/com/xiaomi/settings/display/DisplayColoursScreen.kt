@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.xiaomi.settings.display
 
 import android.content.Context
@@ -28,6 +26,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -55,6 +54,7 @@ import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -102,20 +102,22 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
-                .selectableGroup(),
+                .verticalScroll(rememberScrollState()),
         ) {
-            // No duplicate PartsCategory here — LargeTopAppBar IS the screen header.
             PartsCategory(stringResource(R.string.color_section_standard))
-            PartsCard {
+
+            PartsCard(modifier = Modifier.selectableGroup()) {
                 ColorMode.VIVID.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.SATURATED.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.STANDARD.Row(selectedId)  { applyMode(context, it) { selectedId = it.id } }
             }
 
+            Spacer(Modifier.height(8.dp))
+
             PartsCategory(stringResource(R.string.color_section_expert))
-            PartsCard {
+
+            PartsCard(modifier = Modifier.selectableGroup()) {
                 ColorMode.ORIGINAL.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.P3.Row(selectedId)       { applyMode(context, it) { selectedId = it.id } }
                 ColorMode.SRGB.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
@@ -145,8 +147,6 @@ private fun ColorMode.Row(
     val label   = stringResource(this.labelRes)
     val summary = stringResource(this.summaryRes)
 
-    // Use Modifier.background() for the selection tint — avoids Surface
-    // layering issues with dynamic colour on the first row.
     Row(
         modifier = Modifier
             .fillMaxWidth()

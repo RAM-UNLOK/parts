@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-@file:OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
-
 package com.xiaomi.settings.touchsampling
 
 import android.content.Context
@@ -23,11 +21,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -53,6 +54,7 @@ import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -100,9 +102,9 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(innerPadding)
+                .verticalScroll(rememberScrollState()),
         ) {
-            // No duplicate category header — LargeTopAppBar is the screen title.
             PartsCard {
                 Row(
                     modifier = Modifier
@@ -149,7 +151,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(12.dp))
 
-            // Info surface — secondaryContainer tonal block, large shape
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
