@@ -14,7 +14,6 @@ import android.os.Process
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
@@ -57,18 +56,17 @@ import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material.icons.filled.Web
-import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -85,7 +83,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TransformOrigin
@@ -95,6 +92,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -202,17 +200,6 @@ private fun ChargingInfoBanner() {
 // Centred M3 profile picker dialog
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * A full M3 ExtraLarge (28dp) rounded centred dialog that replaces the old
- * DropdownMenu. Uses BasicAlertDialog so we own the entire surface — giving us
- * proper shape, surfaceContainerHigh background, spring-driven scaleIn/scaleOut
- * animation, and a scrollable LazyColumn when the profile list is long.
- *
- * M3 dialog shape spec: RoundedCornerShape(28.dp) — ExtraLarge.
- * M3 dialog surface role: surfaceContainerHigh.
- * M3 dialog scrim: black at 0.4f (DialogProperties default).
- * M3 dialog motion: scaleIn from 0.85f + fadeIn on enter; scaleOut + fadeOut on exit.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ThermalProfileDialog(
@@ -220,7 +207,6 @@ private fun ThermalProfileDialog(
     onDismiss:     () -> Unit,
     onStateChange: (Int) -> Unit,
 ) {
-    // M3 dialog shape: ExtraLarge = 28.dp
     val dialogShape = RoundedCornerShape(28.dp)
 
     BasicAlertDialog(
@@ -228,19 +214,17 @@ private fun ThermalProfileDialog(
         properties       = DialogProperties(
             dismissOnBackPress       = true,
             dismissOnClickOutside    = true,
-            usePlatformDefaultWidth  = false,   // we control width ourselves
+            usePlatformDefaultWidth  = false,
         ),
     ) {
-        // AnimatedVisibility gives the spring pop-in / pop-out.
-        // TransformOrigin.Center ensures the scale expands from the middle.
         AnimatedVisibility(
             visible = true,
             enter   = scaleIn(
-                animationSpec  = spring(
+                animationSpec   = spring(
                     dampingRatio = Spring.DampingRatioMediumBouncy,
                     stiffness    = Spring.StiffnessMediumLow,
                 ),
-                initialScale   = 0.85f,
+                initialScale    = 0.85f,
                 transformOrigin = TransformOrigin.Center,
             ) + fadeIn(
                 animationSpec = spring(
@@ -249,7 +233,7 @@ private fun ThermalProfileDialog(
                 ),
             ),
             exit    = scaleOut(
-                animationSpec  = spring(
+                animationSpec   = spring(
                     dampingRatio = Spring.DampingRatioNoBouncy,
                     stiffness    = Spring.StiffnessMedium,
                 ),
@@ -264,26 +248,23 @@ private fun ThermalProfileDialog(
         ) {
             Column(
                 modifier = Modifier
-                    // Width: 88% of screen — M3 dialog width spec.
                     .fillMaxWidth(0.88f)
                     .clip(dialogShape)
                     .background(MaterialTheme.colorScheme.surfaceContainerHigh)
                     .padding(vertical = 8.dp),
             ) {
-                // ── Dialog header ─────────────────────────────────────────
                 Row(
                     modifier              = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start   = 24.dp,
-                            end     = 24.dp,
-                            top     = 16.dp,
-                            bottom  = 12.dp,
+                            start  = 24.dp,
+                            end    = 24.dp,
+                            top    = 16.dp,
+                            bottom = 12.dp,
                         ),
                     verticalAlignment     = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    // App icon — 40dp circle
                     Image(
                         bitmap             = entry.icon,
                         contentDescription = null,
@@ -312,11 +293,6 @@ private fun ThermalProfileDialog(
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
 
-                // ── Scrollable profile list ───────────────────────────────
-                // Max ~5 items visible before scroll kicks in (~56dp per row).
-                // coerceAtMost is required here: Dp implements Comparable<Dp>
-                // but minOf() is NOT overloaded for Dp inline value class and
-                // will not compile. coerceAtMost() is the correct idiom.
                 LazyColumn(
                     modifier       = Modifier
                         .fillMaxWidth()
@@ -330,8 +306,8 @@ private fun ThermalProfileDialog(
                         items = ThermalUtils.ThermalState.entries,
                         key   = { it.id },
                     ) { state ->
-                        val isSelected     = state == entry.state
-                        val rowBackground  = if (isSelected)
+                        val isSelected    = state == entry.state
+                        val rowBackground = if (isSelected)
                             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
                         else
                             Color.Transparent
@@ -348,7 +324,6 @@ private fun ThermalProfileDialog(
                             verticalAlignment     = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            // Tonal icon container — 40dp, secondaryContainer fill
                             Box(
                                 modifier         = Modifier
                                     .size(40.dp)
@@ -374,7 +349,6 @@ private fun ThermalProfileDialog(
                                 modifier = Modifier.weight(1f),
                             )
 
-                            // Checkmark for selected state
                             if (isSelected) {
                                 Icon(
                                     imageVector        = Icons.Filled.Check,
@@ -387,7 +361,6 @@ private fun ThermalProfileDialog(
                     }
                 }
 
-                // ── Dismiss button ────────────────────────────────────────
                 HorizontalDivider(
                     color    = MaterialTheme.colorScheme.outlineVariant,
                     modifier = Modifier.padding(horizontal = 8.dp),
@@ -700,6 +673,20 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 // App row
 // ─────────────────────────────────────────────────────────────────────────────
 
+/**
+ * Width of the profile chip button shown on every app row.
+ *
+ * Fixed at 120.dp so every row is identical regardless of profile name
+ * length. "Video Streaming" (longest) fits at labelMedium with the icon
+ * at 16dp. "Default" (shortest) is centred in the same box.
+ *
+ * Why NOT FilledTonalButton with no width:
+ *   It sizes to text → rows are all different widths → looks like a
+ *   messy dropdown, not a consistent selection control.
+ */
+private val CHIP_WIDTH  = 120.dp
+private val CHIP_HEIGHT = 36.dp
+
 @Composable
 private fun AppThermalRow(
     entry:          AppEntry,
@@ -708,15 +695,6 @@ private fun AppThermalRow(
 ) {
     var showDialog by remember(entry.packageName) { mutableStateOf(false) }
     val context = LocalContext.current
-
-    val chevronRotation by animateFloatAsState(
-        targetValue   = if (showDialog) 180f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
-        label = "chevron-${entry.packageName}",
-    )
 
     Row(
         modifier              = Modifier
@@ -728,6 +706,7 @@ private fun AppThermalRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PartsTokens.appRowIconSpacing),
     ) {
+        // App icon
         Image(
             bitmap             = entry.icon,
             contentDescription = null,
@@ -735,6 +714,8 @@ private fun AppThermalRow(
                 .size(PartsTokens.leadingIconContainerSize)
                 .clip(CircleShape),
         )
+
+        // App label — takes remaining horizontal space
         Text(
             text     = entry.label,
             style    = MaterialTheme.typography.bodyMedium,
@@ -744,8 +725,11 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // ── Trigger button ────────────────────────────────────────────────
-        FilledTonalButton(
+        // ── Fixed-width profile chip ──────────────────────────────────────
+        // Surface + clickable: gives full control over size, shape, and
+        // colour without the variable-width behaviour of FilledTonalButton.
+        // All chips are exactly CHIP_WIDTH × CHIP_HEIGHT; text is centred.
+        Surface(
             onClick        = {
                 if (chargingLocked) {
                     Toast.makeText(
@@ -757,33 +741,35 @@ private fun AppThermalRow(
                     showDialog = true
                 }
             },
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            modifier       = Modifier.size(width = CHIP_WIDTH, height = CHIP_HEIGHT),
+            shape          = RoundedCornerShape(50),   // pill shape
+            color          = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
         ) {
-            Icon(
-                imageVector        = entry.state.stateIcon(),
-                contentDescription = null,
-                modifier           = Modifier.size(16.dp),
-                tint               = entry.state.dotColor(),
-            )
-            Spacer(Modifier.width(6.dp))
-            Text(
-                text     = stringResource(entry.state.label),
-                style    = MaterialTheme.typography.labelMedium,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.width(4.dp))
-            Icon(
-                imageVector        = Icons.Outlined.ExpandMore,
-                contentDescription = null,
-                modifier           = Modifier
-                    .size(16.dp)
-                    .rotate(chevronRotation),
-            )
+            Row(
+                modifier              = Modifier.fillMaxSize(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment     = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector        = entry.state.stateIcon(),
+                    contentDescription = null,
+                    modifier           = Modifier.size(14.dp),
+                    tint               = entry.state.dotColor(),
+                )
+                Spacer(Modifier.width(5.dp))
+                Text(
+                    text      = stringResource(entry.state.label),
+                    style     = MaterialTheme.typography.labelSmall,
+                    maxLines  = 1,
+                    overflow  = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
     }
 
-    // ── Pop-out centred dialog ────────────────────────────────────────────
+    // Pop-out centred dialog
     if (showDialog) {
         ThermalProfileDialog(
             entry         = entry,
