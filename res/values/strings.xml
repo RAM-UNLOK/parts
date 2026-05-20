@@ -71,6 +71,8 @@
     <string name="thermal_toggle_failed">❌ Could not toggle thermal profiles</string>
     <string name="thermal_disabled_hint">Enable to configure per-app thermal tuning</string>
     <string name="thermal_apps_category">Per-app profiles</string>
+    <!-- Dialog subtitle in the pop-out profile picker -->
+    <string name="thermal_profile_picker_subtitle">Select thermal profile</string>
 
     <!--
         Thermal profile labels — must match ThermalState enum order in ThermalUtils.kt.
