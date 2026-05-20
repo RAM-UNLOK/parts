@@ -39,7 +39,7 @@
         All coordinates on the 24×24 grid, 2dp minimum stroke equivalent.
     -->
     <path
-        android:fillColor="#FFFFFFFF"
+        android:fillColor="?android:attr/colorControlNormal"
         android:pathData="
             M9,3 L9,1 L11,1 L11,3
             M13,3 L13,1 L15,1 L15,3

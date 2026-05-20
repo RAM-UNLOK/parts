@@ -9,15 +9,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.UserHandle
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.EaseOutCubic
-import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Vibration
@@ -41,7 +36,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -58,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
@@ -81,20 +76,14 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
+    // Fix: MediumLow stiffness matches all other screens.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = PartsTokens.MotionDampingRatio,
-            stiffness    = Spring.StiffnessHigh,
+            stiffness    = Spring.StiffnessMediumLow,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
-
-    // ── Section entrance animation states ─────────────────────────────────────
-    // Two groups: Toggle (group 0, no delay) and Info banner (group 1, 1x step).
-    // slideInVertically and fadeIn share identical tween(duration, delayMillis)
-    // so both axes animate simultaneously — no pop-then-fade artefact.
-    val visToggle = remember { MutableTransitionState(false).apply { targetState = true } }
-    val visBanner = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -123,129 +112,83 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // ── Toggle card (group 0 — no delay) ───────────────────────────────
-            AnimatedVisibility(
-                visibleState = visToggle,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = PartsTokens.MotionDurationEnter,
-                        delayMillis    = 0,
-                        easing         = EaseOutCubic,
-                    ),
-                ) + slideInVertically(
-                    animationSpec  = tween(
-                        durationMillis = PartsTokens.MotionDurationSlide,
-                        delayMillis    = 0,
-                        easing         = EaseOutCubic,
-                    ),
-                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
-                ),
-            ) {
-                Column {
-                    PartsCategory(stringResource(R.string.htsr_category))
-                    PartsCard {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable(role = Role.Switch) {
-                                    toggleHtsr(context, prefs, !enabled) { enabled = it }
-                                }
-                                .padding(
-                                    horizontal = PartsTokens.contentPaddingHorizontal,
-                                    vertical   = PartsTokens.rowPaddingVertical,
-                                ),
-                            verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                        ) {
-                            // Tonal icon container — secondaryContainer / onSecondaryContainer
-                            // consistent with all other PartsRow icons across the flow.
-                            Box(
-                                modifier = Modifier
-                                    .size(PartsTokens.leadingIconContainerSize)
-                                    .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.secondaryContainer),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Icon(
-                                    imageVector        = Icons.Filled.Vibration,
-                                    contentDescription = null,
-                                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                                )
-                            }
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(
-                                    text  = stringResource(R.string.htsr_enable_title),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                )
-                                Text(
-                                    text  = stringResource(R.string.htsr_enable_summary),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                            Switch(
-                                checked         = enabled,
-                                onCheckedChange = { toggleHtsr(context, prefs, it) { enabled = it } },
-                            )
+            // No entrance AnimatedVisibility — removed to prevent first-composition flash.
+            PartsCategory(stringResource(R.string.htsr_category))
+            PartsCard {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(role = Role.Switch) {
+                            toggleHtsr(context, prefs, !enabled) { enabled = it }
                         }
+                        .padding(
+                            horizontal = PartsTokens.contentPaddingHorizontal,
+                            vertical   = PartsTokens.rowPaddingVertical,
+                        ),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(PartsTokens.leadingIconContainerSize)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Filled.Vibration,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                        )
                     }
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text  = stringResource(R.string.htsr_enable_title),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                        Text(
+                            text  = stringResource(R.string.htsr_enable_summary),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked         = enabled,
+                        onCheckedChange = { toggleHtsr(context, prefs, it) { enabled = it } },
+                    )
                 }
             }
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Info banner (group 1 — 1× step delay) ─────────────────────────
-            // secondaryContainer: correct M3 role for informational/tip banners.
-            // tertiaryContainer is reserved for battery/charging context (HomeScreen
-            // + ThermalScreen banners). This is a neutral info tip — secondary is right.
-            AnimatedVisibility(
-                visibleState = visBanner,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = PartsTokens.MotionDurationEnter,
-                        delayMillis    = PartsTokens.MotionStaggerStep,
-                        easing         = EaseOutCubic,
-                    ),
-                ) + slideInVertically(
-                    animationSpec  = tween(
-                        durationMillis = PartsTokens.MotionDurationSlide,
-                        delayMillis    = PartsTokens.MotionStaggerStep,
-                        easing         = EaseOutCubic,
-                    ),
-                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
-                ),
+            // Info banner — secondaryContainer: correct M3 role for informational
+            // tip banners. tertiaryContainer is reserved for battery/charging
+            // context. No tonalElevation: see M3 double-tint rule.
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment     = Alignment.Top,
             ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                    shape          = PartsTokens.bannerShape,
-                    color          = MaterialTheme.colorScheme.secondaryContainer,
-                    tonalElevation = PartsTokens.cardElevation,
-                ) {
-                    Row(
-                        modifier              = Modifier.padding(
-                            horizontal = PartsTokens.bannerInnerPaddingH,
-                            vertical   = PartsTokens.bannerInnerPaddingV,
-                        ),
-                        horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
-                        verticalAlignment     = Alignment.Top,
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Outlined.Lightbulb,
-                            contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                        )
-                        Text(
-                            text  = stringResource(R.string.htsr_info_body),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        )
-                    }
-                }
+                Icon(
+                    imageVector        = Icons.Outlined.Lightbulb,
+                    contentDescription = null,
+                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier           = Modifier
+                        .padding(top = 2.dp)
+                        .size(PartsTokens.leadingIconSize),
+                )
+                Text(
+                    text  = stringResource(R.string.htsr_info_body),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
             }
 
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
