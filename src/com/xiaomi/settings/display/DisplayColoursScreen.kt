@@ -9,8 +9,15 @@ import android.content.Context
 import android.os.UserHandle
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -72,7 +79,11 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         )
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = remember { partsScrollBehavior() }
+
+    // Card entrance animations: Standard card 0 ms delay, Expert card 80 ms.
+    val visStandard = remember { MutableTransitionState(false).apply { targetState = true } }
+    val visExpert   = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -110,34 +121,46 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             val standardModes = listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
             val expertModes   = listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
 
-            PartsCategory(stringResource(R.string.color_section_standard))
-            PartsCard(modifier = Modifier.selectableGroup()) {
-                standardModes.forEachIndexed { index, mode ->
-                    mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                    if (index < standardModes.lastIndex) {
-                        HorizontalDivider(
-                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                            thickness = 0.5.dp,
-                            color     = MaterialTheme.colorScheme.outlineVariant,
-                        )
+            AnimatedVisibility(
+                visibleState = visStandard,
+                enter = fadeIn(tween(280)) +
+                        slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 5 },
+            ) {
+                Column {
+                    PartsCategory(stringResource(R.string.color_section_standard))
+                    PartsCard(modifier = Modifier.selectableGroup()) {
+                        standardModes.forEachIndexed { index, mode ->
+                            mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                            if (index < standardModes.lastIndex) {
+                                HorizontalDivider(
+                                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                                    thickness = 0.5.dp,
+                                    color     = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // No explicit Spacer here — PartsCategory already contributes
-            // categoryTopPadding (24dp) above its label. Adding a cardBlockSpacing
-            // (16dp) Spacer on top of that produced a 40dp gap which was visually
-            // too wide and inconsistent with the home screen section rhythm.
-            PartsCategory(stringResource(R.string.color_section_expert))
-            PartsCard(modifier = Modifier.selectableGroup()) {
-                expertModes.forEachIndexed { index, mode ->
-                    mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                    if (index < expertModes.lastIndex) {
-                        HorizontalDivider(
-                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                            thickness = 0.5.dp,
-                            color     = MaterialTheme.colorScheme.outlineVariant,
-                        )
+            AnimatedVisibility(
+                visibleState = visExpert,
+                enter = fadeIn(tween(280, delayMillis = 80)) +
+                        slideInVertically(tween(280, delayMillis = 80, easing = FastOutSlowInEasing)) { it / 5 },
+            ) {
+                Column {
+                    PartsCategory(stringResource(R.string.color_section_expert))
+                    PartsCard(modifier = Modifier.selectableGroup()) {
+                        expertModes.forEachIndexed { index, mode ->
+                            mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                            if (index < expertModes.lastIndex) {
+                                HorizontalDivider(
+                                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                                    thickness = 0.5.dp,
+                                    color     = MaterialTheme.colorScheme.outlineVariant,
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -156,32 +179,18 @@ private fun ColorMode.Row(
 ) {
     val selected = this.id == selectedId
 
-    // Use secondaryContainer as the selected-row background.
-    //
-    // Why NOT lerp(surfaceContainerLow, primaryContainer, 0.12f):
-    //   Dynamic colour (wallpaper-derived tonal palette) can place
-    //   primaryContainer very close in lightness to surfaceContainerLow,
-    //   making a 12% lerp invisible — especially when Xiaomi Parts is
-    //   hosted inside the Settings process via Connection Preferences.
-    //
-    // Why secondaryContainer:
-    //   M3 Expressive selected-row pattern (used in Pixel Settings radio
-    //   groups, navigation drawer, etc.) uses secondaryContainer as the
-    //   persistent selected-state fill. It is always tonally distinct from
-    //   every surface level in the dynamic colour system by construction —
-    //   secondary and surface hues are generated from different palette
-    //   keys. This guarantees perceptible contrast regardless of wallpaper.
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
             MaterialTheme.colorScheme.secondaryContainer
         else
             MaterialTheme.colorScheme.surfaceContainerLow,
-        animationSpec = spring(),
+        // StiffnessMediumLow (400): snappy enough to feel responsive,
+        // slow enough to read as a deliberate colour transition — not
+        // an accidental flicker.
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label         = "color-row-bg-${this.name}",
     )
 
-    // Text and radio tint: onSecondaryContainer when selected so the
-    // foreground colour is guaranteed to meet contrast on the new bg.
     val contentColor = if (selected)
         MaterialTheme.colorScheme.onSecondaryContainer
     else

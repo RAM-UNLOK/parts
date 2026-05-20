@@ -12,10 +12,16 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -48,6 +54,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -68,6 +75,24 @@ import com.xiaomi.settings.thermal.ThermalUtils
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
 
+// Shared scroll-behavior factory used by every screen in the app.
+// snapAnimationSpec  — StiffnessHigh (1000) + NoBouncy: crisp snap with
+//                      no overshoot when the user lifts their finger
+//                      mid-collapse. Default is an overdamped low-
+//                      stiffness spring that feels sluggish.
+// flingAnimationSpec — exponentialDecay(2f): fast but natural deceleration
+//                      on a fling; stops the bar from floating lazily
+//                      after a quick swipe.
+@OptIn(ExperimentalMaterial3Api::class)
+fun partsScrollBehavior(): TopAppBarScrollBehavior =
+    TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+        snapAnimationSpec  = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessHigh,
+        ),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+    )
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
@@ -78,23 +103,12 @@ fun XiaomiPartsHomeScreen(
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    // ── Charging state ────────────────────────────────────────────────────
-    // Initial value from sticky broadcast (synchronous, no allocation).
+    // ── Charging state ──────────────────────────────────────────────────────────────────
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         mutableStateOf(plugged != 0)
     }
-    // Live updates via POWER_CONNECTED / POWER_DISCONNECTED / BATTERY_CHANGED.
-    //
-    // ACTION_POWER_CONNECTED, ACTION_POWER_DISCONNECTED and ACTION_BATTERY_CHANGED
-    // are system-protected broadcasts sent exclusively by the OS framework.
-    // RECEIVER_NOT_EXPORTED must NOT be used for them: it is semantically
-    // incorrect for system broadcasts, causes a SecurityException on Android 13+
-    // for protected actions, and silently drops registration on some Xiaomi
-    // kernels. The @Suppress silences the UnspecifiedRegisterReceiverFlag lint
-    // warning — this is the correct and intentional pattern, matching
-    // ColorService and TouchSamplingService in this project.
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
@@ -118,9 +132,7 @@ fun XiaomiPartsHomeScreen(
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    // ── Thermal-enabled state ─────────────────────────────────────────────
-    // Observed via SharedPreferences so toggling in ThermalManagementScreen
-    // propagates back here immediately without a recompose trigger.
+    // ── Thermal-enabled state ──────────────────────────────────────────────────────────
     var thermalEnabled by remember { mutableStateOf(thermalUtils.enabled) }
     DisposableEffect(Unit) {
         val prefListener = android.content.SharedPreferences
@@ -132,18 +144,27 @@ fun XiaomiPartsHomeScreen(
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(prefListener) }
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = remember { partsScrollBehavior() }
+
+    // ── Section entrance animation state ──────────────────────────────────────────────
+    // Three section cards stagger-in with 60 ms delay between each.
+    // MutableTransitionState(false) starts invisible; setting to true
+    // triggers the enter animation exactly once on first composition.
+    val visDisplay     = remember { MutableTransitionState(false).apply { targetState = true } }
+    val visPerformance = remember { MutableTransitionState(false).apply { targetState = true } }
+    val visDiagnostics = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surfaceContainer matches Theme.Settings.Home.Expressive colorBackground.
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
-                // No explicit style on the title Text — LargeTopAppBar manages
-                // the headlineMedium → titleLarge transition internally on scroll.
-                // Overriding it breaks the animated size/weight transition.
-                title = { Text(text = stringResource(R.string.xiaomi_parts_title)) },
+                title = {
+                    Text(
+                        text  = stringResource(R.string.xiaomi_parts_title),
+                        style = MaterialTheme.typography.headlineLarge,
+                    )
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = Color.Transparent,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -158,14 +179,17 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Charging banner — only shown when thermal is active AND charger
-            // is connected. Using both conditions avoids the misleading state
-            // where the banner claims a charging profile is active but the
-            // ThermalService is not running.
+            // Charging banner — no bounce (DampingRatioNoBouncy): functional
+            // status indicators should not overshoot; only playful UI elements
+            // (FAB, empty-state illustrations) warrant a bouncy spring.
             AnimatedVisibility(
                 visible = isCharging && thermalEnabled,
-                enter   = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)),
-                exit    = shrinkVertically(spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)),
+                enter   = expandVertically(
+                    spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
+                ) + fadeIn(tween(220)),
+                exit    = shrinkVertically(
+                    spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
+                ) + fadeOut(tween(160)),
             ) {
                 ChargingBanner(
                     Modifier.padding(
@@ -175,58 +199,82 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Display section ───────────────────────────────────────────
-            PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
-            PartsCard {
-                PartsRow(
-                    icon    = Icons.Filled.Palette,
-                    title   = stringResource(R.string.display_title),
-                    summary = stringResource(R.string.display_summary),
-                    onClick = onNavigateToDisplay,
-                )
+            // ── Display section ─────────────────────────────────────────────────────
+            AnimatedVisibility(
+                visibleState = visDisplay,
+                enter = fadeIn(tween(280)) +
+                        slideInVertically(tween(280, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 5 },
+            ) {
+                Column {
+                    PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
+                    PartsCard {
+                        PartsRow(
+                            icon    = Icons.Filled.Palette,
+                            title   = stringResource(R.string.display_title),
+                            summary = stringResource(R.string.display_summary),
+                            onClick = onNavigateToDisplay,
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Performance section ───────────────────────────────────────
-            PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
-            PartsCard {
-                PartsRow(
-                    icon    = Icons.Filled.Thermostat,
-                    title   = stringResource(R.string.thermal_title),
-                    summary = stringResource(
-                        if (thermalEnabled) R.string.thermal_summary_active
-                        else               R.string.thermal_summary_disabled
-                    ),
-                    onClick = onNavigateToThermal,
-                )
-                HorizontalDivider(
-                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                    thickness = 0.5.dp,
-                    color     = MaterialTheme.colorScheme.outlineVariant,
-                )
-                PartsRow(
-                    icon    = Icons.Filled.TouchApp,
-                    title   = stringResource(R.string.htsr_title),
-                    summary = stringResource(R.string.htsr_summary),
-                    onClick = onNavigateToTouch,
-                )
+            // ── Performance section ──────────────────────────────────────────────────
+            AnimatedVisibility(
+                visibleState = visPerformance,
+                enter = fadeIn(tween(280, delayMillis = 60)) +
+                        slideInVertically(tween(280, delayMillis = 60, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 5 },
+            ) {
+                Column {
+                    PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
+                    PartsCard {
+                        PartsRow(
+                            icon    = Icons.Filled.Thermostat,
+                            title   = stringResource(R.string.thermal_title),
+                            summary = stringResource(
+                                if (thermalEnabled) R.string.thermal_summary_active
+                                else               R.string.thermal_summary_disabled
+                            ),
+                            onClick = onNavigateToThermal,
+                        )
+                        HorizontalDivider(
+                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                            thickness = 0.5.dp,
+                            color     = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                        PartsRow(
+                            icon    = Icons.Filled.TouchApp,
+                            title   = stringResource(R.string.htsr_title),
+                            summary = stringResource(R.string.htsr_summary),
+                            onClick = onNavigateToTouch,
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Diagnostics section ───────────────────────────────────────
-            PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
-            PartsCard {
-                PartsRow(
-                    icon    = Icons.Filled.Science,
-                    title   = stringResource(R.string.cit_title),
-                    summary = stringResource(R.string.cit_summary),
-                    onClick = {
-                        if (!CitLauncher.launch(context))
-                            Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
-                    },
-                )
+            // ── Diagnostics section ──────────────────────────────────────────────────
+            AnimatedVisibility(
+                visibleState = visDiagnostics,
+                enter = fadeIn(tween(280, delayMillis = 120)) +
+                        slideInVertically(tween(280, delayMillis = 120, easing = androidx.compose.animation.core.FastOutSlowInEasing)) { it / 5 },
+            ) {
+                Column {
+                    PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
+                    PartsCard {
+                        PartsRow(
+                            icon    = Icons.Filled.Science,
+                            title   = stringResource(R.string.cit_title),
+                            summary = stringResource(R.string.cit_summary),
+                            onClick = {
+                                if (!CitLauncher.launch(context))
+                                    Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
+                            },
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
@@ -253,15 +301,13 @@ fun PartsCard(
     modifier: Modifier = Modifier,
     content:  @Composable ColumnScope.() -> Unit,
 ) {
-    // tonalElevation is intentionally omitted — surfaceContainerLow already
-    // encodes the correct M3 tonal value. Passing 0.dp would be a no-op and
-    // misleadingly implies elevation is meaningful here.
     Surface(
-        modifier = modifier
+        modifier       = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        shape = PartsTokens.cardShape,
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape          = PartsTokens.cardShape,
+        color          = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = PartsTokens.cardElevation,
     ) {
         Column(content = content)
     }
@@ -329,9 +375,10 @@ fun PartsRow(
 @Composable
 private fun ChargingBanner(modifier: Modifier = Modifier) {
     Surface(
-        modifier = modifier.fillMaxWidth(),
-        shape    = PartsTokens.bannerShape,
-        color    = MaterialTheme.colorScheme.tertiaryContainer,
+        modifier       = modifier.fillMaxWidth(),
+        shape          = PartsTokens.bannerShape,
+        color          = MaterialTheme.colorScheme.tertiaryContainer,
+        tonalElevation = PartsTokens.cardElevation,
     ) {
         Row(
             modifier = Modifier.padding(
@@ -353,10 +400,6 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
-                // Use onTertiaryContainer at full opacity. Color.copy(alpha)
-                // composites over transparent black, not over the container
-                // surface, producing muddy grey. The titleSmall/bodySmall
-                // size+weight contrast already provides the M3 visual hierarchy.
                 Text(
                     text  = stringResource(R.string.thermal_charging_active_desc),
                     style = MaterialTheme.typography.bodySmall,

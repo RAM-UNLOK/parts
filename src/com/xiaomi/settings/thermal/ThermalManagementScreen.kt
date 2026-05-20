@@ -52,6 +52,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -80,6 +81,7 @@ import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.partsScrollBehavior
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -136,7 +138,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         )
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = remember { partsScrollBehavior() }
     val listState      = rememberLazyListState()
 
     Scaffold(
@@ -144,10 +146,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
-                // No explicit style on the title Text — LargeTopAppBar manages
-                // the headlineMedium → titleLarge transition internally on scroll.
-                // Overriding it breaks the animated size/weight transition.
-                title = { Text(text = stringResource(R.string.thermal_title)) },
+                title = {
+                    Text(
+                        text  = stringResource(R.string.thermal_title),
+                        style = MaterialTheme.typography.headlineLarge,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -201,7 +205,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 return@LazyColumn
             }
 
-            // ── Toggle section ──────────────────────────────────────────
+            // ── Toggle section ──────────────────────────────────────────────────────────
             item(key = "toggle-label") {
                 PartsCategory(stringResource(R.string.thermal_enable))
             }
@@ -255,6 +259,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
 
             if (!enabled) {
+                // ── Disabled hint ────────────────────────────────────────────────────────
                 item(key = "disabled-hint") {
                     Box(
                         modifier         = Modifier
@@ -271,12 +276,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
+                // ── Per-app profiles section ────────────────────────────────────────────
                 item(key = "apps-label") {
                     PartsCategory(stringResource(R.string.thermal_apps_category))
                 }
-                // All app rows live inside a single PartsCard separated by
-                // HorizontalDividers — matches the AOSP/Pixel Settings dense
-                // list pattern and avoids individual-card-per-row clutter.
                 item(key = "apps-card") {
                     PartsCard {
                         appEntries.forEachIndexed { index, entry ->
@@ -322,9 +325,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
 // Per-app row with profile dropdown
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -383,24 +386,24 @@ private fun AppThermalRow(
                     .widthIn(min = 140.dp),
             )
 
-            // ExposedDropdownMenu renders in its own Popup window outside the
-            // Compose layout tree. A Surface wrapper here has no clipping or
-            // shaping effect on the popup — the menu uses its own internal
-            // surface. The correct approach is to let M3 manage the menu
-            // container and rely on the system-default menu shape.
-            ExposedDropdownMenu(
-                expanded         = expanded,
-                onDismissRequest = { expanded = false },
-                modifier         = Modifier.width(IntrinsicSize.Max),
+            Surface(
+                shape = PartsTokens.cardShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                val states = ThermalUtils.ThermalState.entries
-                for (i in states.indices) {
-                    val state = states[i]
-                    ThermalDropdownItem(
-                        state      = state,
-                        isSelected = state == entry.state,
-                        onClick    = { onStateChange(state.id); expanded = false },
-                    )
+                ExposedDropdownMenu(
+                    expanded         = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier         = Modifier.width(IntrinsicSize.Max),
+                ) {
+                    val states = ThermalUtils.ThermalState.entries
+                    for (i in states.indices) {
+                        val state = states[i]
+                        ThermalDropdownItem(
+                            state      = state,
+                            isSelected = state == entry.state,
+                            onClick    = { onStateChange(state.id); expanded = false },
+                        )
+                    }
                 }
             }
         }
@@ -434,9 +437,9 @@ private fun ThermalDropdownItem(
     )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
 // Helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────────────────
 
 private fun toggleService(
     context:      Context,

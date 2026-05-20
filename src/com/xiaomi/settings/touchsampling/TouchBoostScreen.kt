@@ -9,8 +9,12 @@ import android.content.Context
 import android.content.Intent
 import android.os.UserHandle
 import android.widget.Toast
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -57,6 +61,7 @@ import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.partsScrollBehavior
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,22 +74,23 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMedium,
-        )
-    )
+    val scrollBehavior = remember { partsScrollBehavior() }
+
+    // Card entrance: toggle card at 0 ms, info banner at 100 ms.
+    val visToggle = remember { MutableTransitionState(false).apply { targetState = true } }
+    val visBanner = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
-                // No explicit style on the title Text — LargeTopAppBar manages
-                // the headlineMedium → titleLarge transition internally on scroll.
-                // Overriding it breaks the animated size/weight transition.
-                title = { Text(text = stringResource(R.string.htsr_title)) },
+                title = {
+                    Text(
+                        text  = stringResource(R.string.htsr_title),
+                        style = MaterialTheme.typography.headlineLarge,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
@@ -107,86 +113,97 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Category label — consistent with ThermalManagementScreen pattern.
-            PartsCategory(stringResource(R.string.htsr_category))
-
-            PartsCard {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(role = Role.Switch) {
-                            toggleHtsr(context, prefs, !enabled) { enabled = it }
+            AnimatedVisibility(
+                visibleState = visToggle,
+                enter = fadeIn(tween(280)) +
+                        slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 5 },
+            ) {
+                Column {
+                    PartsCategory(stringResource(R.string.htsr_category))
+                    PartsCard {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.Switch) {
+                                    toggleHtsr(context, prefs, !enabled) { enabled = it }
+                                }
+                                .padding(
+                                    horizontal = PartsTokens.contentPaddingHorizontal,
+                                    vertical   = PartsTokens.rowPaddingVertical,
+                                ),
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
+                        ) {
+                            Box(
+                                modifier         = Modifier
+                                    .size(PartsTokens.leadingIconContainerSize)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector        = Icons.Filled.TouchApp,
+                                    contentDescription = null,
+                                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                                )
+                            }
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text  = stringResource(R.string.htsr_enable_title),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                )
+                                Text(
+                                    text  = stringResource(R.string.htsr_enable_summary),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                            Switch(
+                                checked         = enabled,
+                                onCheckedChange = { toggleHtsr(context, prefs, it) { enabled = it } },
+                            )
                         }
-                        .padding(
-                            horizontal = PartsTokens.contentPaddingHorizontal,
-                            vertical   = PartsTokens.rowPaddingVertical,
-                        ),
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                ) {
-                    Box(
-                        modifier         = Modifier
-                            .size(PartsTokens.leadingIconContainerSize)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Filled.TouchApp,
-                            contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                        )
                     }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text  = stringResource(R.string.htsr_enable_title),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text  = stringResource(R.string.htsr_enable_summary),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(
-                        checked         = enabled,
-                        onCheckedChange = { toggleHtsr(context, prefs, it) { enabled = it } },
-                    )
                 }
             }
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // Info banner — secondaryContainer is visually distinct from the
-            // surfaceContainer scaffold background.
-            Surface(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                shape = PartsTokens.bannerShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
+            AnimatedVisibility(
+                visibleState = visBanner,
+                enter = fadeIn(tween(280, delayMillis = 100)) +
+                        slideInVertically(tween(280, delayMillis = 100, easing = FastOutSlowInEasing)) { it / 5 },
             ) {
-                Row(
-                    modifier              = Modifier.padding(
-                        horizontal = PartsTokens.bannerInnerPaddingH,
-                        vertical   = PartsTokens.bannerInnerPaddingV,
-                    ),
-                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
-                    verticalAlignment     = Alignment.Top,
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                    shape          = PartsTokens.bannerShape,
+                    color          = MaterialTheme.colorScheme.secondaryContainer,
+                    tonalElevation = PartsTokens.cardElevation,
                 ) {
-                    Icon(
-                        imageVector        = Icons.Filled.Info,
-                        contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                    )
-                    Text(
-                        text  = stringResource(R.string.htsr_info_body),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
+                    Row(
+                        modifier              = Modifier.padding(
+                            horizontal = PartsTokens.bannerInnerPaddingH,
+                            vertical   = PartsTokens.bannerInnerPaddingV,
+                        ),
+                        horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
+                        verticalAlignment     = Alignment.Top,
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                        )
+                        Text(
+                            text  = stringResource(R.string.htsr_info_body),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
                 }
             }
 
@@ -202,18 +219,13 @@ private fun toggleHtsr(
     onResult: (Boolean) -> Unit,
 ) {
     runCatching {
-        // Write pref first — TouchSamplingService listens to this key via
-        // OnSharedPreferenceChangeListener and applies the hardware change
-        // while already running.
         prefs.edit().putBoolean(TouchSamplingService.HTSR_STATE, target).apply()
-
         val serviceIntent = Intent(context, TouchSamplingService::class.java)
         if (target) {
             context.startServiceAsUser(serviceIntent, UserHandle.CURRENT)
         } else {
             context.stopServiceAsUser(serviceIntent, UserHandle.CURRENT)
         }
-
         onResult(target)
         val msg = if (target) R.string.htsr_enabled_toast else R.string.htsr_disabled_toast
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
