@@ -35,8 +35,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.outlined.Lightbulb
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -76,8 +76,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
-    // MediumTopAppBar + enterAlwaysScrollBehavior: correct for sub-screens.
-    // See ThermalManagementScreen for full rationale.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -155,7 +153,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
-                                    imageVector        = Icons.Filled.TouchApp,
+                                    // Vibration: represents the physical digitiser
+                                    // sampling of a high-refresh touchscreen.
+                                    // Matches the home screen row icon for consistency.
+                                    imageVector        = Icons.Filled.Vibration,
                                     contentDescription = null,
                                     tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                                     modifier           = Modifier.size(PartsTokens.leadingIconSize),
@@ -209,7 +210,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         verticalAlignment     = Alignment.Top,
                     ) {
                         Icon(
-                            imageVector        = Icons.Filled.Info,
+                            // Lightbulb (outlined): Pixel Settings uses this for
+                            // informational/tip banners. Info is reserved for
+                            // warnings/alerts in M3 convention.
+                            imageVector        = Icons.Outlined.Lightbulb,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier           = Modifier.size(PartsTokens.leadingIconSize),

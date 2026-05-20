@@ -14,10 +14,10 @@ import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -42,10 +42,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Science
-import androidx.compose.material.icons.filled.Thermostat
-import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.filled.DisplaySettings
+import androidx.compose.material.icons.filled.ElectricBolt
+import androidx.compose.material.icons.filled.Troubleshoot
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -84,7 +84,7 @@ fun XiaomiPartsHomeScreen(
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    // ── Charging state ──────────────────────────────────────────────────────────────────────
+    // ── Charging state ──────────────────────────────────────────────────────────────────────────────
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
@@ -113,7 +113,7 @@ fun XiaomiPartsHomeScreen(
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    // ── Thermal-enabled state ───────────────────────────────────────────────────
+    // ── Thermal-enabled state ─────────────────────────────────────────────────────
     var thermalEnabled by remember { mutableStateOf(thermalUtils.enabled) }
     DisposableEffect(Unit) {
         val prefListener = android.content.SharedPreferences
@@ -125,11 +125,7 @@ fun XiaomiPartsHomeScreen(
         onDispose { prefs.unregisterOnSharedPreferenceChangeListener(prefListener) }
     }
 
-    // ── Scroll behaviour ────────────────────────────────────────────────────────────
-    // LargeTopAppBar is correct for the home/root screen.
-    // exitUntilCollapsedScrollBehavior is the correct pairing for Large:
-    // the bar collapses fully on scroll-down and stays hidden until the
-    // user scrolls back to the very top.
+    // ── Scroll behaviour ────────────────────────────────────────────────────────
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -138,7 +134,7 @@ fun XiaomiPartsHomeScreen(
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
-    // ── Section entrance animation states ───────────────────────────────────────────
+    // ── Section entrance animation states ────────────────────────────────────────
     val visDisplay     = remember { MutableTransitionState(false).apply { targetState = true } }
     val visPerformance = remember { MutableTransitionState(false).apply { targetState = true } }
     val visDiagnostics = remember { MutableTransitionState(false).apply { targetState = true } }
@@ -149,19 +145,9 @@ fun XiaomiPartsHomeScreen(
         topBar = {
             LargeTopAppBar(
                 title = {
-                    // Do NOT set an explicit style here. LargeTopAppBar manages
-                    // its own title-style transition (headlineMedium expanded →
-                    // titleLarge collapsed) via internal SlotLayout animation.
-                    // Overriding with headlineLarge breaks that transition and
-                    // forces 32 sp even when collapsed.
                     Text(text = stringResource(R.string.xiaomi_parts_title))
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    // containerColor must match Scaffold.containerColor exactly.
-                    // Color.Transparent was causing a flash: the app bar
-                    // background was the raw window/theme colour, not the
-                    // Scaffold surface. On collapse it snapped to
-                    // scrolledContainerColor — two visual hops = flash.
                     containerColor         = MaterialTheme.colorScheme.surfaceContainer,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
@@ -192,7 +178,7 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Display section ────────────────────────────────────────────────────────────
+            // ── Display section ──────────────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDisplay,
                 enter = fadeIn(tween(280)) +
@@ -205,7 +191,9 @@ fun XiaomiPartsHomeScreen(
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
                     PartsCard {
                         PartsRow(
-                            icon    = Icons.Filled.Palette,
+                            // DisplaySettings: a monitor with a settings gear overlay —
+                            // unambiguously "display configuration", not a generic palette.
+                            icon    = Icons.Filled.DisplaySettings,
                             title   = stringResource(R.string.display_title),
                             summary = stringResource(R.string.display_summary),
                             onClick = onNavigateToDisplay,
@@ -216,7 +204,7 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Performance section ─────────────────────────────────────────────────────────
+            // ── Performance section ───────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visPerformance,
                 enter = fadeIn(tween(280, delayMillis = 60)) +
@@ -229,7 +217,10 @@ fun XiaomiPartsHomeScreen(
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
                     PartsCard {
                         PartsRow(
-                            icon    = Icons.Filled.Thermostat,
+                            // ElectricBolt: lightning = power/performance management.
+                            // Thermostat read as weather; ElectricBolt reads as
+                            // "this affects device power behaviour".
+                            icon    = Icons.Filled.ElectricBolt,
                             title   = stringResource(R.string.thermal_title),
                             summary = stringResource(
                                 if (thermalEnabled) R.string.thermal_summary_active
@@ -243,7 +234,10 @@ fun XiaomiPartsHomeScreen(
                             color     = MaterialTheme.colorScheme.outlineVariant,
                         )
                         PartsRow(
-                            icon    = Icons.Filled.TouchApp,
+                            // Vibration: represents the physical digitiser/haptic
+                            // sampling ring of a high-refresh touchscreen —
+                            // more precise than the generic finger-tap TouchApp.
+                            icon    = Icons.Filled.Vibration,
                             title   = stringResource(R.string.htsr_title),
                             summary = stringResource(R.string.htsr_summary),
                             onClick = onNavigateToTouch,
@@ -254,7 +248,7 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Diagnostics section ─────────────────────────────────────────────────────────
+            // ── Diagnostics section ───────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDiagnostics,
                 enter = fadeIn(tween(280, delayMillis = 120)) +
@@ -267,7 +261,9 @@ fun XiaomiPartsHomeScreen(
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
                     PartsCard {
                         PartsRow(
-                            icon    = Icons.Filled.Science,
+                            // Troubleshoot: magnifying glass over circuit board —
+                            // hardware diagnostics, not a chemistry Science beaker.
+                            icon    = Icons.Filled.Troubleshoot,
                             title   = stringResource(R.string.cit_title),
                             summary = stringResource(R.string.cit_summary),
                             onClick = {
@@ -391,6 +387,7 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
         ) {
             Icon(
+                // BatteryChargingFull: already semantically perfect — kept as-is.
                 imageVector        = Icons.Filled.BatteryChargingFull,
                 contentDescription = null,
                 tint               = MaterialTheme.colorScheme.onTertiaryContainer,
