@@ -56,7 +56,7 @@
              Monitors foreground app via TaskStackListener
              and writes the matching profile to sconfig.
              Charging state handled internally via
-             ACTION_BATTERY_CHANGED (sticky, works on all APIs).
+             ACTION_POWER_CONNECTED/DISCONNECTED.
              ════════════════════════════════════════════════ -->
         <service
             android:name=".thermal.ThermalService"
@@ -85,7 +85,7 @@
             android:name=".XiaomiPartsActivity"
             android:label="@string/xiaomi_parts_title"
             android:exported="true"
-            android:theme="@android:style/Theme.DeviceDefault.DayNight.NoActionBar">
+            android:theme="@android:style/Theme.DeviceDefault.NoActionBar">
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
             </intent-filter>
