@@ -12,17 +12,21 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -33,8 +37,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -54,10 +60,8 @@ import androidx.compose.material.icons.filled.Web
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DividerDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
@@ -84,6 +88,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -92,6 +97,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.PartsRow
@@ -101,6 +107,10 @@ import com.xiaomi.settings.utils.ChargingMonitor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Data
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Immutable
 private data class AppEntry(
     val packageName: String,
@@ -108,6 +118,10 @@ private data class AppEntry(
     val icon:        ImageBitmap,
     val state:       ThermalUtils.ThermalState,
 )
+
+// ─────────────────────────────────────────────────────────────────────────────
+// State helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
@@ -141,6 +155,10 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.MUSIC           -> Icons.AutoMirrored.Filled.VolumeUp
     ThermalUtils.ThermalState.STREAMING       -> Icons.Filled.Stream
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Charging banner
+// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ChargingInfoBanner() {
@@ -179,6 +197,219 @@ private fun ChargingInfoBanner() {
         }
     }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Centred M3 profile picker dialog
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A full M3 ExtraLarge (28dp) rounded centred dialog that replaces the old
+ * DropdownMenu. Uses BasicAlertDialog so we own the entire surface — giving us
+ * proper shape, surfaceContainerHigh background, spring-driven scaleIn/scaleOut
+ * animation, and a scrollable LazyColumn when the profile list is long.
+ *
+ * M3 dialog shape spec: RoundedCornerShape(28.dp) — ExtraLarge.
+ * M3 dialog surface role: surfaceContainerHigh.
+ * M3 dialog scrim: black at 0.4f (DialogProperties default).
+ * M3 dialog motion: scaleIn from 0.85f + fadeIn on enter; scaleOut + fadeOut on exit.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ThermalProfileDialog(
+    entry:         AppEntry,
+    onDismiss:     () -> Unit,
+    onStateChange: (Int) -> Unit,
+) {
+    // M3 dialog shape: ExtraLarge = 28.dp
+    val dialogShape = RoundedCornerShape(28.dp)
+
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        properties       = DialogProperties(
+            dismissOnBackPress       = true,
+            dismissOnClickOutside    = true,
+            usePlatformDefaultWidth  = false,   // we control width ourselves
+        ),
+    ) {
+        // AnimatedVisibility gives the spring pop-in / pop-out.
+        // TransformOrigin.Center ensures the scale expands from the middle.
+        AnimatedVisibility(
+            visible = true,
+            enter   = scaleIn(
+                animationSpec  = spring(
+                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                    stiffness    = Spring.StiffnessMediumLow,
+                ),
+                initialScale   = 0.85f,
+                transformOrigin = TransformOrigin.Center,
+            ) + fadeIn(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness    = Spring.StiffnessMedium,
+                ),
+            ),
+            exit    = scaleOut(
+                animationSpec  = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness    = Spring.StiffnessMedium,
+                ),
+                targetScale     = 0.92f,
+                transformOrigin = TransformOrigin.Center,
+            ) + fadeOut(
+                animationSpec = spring(
+                    dampingRatio = Spring.DampingRatioNoBouncy,
+                    stiffness    = Spring.StiffnessMedium,
+                ),
+            ),
+        ) {
+            Column(
+                modifier = Modifier
+                    // Width: 80% of screen, min 280dp, max 480dp — M3 dialog width spec.
+                    .fillMaxWidth(0.88f)
+                    .clip(dialogShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .padding(vertical = 8.dp),
+            ) {
+                // ── Dialog header ─────────────────────────────────────────
+                Row(
+                    modifier              = Modifier
+                        .fillMaxWidth()
+                        .padding(
+                            start   = 24.dp,
+                            end     = 24.dp,
+                            top     = 16.dp,
+                            bottom  = 12.dp,
+                        ),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    // App icon — 40dp circle
+                    Image(
+                        bitmap             = entry.icon,
+                        contentDescription = null,
+                        modifier           = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text     = entry.label,
+                            style    = MaterialTheme.typography.titleMedium,
+                            color    = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text  = stringResource(R.string.thermal_profile_picker_subtitle),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+
+                HorizontalDivider(
+                    color    = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+
+                // ── Scrollable profile list ───────────────────────────────
+                // Max 5 items visible before scroll kicks in (~56dp per row).
+                LazyColumn(
+                    modifier       = Modifier
+                        .fillMaxWidth()
+                        .height(minOf(
+                            (ThermalUtils.ThermalState.entries.size * 56).dp,
+                            320.dp,   // cap at ~5.7 rows
+                        )),
+                    contentPadding = PaddingValues(vertical = 8.dp),
+                ) {
+                    items(
+                        items = ThermalUtils.ThermalState.entries,
+                        key   = { it.id },
+                    ) { state ->
+                        val isSelected     = state == entry.state
+                        val rowBackground  = if (isSelected)
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+                        else
+                            Color.Transparent
+
+                        Row(
+                            modifier              = Modifier
+                                .fillMaxWidth()
+                                .background(rowBackground)
+                                .clickable(role = Role.RadioButton) {
+                                    onStateChange(state.id)
+                                    onDismiss()
+                                }
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            // Tonal icon container — 40dp, secondaryContainer fill
+                            Box(
+                                modifier         = Modifier
+                                    .size(40.dp)
+                                    .clip(CircleShape)
+                                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Icon(
+                                    imageVector        = state.stateIcon(),
+                                    contentDescription = null,
+                                    tint               = state.dotColor(),
+                                    modifier           = Modifier.size(22.dp),
+                                )
+                            }
+
+                            Text(
+                                text     = stringResource(state.label),
+                                style    = MaterialTheme.typography.bodyLarge,
+                                color    = if (isSelected)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.weight(1f),
+                            )
+
+                            // Checkmark for selected state
+                            if (isSelected) {
+                                Icon(
+                                    imageVector        = Icons.Filled.Check,
+                                    contentDescription = null,
+                                    tint               = MaterialTheme.colorScheme.primary,
+                                    modifier           = Modifier.size(22.dp),
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // ── Dismiss button ────────────────────────────────────────
+                HorizontalDivider(
+                    color    = MaterialTheme.colorScheme.outlineVariant,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+                Box(
+                    modifier         = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.CenterEnd,
+                ) {
+                    TextButton(onClick = onDismiss) {
+                        Text(
+                            text  = stringResource(R.string.cancel),
+                            style = MaterialTheme.typography.labelLarge,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main screen
+// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -246,8 +477,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // M3 Expressive: surfaceContainer matches all other screens.
-        // Do NOT use surface (M2 pattern).
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             MediumTopAppBar(
@@ -258,10 +487,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    // surfaceContainer: matches Scaffold so bar is flush
-                    // when not scrolled. surfaceContainerHighest on scroll.
                     containerColor         = MaterialTheme.colorScheme.surfaceContainer,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
@@ -399,8 +625,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
                     ) {
                         appEntries.forEachIndexed { index, entry ->
-                            // animateItem: M3 placement animation when the list
-                            // reorders or filters — items slide instead of snapping.
                             AppThermalRow(
                                 entry          = entry,
                                 chargingLocked = isCharging,
@@ -469,17 +693,21 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// App row
+// ─────────────────────────────────────────────────────────────────────────────
+
 @Composable
 private fun AppThermalRow(
     entry:          AppEntry,
     chargingLocked: Boolean,
     onStateChange:  (Int) -> Unit,
 ) {
-    var expanded by remember(entry.packageName) { mutableStateOf(false) }
+    var showDialog by remember(entry.packageName) { mutableStateOf(false) }
     val context = LocalContext.current
 
     val chevronRotation by animateFloatAsState(
-        targetValue   = if (expanded) 180f else 0f,
+        targetValue   = if (showDialog) 180f else 0f,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness    = Spring.StiffnessMediumLow,
@@ -513,88 +741,58 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        Box {
-            FilledTonalButton(
-                onClick        = {
-                    if (chargingLocked) {
-                        Toast.makeText(
-                            context,
-                            R.string.thermal_charging_locked_hint,
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    } else {
-                        expanded = !expanded
-                    }
-                },
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-            ) {
-                Icon(
-                    imageVector        = entry.state.stateIcon(),
-                    contentDescription = null,
-                    modifier           = Modifier.size(16.dp),
-                    tint               = entry.state.dotColor(),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text     = stringResource(entry.state.label),
-                    style    = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.width(4.dp))
-                Icon(
-                    imageVector        = Icons.Outlined.ExpandMore,
-                    contentDescription = null,
-                    modifier           = Modifier
-                        .size(16.dp)
-                        .rotate(chevronRotation),
-                )
-            }
-
-            DropdownMenu(
-                expanded         = expanded,
-                onDismissRequest = { expanded = false },
-                modifier         = Modifier.width(IntrinsicSize.Max),
-            ) {
-                ThermalUtils.ThermalState.entries.forEach { state ->
-                    val isSelected = state == entry.state
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text  = stringResource(state.label),
-                                style = MaterialTheme.typography.bodyLarge,
-                            )
-                        },
-                        onClick = {
-                            expanded = false
-                            onStateChange(state.id)
-                        },
-                        leadingIcon = {
-                            Icon(
-                                imageVector        = state.stateIcon(),
-                                contentDescription = null,
-                                modifier           = Modifier.size(22.dp),
-                                tint               = state.dotColor(),
-                            )
-                        },
-                        trailingIcon = if (isSelected) ({
-                            Icon(
-                                imageVector        = Icons.Filled.Check,
-                                contentDescription = null,
-                                modifier           = Modifier.size(20.dp),
-                                tint               = MaterialTheme.colorScheme.primary,
-                            )
-                        }) else null,
-                        contentPadding = PaddingValues(
-                            horizontal = 16.dp,
-                            vertical   = PartsTokens.dropdownItemVerticalPadding,
-                        ),
-                    )
+        // ── Trigger button ────────────────────────────────────────────────
+        FilledTonalButton(
+            onClick        = {
+                if (chargingLocked) {
+                    Toast.makeText(
+                        context,
+                        R.string.thermal_charging_locked_hint,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                } else {
+                    showDialog = true
                 }
-            }
+            },
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+        ) {
+            Icon(
+                imageVector        = entry.state.stateIcon(),
+                contentDescription = null,
+                modifier           = Modifier.size(16.dp),
+                tint               = entry.state.dotColor(),
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text     = stringResource(entry.state.label),
+                style    = MaterialTheme.typography.labelMedium,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.width(4.dp))
+            Icon(
+                imageVector        = Icons.Outlined.ExpandMore,
+                contentDescription = null,
+                modifier           = Modifier
+                    .size(16.dp)
+                    .rotate(chevronRotation),
+            )
         }
     }
+
+    // ── Pop-out centred dialog ────────────────────────────────────────────
+    if (showDialog) {
+        ThermalProfileDialog(
+            entry         = entry,
+            onDismiss     = { showDialog = false },
+            onStateChange = onStateChange,
+        )
+    }
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Service helpers
+// ─────────────────────────────────────────────────────────────────────────────
 
 private fun toggleService(
     context:      Context,
