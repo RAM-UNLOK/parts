@@ -20,6 +20,12 @@
  *   2. Screen off    → sconfig=0   (default, low-power)
  *   3. Foreground app known → per-app sconfig from ThermalUtils
  *   4. No foreground app yet → skip (TaskStackListener hasn't fired)
+ *
+ * Toast deduplication:
+ *   A single `currentToast` field holds the last Toast issued by this service.
+ *   Before showing any new toast, currentToast?.cancel() is called so the
+ *   previous one is dismissed immediately. This prevents stacked/queued toasts
+ *   from the charging edge-detection path.
  */
 
 package com.xiaomi.settings.thermal
@@ -45,6 +51,14 @@ class ThermalService : Service() {
     private lateinit var thermalUtils    : ThermalUtils
     private lateinit var chargingMonitor : ChargingMonitor
     private lateinit var mainHandler     : Handler
+
+    /**
+     * Tracks the last Toast shown by this service so we can cancel it before
+     * showing a new one. Prevents stacked / queued toasts when charging events
+     * fire in rapid succession (e.g. charger wiggle, USB handshake retries).
+     * Always accessed on the main thread via mainHandler.post{}.
+     */
+    private var currentToast: Toast? = null
 
     private var currentApp = ""
         set(value) {
@@ -117,7 +131,7 @@ class ThermalService : Service() {
 
         chargingMonitor = ChargingMonitor(this) { info ->
             dlog(TAG, "Charging changed: ${info.isCharging} via ${info.plugType} " +
-                      "level=${info.level}% temp=${info.tempTenthsC / 10.0}°C")
+                      "level=${info.level}% temp=${info.tempTenthsC / 10.0}\u00b0C")
             applyProfile()
         }
         chargingMonitor.start()
@@ -165,20 +179,21 @@ class ThermalService : Service() {
      * Toast logic:
      *   wasCharging is null only on the very first call (service start).
      *   In that case we write the correct sconfig but skip the toast so
-     *   the user doesn't see a "Plugged in" notification just because the
-     *   service restarted while the phone was already on charge.
+     *   the user doesn't see a notification just because the service
+     *   restarted while the phone was already on charge.
      *   On every subsequent call, a toast fires only when isCharging flips
      *   (true→false or false→true) — never on repeated calls with the same
-     *   state.
+     *   state. currentToast?.cancel() dismisses any queued toast before
+     *   the new one is shown, preventing visible stacking.
      */
     private fun applyProfile() {
-        val isCharging = chargingMonitor.isCharging
+        val isCharging   = chargingMonitor.isCharging
         val prevCharging = wasCharging
 
         runCatching {
             when {
-                isCharging            -> thermalUtils.setChargingThermalProfile()
-                !screenOn             -> thermalUtils.setDefaultThermalProfile()
+                isCharging              -> thermalUtils.setChargingThermalProfile()
+                !screenOn               -> thermalUtils.setDefaultThermalProfile()
                 currentApp.isNotEmpty() -> thermalUtils.setThermalProfile(currentApp)
                 else -> dlog(TAG, "applyProfile: skipped — no foreground app yet")
             }
@@ -191,8 +206,7 @@ class ThermalService : Service() {
         wasCharging = isCharging
 
         // Show a toast only on a real plug-in / plug-out transition.
-        // prevCharging == null means this is the first call (service start) —
-        // skip the toast regardless of current charging state.
+        // prevCharging == null → first call (service start) — skip toast.
         if (prevCharging == null) return
         if (isCharging == prevCharging) return
 
@@ -203,8 +217,11 @@ class ThermalService : Service() {
 
         // Toast.makeText() requires the main looper. applyProfile() can be
         // called from ChargingMonitor's HandlerThread, so we always post.
+        // Cancel the previous toast first to prevent stacking.
         mainHandler.post {
-            Toast.makeText(applicationContext, msgRes, Toast.LENGTH_SHORT).show()
+            currentToast?.cancel()
+            currentToast = Toast.makeText(applicationContext, msgRes, Toast.LENGTH_SHORT)
+                .also { it.show() }
         }
     }
 
