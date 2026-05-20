@@ -10,11 +10,10 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
-import android.widget.Toast
+import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -58,6 +57,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -85,28 +85,38 @@ fun XiaomiPartsHomeScreen(
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
     // ── Charging state ────────────────────────────────────────────────────────
+    // Seed from sticky ACTION_BATTERY_CHANGED so the UI is correct before any
+    // broadcast arrives. Only register for CONNECTED / DISCONNECTED edge events
+    // — dropping ACTION_BATTERY_CHANGED from the live receiver prevents the
+    // double-fire that produced multiple charging toasts on a single plug event.
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         mutableStateOf(plugged != 0)
     }
+
+    // Debounce: suppress any second edge event arriving within 2 s (e.g. a
+    // charger that briefly disconnects during negotiation).
+    var lastChargingEventMs by remember { mutableLongStateOf(0L) }
+
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
+                val now = SystemClock.elapsedRealtime()
+                if (now - lastChargingEventMs < 2_000L) return
+                lastChargingEventMs = now
                 when (intent.action) {
                     Intent.ACTION_POWER_CONNECTED    -> isCharging = true
                     Intent.ACTION_POWER_DISCONNECTED -> isCharging = false
-                    Intent.ACTION_BATTERY_CHANGED    -> {
-                        val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-                        isCharging  = plugged != 0
-                    }
                 }
             }
         }
+        // Only CONNECTED + DISCONNECTED — no ACTION_BATTERY_CHANGED.
+        // BATTERY_CHANGED fires repeatedly (every % change) and causes
+        // duplicate state updates + duplicate toasts.
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
-            addAction(Intent.ACTION_BATTERY_CHANGED)
         }
         @Suppress("UnspecifiedRegisterReceiverFlag")
         context.registerReceiver(receiver, filter)
@@ -126,6 +136,8 @@ fun XiaomiPartsHomeScreen(
     }
 
     // ── Scroll behaviour ──────────────────────────────────────────────────────
+    // exitUntilCollapsed: correct for the home screen LargeTopAppBar so the
+    // title collapses as the user scrolls into the content list.
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -141,14 +153,12 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // Use surface so surfaceContainerLow cards have visible lift against the page bg,
-        // matching how every other Settings screen looks on Pixel with dynamic colour.
+        // surface: cards use surfaceContainerLow giving them visible lift against
+        // the page background — matches Pixel/AOSP dynamic-colour Settings look.
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
-                title = {
-                    Text(text = stringResource(R.string.xiaomi_parts_title))
-                },
+                title  = { Text(text = stringResource(R.string.xiaomi_parts_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -163,6 +173,10 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            // ── Charging banner ───────────────────────────────────────────────
+            // Shown only when thermal is enabled AND device is charging.
+            // spring enter/exit: banner slides in/out smoothly without a hard
+            // pop — matches M3 Expressive motion guidance for contextual cards.
             AnimatedVisibility(
                 visible = isCharging && thermalEnabled,
                 enter   = expandVertically(
@@ -183,9 +197,12 @@ fun XiaomiPartsHomeScreen(
             // ── Display section ───────────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDisplay,
-                enter = fadeIn(tween(280)) +
+                enter = fadeIn(tween(220)) +
                         slideInVertically(
-                            animationSpec  = tween(280, easing = FastOutSlowInEasing),
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
+                            ),
                             initialOffsetY = { it / 5 },
                         ),
             ) {
@@ -207,9 +224,12 @@ fun XiaomiPartsHomeScreen(
             // ── Performance section ───────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visPerformance,
-                enter = fadeIn(tween(280, delayMillis = 60)) +
+                enter = fadeIn(tween(220, delayMillis = 60)) +
                         slideInVertically(
-                            animationSpec  = tween(280, delayMillis = 60, easing = FastOutSlowInEasing),
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
+                            ),
                             initialOffsetY = { it / 5 },
                         ),
             ) {
@@ -245,9 +265,12 @@ fun XiaomiPartsHomeScreen(
             // ── Diagnostics section ───────────────────────────────────────────
             AnimatedVisibility(
                 visibleState = visDiagnostics,
-                enter = fadeIn(tween(280, delayMillis = 120)) +
+                enter = fadeIn(tween(220, delayMillis = 120)) +
                         slideInVertically(
-                            animationSpec  = tween(280, delayMillis = 120, easing = FastOutSlowInEasing),
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
+                            ),
                             initialOffsetY = { it / 5 },
                         ),
             ) {
@@ -260,7 +283,11 @@ fun XiaomiPartsHomeScreen(
                             summary = stringResource(R.string.cit_summary),
                             onClick = {
                                 if (!CitLauncher.launch(context))
-                                    Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
+                                    android.widget.Toast.makeText(
+                                        context,
+                                        R.string.cit_not_found,
+                                        android.widget.Toast.LENGTH_SHORT,
+                                    ).show()
                             },
                         )
                     }
@@ -272,11 +299,22 @@ fun XiaomiPartsHomeScreen(
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Shared composables — used by HomeScreen and sub-screens
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * M3 Expressive category header.
+ *
+ * Uses [MaterialTheme.typography.titleSmall] (was labelLarge) to match the
+ * M3 Expressive spec for list-section headers. Primary colour so the header
+ * reads as a structural landmark without competing with content.
+ */
 @Composable
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
         text     = label,
-        style    = MaterialTheme.typography.labelLarge,
+        style    = MaterialTheme.typography.titleSmall,
         color    = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(
             start  = PartsTokens.contentPaddingHorizontal,
@@ -286,6 +324,14 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * M3 card container for settings rows.
+ *
+ * Backed by [Surface] with [MaterialTheme.colorScheme.surfaceContainerLow] so
+ * the card has a single consistent background colour sourced from the dynamic
+ * Monet palette. The shape uses [PartsTokens.cardShape] (28 dp corner radius —
+ * M3 Expressive extra-large shape).
+ */
 @Composable
 fun PartsCard(
     modifier: Modifier = Modifier,
@@ -303,6 +349,13 @@ fun PartsCard(
     }
 }
 
+/**
+ * M3 Expressive settings row.
+ *
+ * Leading icon sits in a 40 dp tonal container (secondaryContainer fill,
+ * onSecondaryContainer icon tint) — the correct M3 Expressive tonal icon
+ * treatment. Trailing chevron uses onSurfaceVariant to stay visually quiet.
+ */
 @Composable
 fun PartsRow(
     icon:     ImageVector,
@@ -323,8 +376,11 @@ fun PartsRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
     ) {
+        // Tonal icon container — M3 Expressive 40 dp circle with secondaryContainer
+        // background. Replaces the earlier manual Box(CircleShape)+clip pattern
+        // with a semantically equivalent but token-correct version.
         Box(
-            modifier         = Modifier
+            modifier = Modifier
                 .size(PartsTokens.leadingIconContainerSize)
                 .clip(CircleShape)
                 .background(MaterialTheme.colorScheme.secondaryContainer),
@@ -364,6 +420,8 @@ fun PartsRow(
 
 @Composable
 private fun ChargingBanner(modifier: Modifier = Modifier) {
+    // tertiaryContainer / onTertiaryContainer: the correct M3 semantic for
+    // battery / charging context (warm accent, distinct from primary/secondary).
     Surface(
         modifier       = modifier.fillMaxWidth(),
         shape          = PartsTokens.bannerShape,

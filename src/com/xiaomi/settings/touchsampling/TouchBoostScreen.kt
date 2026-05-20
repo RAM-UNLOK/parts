@@ -11,7 +11,6 @@ import android.os.UserHandle
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
@@ -34,12 +33,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.outlined.Lightbulb
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
@@ -65,6 +62,13 @@ import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 
+/**
+ * Touch Boost sub-screen.
+ *
+ * Back navigation: removed the [navigationIcon] back button entirely.
+ * Predictive-back gesture + gesture navigation handles back natively on
+ * Android 13+. [onBack] is kept in the signature for NavHost compatibility.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
@@ -89,7 +93,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        // surface: consistent background token across all screens in the Parts flow.
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -99,16 +104,9 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    }
-                },
+                // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -123,9 +121,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         ) {
             AnimatedVisibility(
                 visibleState = visToggle,
-                enter = fadeIn(tween(280)) +
+                enter = fadeIn(tween(220)) +
                         slideInVertically(
-                            animationSpec  = tween(280, easing = FastOutSlowInEasing),
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
+                            ),
                             initialOffsetY = { it / 5 },
                         ),
             ) {
@@ -145,17 +146,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                             verticalAlignment     = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                         ) {
+                            // Tonal icon container — secondaryContainer / onSecondaryContainer
+                            // consistent with all other PartsRow icons in the flow.
                             Box(
-                                modifier         = Modifier
+                                modifier = Modifier
                                     .size(PartsTokens.leadingIconContainerSize)
                                     .clip(CircleShape)
                                     .background(MaterialTheme.colorScheme.secondaryContainer),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
-                                    // Vibration: represents the physical digitiser
-                                    // sampling of a high-refresh touchscreen.
-                                    // Matches the home screen row icon for consistency.
                                     imageVector        = Icons.Filled.Vibration,
                                     contentDescription = null,
                                     tint               = MaterialTheme.colorScheme.onSecondaryContainer,
@@ -187,12 +187,17 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             AnimatedVisibility(
                 visibleState = visBanner,
-                enter = fadeIn(tween(280, delayMillis = 100)) +
+                enter = fadeIn(tween(220, delayMillis = 100)) +
                         slideInVertically(
-                            animationSpec  = tween(280, delayMillis = 100, easing = FastOutSlowInEasing),
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
+                            ),
                             initialOffsetY = { it / 5 },
                         ),
             ) {
+                // secondaryContainer: information/tip banner colour role per M3.
+                // onSecondaryContainer for all text and icons inside.
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -210,9 +215,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         verticalAlignment     = Alignment.Top,
                     ) {
                         Icon(
-                            // Lightbulb (outlined): Pixel Settings uses this for
-                            // informational/tip banners. Info is reserved for
-                            // warnings/alerts in M3 convention.
                             imageVector        = Icons.Outlined.Lightbulb,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,

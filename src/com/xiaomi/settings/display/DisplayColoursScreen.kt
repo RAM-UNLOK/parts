@@ -13,7 +13,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -32,12 +31,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.RadioButton
@@ -64,6 +59,18 @@ import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 
+/**
+ * Display Colours sub-screen.
+ *
+ * Back navigation: removed the [navigationIcon] IconButton entirely.
+ * Android's predictive-back gesture and gesture navigation handle back
+ * natively — an explicit back button in the TopAppBar is redundant and
+ * conflicts with the OS-level back animation on Android 13+.
+ *
+ * The [onBack] lambda is kept in the signature so the NavHost can still
+ * pass a popBackStack lambda for any legacy 3-button nav path if needed;
+ * it is NOT wired to a visible button.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
@@ -80,8 +87,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         )
     }
 
-    // MediumTopAppBar + enterAlwaysScrollBehavior: correct for sub-screens.
-    // See ThermalManagementScreen for full rationale.
+    // enterAlwaysScrollBehavior: correct for sub-screens (MediumTopAppBar).
+    // Snaps with a stiff spring so the bar never rests mid-collapsed.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -95,7 +102,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        // surface: consistent with HomeScreen background token so the M3 dynamic
+        // colour palette reads uniformly across the full settings flow.
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -105,16 +114,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.back),
-                        )
-                    }
-                },
+                // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -130,11 +132,17 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             val standardModes = listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
             val expertModes   = listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
 
+            // Section entrance: spring slide (M3 Expressive) + short fade.
+            // spring(DampingRatioNoBouncy, StiffnessMediumLow) matches the
+            // HomeScreen stagger so transitions feel consistent across the flow.
             AnimatedVisibility(
                 visibleState = visStandard,
-                enter = fadeIn(tween(280)) +
+                enter = fadeIn(tween(220)) +
                         slideInVertically(
-                            animationSpec  = tween(280, easing = FastOutSlowInEasing),
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
+                            ),
                             initialOffsetY = { it / 5 },
                         ),
             ) {
@@ -157,9 +165,12 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
             AnimatedVisibility(
                 visibleState = visExpert,
-                enter = fadeIn(tween(280, delayMillis = 80)) +
+                enter = fadeIn(tween(220, delayMillis = 80)) +
                         slideInVertically(
-                            animationSpec  = tween(280, delayMillis = 80, easing = FastOutSlowInEasing),
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
+                            ),
                             initialOffsetY = { it / 5 },
                         ),
             ) {
@@ -194,6 +205,8 @@ private fun ColorMode.Row(
 ) {
     val selected = this.id == selectedId
 
+    // Animate background with a spring so selection transitions feel physical
+    // rather than linear — matches M3 Expressive state-change motion guidance.
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
             MaterialTheme.colorScheme.secondaryContainer
