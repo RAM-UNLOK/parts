@@ -83,26 +83,48 @@
         <!-- ════════════════════════════════════════════════
              XIAOMI PARTS HUB — Settings entry point.
 
-             Category: ia.device — renders as its own separate
-             card block in the Settings homepage, like Battery,
-             Sound, Display etc. (not merged inline with other
-             tiles).
+             Two intent-filters are required for correct placement:
 
-             Order: 100 — pushes this block to the bottom of the
-             Settings page, below all standard AOSP categories.
+             1. android.intent.action.MAIN + DEFAULT
+                AOSP Settings uses this pair to resolve the activity's
+                top-level category anchor. Without it the Settings app
+                falls back to heuristic placement and the tile ends up
+                under "Connected devices -> Connection Preferences"
+                (the catch-all bucket for IA_SETTINGS entries that
+                have no MAIN/DEFAULT anchor on Android 14+).
+
+             2. com.android.settings.action.IA_SETTINGS
+                Declares this as an Injectable Activity Settings tile
+                so Settings can query it via PackageManager and render
+                it with the correct icon, label and summary.
+
+             Category: ia.device — renders as a top-level block in
+             Settings alongside Battery, Sound, Display etc.
+
+             Order: 100 — pushes the block below all standard AOSP
+             categories so it doesn't disrupt the default page order.
 
              Theme: XiaomiParts.Theme — transparent window bg so
-             Compose's dynamic Material You surface colour owns
-             the window from the very first frame.
+             Compose's dynamic Material You surface colour owns the
+             window from the very first frame.
              ════════════════════════════════════════════════ -->
         <activity
             android:name=".XiaomiPartsActivity"
             android:label="@string/xiaomi_parts_title"
             android:exported="true"
             android:theme="@style/XiaomiParts.Theme">
+
+            <!-- Required anchor: MAIN/DEFAULT pair for correct top-level placement -->
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <!-- Injectable Activity Settings tile declaration -->
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
             </intent-filter>
+
             <meta-data
                 android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.device" />

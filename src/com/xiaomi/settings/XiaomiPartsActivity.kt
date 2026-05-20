@@ -9,11 +9,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -32,33 +31,33 @@ class XiaomiPartsActivity : ComponentActivity() {
             XiaomiPartsTheme {
                 val navController = rememberNavController()
 
-                // M3 Expressive screen transitions matching Pixel 10 Settings:
-                //   Enter  — fade + gentle scale-up from 92 % (300 ms, EaseOut)
-                //   Exit   — fade + gentle scale-down to  92 % (220 ms, EaseIn)
-                //   Pop-Enter  — fade + scale-up from 92 % (300 ms)
-                //   Pop-Exit   — fade + scale-down to 92 % (220 ms)
-                // Asymmetric timing (enter slower than exit) matches M3 motion
-                // spec: the incoming screen is the hero and gets more time;
-                // the outgoing screen exits quickly so it doesn't compete.
+                // Plain crossfade transitions for in-process NavHost navigation.
+                //
+                // WHY NOT scaleIn/scaleOut:
+                //   Scale + fade simultaneously causes a brightness flash.
+                //   The outgoing screen's fadeOut (fast) completes before the
+                //   incoming screen is opaque, briefly exposing the raw window
+                //   background. Scale transitions belong at the Activity window
+                //   level (WindowManager / predictive-back), not inside a
+                //   NavHost composable.
+                //
+                // WHY LinearEasing for fades:
+                //   EaseIn or EaseOut on an opacity-only transition produces a
+                //   perceptual brightness dip at the midpoint — the eye reads
+                //   this as a flash. LinearEasing keeps brightness even
+                //   throughout the crossfade, matching how Android's own
+                //   ActivityOptions.makeSceneTransitionAnimation works.
+                //
+                // enter 200ms / exit 150ms: asymmetric timing so the outgoing
+                // screen exits slightly faster than the incoming one arrives,
+                // matching Material 3 motion guidance (exit is secondary).
                 NavHost(
-                    navController    = navController,
-                    startDestination = "home",
-                    enterTransition  = {
-                        fadeIn(tween(300)) +
-                        scaleIn(tween(300), initialScale = 0.92f)
-                    },
-                    exitTransition   = {
-                        fadeOut(tween(220)) +
-                        scaleOut(tween(220), targetScale = 0.92f)
-                    },
-                    popEnterTransition = {
-                        fadeIn(tween(300)) +
-                        scaleIn(tween(300), initialScale = 0.96f)
-                    },
-                    popExitTransition  = {
-                        fadeOut(tween(200)) +
-                        scaleOut(tween(200), targetScale = 1.04f)
-                    },
+                    navController      = navController,
+                    startDestination   = "home",
+                    enterTransition    = { fadeIn(tween(200, easing = LinearEasing)) },
+                    exitTransition     = { fadeOut(tween(150, easing = LinearEasing)) },
+                    popEnterTransition = { fadeIn(tween(200, easing = LinearEasing)) },
+                    popExitTransition  = { fadeOut(tween(150, easing = LinearEasing)) },
                 ) {
                     composable("home") {
                         XiaomiPartsHomeScreen(
