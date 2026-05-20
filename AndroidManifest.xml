@@ -85,14 +85,8 @@
 
              Uses XiaomiParts.Theme (parent DeviceDefault.NoActionBar)
              with ?colorBackground window background so the Compose
-             Scaffold's Monet surface colour owns the window from the
+             Scaffold’s Monet surface colour owns the window from the
              very first frame.
-
-             Only the MAIN/DEFAULT launcher anchor lives here.
-             All Settings homepage injection filters live on the
-             .XiaomiPartsSettingsTile activity-alias below so the
-             Settings preference inflater uses the M3 / Monet theme
-             declared there rather than this Compose window theme.
              ════════════════════════════════════════════════ -->
         <activity
             android:name=".XiaomiPartsActivity"
@@ -111,46 +105,27 @@
         <!-- ════════════════════════════════════════════════
              XIAOMI PARTS HUB — Settings homepage tile alias.
 
-             Why a separate activity-alias?
-             The AOSP Settings app resolves the visual style of an
-             injected preference tile from the android:theme declared
-             on whichever component it queries via PackageManager.
-             The main activity uses XiaomiParts.Theme whose parent is
-             Theme.DeviceDefault.NoActionBar — this has no preferenceTheme
-             attribute, so the tile renders with square corners and the
-             raw DeviceDefault card background (no Monet palette).
-
-             XiaomiParts.Settings.HeaderTheme (declared in styles.xml)
-             inherits Theme.Material3.DynamicColors.DayNight, which
-             pulls the full Monet/dynamic colour palette, and sets
-             preferenceTheme = PreferenceThemeOverlay.v2.Material for
-             M3 card background, 28 dp corner radius, and correct
-             padding/typography on every Preference item.
-
-             By placing all Settings filters here and leaving only the
-             MAIN/DEFAULT anchor on the activity, we give AOSP Settings
-             exactly the theme context it needs to render the tile
-             correctly without affecting the Compose window theme.
+             android:theme is set to XiaomiParts.Theme here (same as
+             the main activity). AOSP Settings applies its own M3
+             preference theme to every injected tile it inflates,
+             so the tile’s visual appearance — Monet colours, 28dp
+             card corners, M3 typography — is controlled by Settings,
+             not by this APK’s theme attribute.
 
              Three intent-filters:
              1. EXTRA_SETTINGS + DEFAULT  — primary homepage injection
                 path (AOSP / Paranoid Android / most custom ROMs).
              2. IA_SETTINGS              — Injectable Activity tile for
                 Android 14+ / newer Settings forks.
-             3. MAIN + DEFAULT           — required anchor for Settings'
+             3. MAIN + DEFAULT           — required anchor for Settings’
                 category resolver on some builds.
-
-             Category meta-data:
-               ia.homepage — renders on the Settings root page.
-               order 110   — below AOSP standard categories, above
-                             third-party injected tiles.
              ════════════════════════════════════════════════ -->
         <activity-alias
             android:name=".XiaomiPartsSettingsTile"
             android:targetActivity=".XiaomiPartsActivity"
             android:label="@string/xiaomi_parts_title"
             android:exported="true"
-            android:theme="@style/XiaomiParts.Settings.HeaderTheme">
+            android:theme="@style/XiaomiParts.Theme">
 
             <!-- 1. EXTRA_SETTINGS: surfaces tile on Settings homepage block -->
             <intent-filter>
