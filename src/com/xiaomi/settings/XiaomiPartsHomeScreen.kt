@@ -42,10 +42,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.DisplaySettings
-import androidx.compose.material.icons.filled.ElectricBolt
-import androidx.compose.material.icons.filled.Troubleshoot
-import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.filled.Palette
+import androidx.compose.material.icons.filled.Science
+import androidx.compose.material.icons.filled.Thermostat
+import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -191,9 +191,7 @@ fun XiaomiPartsHomeScreen(
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
                     PartsCard {
                         PartsRow(
-                            // DisplaySettings: a monitor with a settings gear overlay —
-                            // unambiguously "display configuration", not a generic palette.
-                            icon    = Icons.Filled.DisplaySettings,
+                            icon    = Icons.Filled.Palette,
                             title   = stringResource(R.string.display_title),
                             summary = stringResource(R.string.display_summary),
                             onClick = onNavigateToDisplay,
@@ -217,10 +215,7 @@ fun XiaomiPartsHomeScreen(
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
                     PartsCard {
                         PartsRow(
-                            // ElectricBolt: lightning = power/performance management.
-                            // Thermostat read as weather; ElectricBolt reads as
-                            // "this affects device power behaviour".
-                            icon    = Icons.Filled.ElectricBolt,
+                            icon    = Icons.Filled.Thermostat,
                             title   = stringResource(R.string.thermal_title),
                             summary = stringResource(
                                 if (thermalEnabled) R.string.thermal_summary_active
@@ -234,10 +229,7 @@ fun XiaomiPartsHomeScreen(
                             color     = MaterialTheme.colorScheme.outlineVariant,
                         )
                         PartsRow(
-                            // Vibration: represents the physical digitiser/haptic
-                            // sampling ring of a high-refresh touchscreen —
-                            // more precise than the generic finger-tap TouchApp.
-                            icon    = Icons.Filled.Vibration,
+                            icon    = Icons.Filled.TouchApp,
                             title   = stringResource(R.string.htsr_title),
                             summary = stringResource(R.string.htsr_summary),
                             onClick = onNavigateToTouch,
@@ -261,9 +253,7 @@ fun XiaomiPartsHomeScreen(
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
                     PartsCard {
                         PartsRow(
-                            // Troubleshoot: magnifying glass over circuit board —
-                            // hardware diagnostics, not a chemistry Science beaker.
-                            icon    = Icons.Filled.Troubleshoot,
+                            icon    = Icons.Filled.Science,
                             title   = stringResource(R.string.cit_title),
                             summary = stringResource(R.string.cit_summary),
                             onClick = {
@@ -387,7 +377,6 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
             horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
         ) {
             Icon(
-                // BatteryChargingFull: already semantically perfect — kept as-is.
                 imageVector        = Icons.Filled.BatteryChargingFull,
                 contentDescription = null,
                 tint               = MaterialTheme.colorScheme.onTertiaryContainer,
