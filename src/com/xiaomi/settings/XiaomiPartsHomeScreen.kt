@@ -5,12 +5,6 @@
 
 package com.xiaomi.settings
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
-import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.EaseOutCubic
@@ -19,10 +13,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -42,7 +33,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Thermostat
@@ -57,12 +47,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -85,69 +70,6 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
-
-    // ── Charging state ────────────────────────────────────────────────────────
-    // Seed from sticky ACTION_BATTERY_CHANGED so the UI is correct before any
-    // broadcast arrives. Only CONNECTED / DISCONNECTED edge events registered
-    // to prevent duplicate toasts from repeated BATTERY_CHANGED fires.
-    // lastToast: cancel-before-show guard so stacked toasts are impossible.
-    var isCharging by remember {
-        val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
-        mutableStateOf(plugged != 0)
-    }
-    var lastChargingEventMs by remember { mutableLongStateOf(0L) }
-    // Holds the last Toast reference so we can cancel it before showing a new one.
-    var lastToast by remember { mutableStateOf<Toast?>(null) }
-
-    DisposableEffect(Unit) {
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context, intent: Intent) {
-                val now = SystemClock.elapsedRealtime()
-                // 2-second debounce: ignore rapid repeated events from the same plug action.
-                if (now - lastChargingEventMs < 2_000L) return
-                lastChargingEventMs = now
-
-                val newCharging = when (intent.action) {
-                    Intent.ACTION_POWER_CONNECTED    -> true
-                    Intent.ACTION_POWER_DISCONNECTED -> false
-                    else                             -> return
-                }
-                // Guard: only update + toast if the state actually changed.
-                if (newCharging == isCharging) return
-                isCharging = newCharging
-
-                val msgRes = if (newCharging)
-                    R.string.thermal_charging_toast_connected
-                else
-                    R.string.thermal_charging_toast_disconnected
-
-                // Cancel any queued toast before showing the new one.
-                lastToast?.cancel()
-                lastToast = Toast.makeText(ctx, msgRes, Toast.LENGTH_SHORT)
-                    .also { it.show() }
-            }
-        }
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_POWER_CONNECTED)
-            addAction(Intent.ACTION_POWER_DISCONNECTED)
-        }
-        @Suppress("UnspecifiedRegisterReceiverFlag")
-        context.registerReceiver(receiver, filter)
-        onDispose { context.unregisterReceiver(receiver) }
-    }
-
-    // ── Thermal-enabled state ─────────────────────────────────────────────────
-    var thermalEnabled by remember { mutableStateOf(thermalUtils.enabled) }
-    DisposableEffect(Unit) {
-        val prefListener = android.content.SharedPreferences
-            .OnSharedPreferenceChangeListener { _, key ->
-                if (key == "thermal_enabled") thermalEnabled = thermalUtils.enabled
-            }
-        val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
-        prefs.registerOnSharedPreferenceChangeListener(prefListener)
-        onDispose { prefs.unregisterOnSharedPreferenceChangeListener(prefListener) }
-    }
 
     // ── Scroll behaviour ──────────────────────────────────────────────────────
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
@@ -183,40 +105,6 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // ── Charging banner ───────────────────────────────────────────────
-            AnimatedVisibility(
-                visible = isCharging && thermalEnabled,
-                enter   = expandVertically(
-                    animationSpec = spring(
-                        dampingRatio = PartsTokens.MotionDampingRatio,
-                        stiffness    = PartsTokens.MotionStiffnessMediumLow,
-                    ),
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = PartsTokens.MotionDurationEnter,
-                        easing         = EaseOutCubic,
-                    ),
-                ),
-                exit    = shrinkVertically(
-                    animationSpec = spring(
-                        dampingRatio = PartsTokens.MotionDampingRatio,
-                        stiffness    = PartsTokens.MotionStiffnessMedium,
-                    ),
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = PartsTokens.MotionDurationExit,
-                        easing         = EaseOutCubic,
-                    ),
-                ),
-            ) {
-                ChargingBanner(
-                    Modifier.padding(
-                        horizontal = PartsTokens.contentPaddingHorizontal,
-                        vertical   = PartsTokens.bannerPaddingVertical,
-                    )
-                )
-            }
-
             // ── Display section  (stagger group 0 — no delay) ─────────────────
             AnimatedVisibility(
                 visibleState = visDisplay,
@@ -275,8 +163,8 @@ fun XiaomiPartsHomeScreen(
                             icon    = Icons.Filled.Thermostat,
                             title   = stringResource(R.string.thermal_title),
                             summary = stringResource(
-                                if (thermalEnabled) R.string.thermal_summary_active
-                                else               R.string.thermal_summary_disabled
+                                if (thermalUtils.enabled) R.string.thermal_summary_active
+                                else                      R.string.thermal_summary_disabled
                             ),
                             onClick = onNavigateToThermal,
                         )
@@ -430,44 +318,6 @@ fun PartsRow(
                 tint               = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier           = Modifier.size(PartsTokens.trailingIconSize),
             )
-        }
-    }
-}
-
-@Composable
-private fun ChargingBanner(modifier: Modifier = Modifier) {
-    Surface(
-        modifier       = modifier.fillMaxWidth(),
-        shape          = PartsTokens.bannerShape,
-        color          = MaterialTheme.colorScheme.tertiaryContainer,
-        tonalElevation = PartsTokens.cardElevation,
-    ) {
-        Row(
-            modifier = Modifier.padding(
-                horizontal = PartsTokens.bannerInnerPaddingH,
-                vertical   = PartsTokens.bannerInnerPaddingV,
-            ),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
-        ) {
-            Icon(
-                imageVector        = Icons.Filled.BatteryChargingFull,
-                contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onTertiaryContainer,
-                modifier           = Modifier.size(PartsTokens.bannerIconSize),
-            )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text  = stringResource(R.string.thermal_charging_active),
-                    style = MaterialTheme.typography.titleSmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-                Text(
-                    text  = stringResource(R.string.thermal_charging_active_desc),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-            }
         }
     }
 }
