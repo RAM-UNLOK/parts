@@ -64,7 +64,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -127,9 +126,10 @@ fun XiaomiPartsHomeScreen(
     }
 
     // ── Scroll behaviour ────────────────────────────────────────────────────
-    // TopAppBarDefaults.exitUntilCollapsedScrollBehavior is @Composable, so
-    // it must be called directly in a @Composable scope, NOT inside remember{}.
-    // The scroll state is remembered internally by the M3 implementation.
+    // LargeTopAppBar is correct for the home/root screen.
+    // exitUntilCollapsedScrollBehavior is the correct pairing for Large:
+    // the bar collapses fully on scroll-down and stays hidden until the
+    // user scrolls back to the very top.
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -139,8 +139,6 @@ fun XiaomiPartsHomeScreen(
     )
 
     // ── Section entrance animation states ───────────────────────────────────
-    // MutableTransitionState(false) starts invisible; setting targetState = true
-    // triggers the enter animation exactly once on first composition.
     val visDisplay     = remember { MutableTransitionState(false).apply { targetState = true } }
     val visPerformance = remember { MutableTransitionState(false).apply { targetState = true } }
     val visDiagnostics = remember { MutableTransitionState(false).apply { targetState = true } }
@@ -151,14 +149,21 @@ fun XiaomiPartsHomeScreen(
         topBar = {
             LargeTopAppBar(
                 title = {
-                    Text(
-                        text  = stringResource(R.string.xiaomi_parts_title),
-                        style = MaterialTheme.typography.headlineLarge,
-                    )
+                    // Do NOT set an explicit style here. LargeTopAppBar manages
+                    // its own title-style transition (headlineMedium expanded →
+                    // titleLarge collapsed) via internal SlotLayout animation.
+                    // Overriding with headlineLarge breaks that transition and
+                    // forces 32 sp even when collapsed.
+                    Text(text = stringResource(R.string.xiaomi_parts_title))
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                colors = TopAppBarDefaults.largeTopAppBarColors(
+                    // containerColor must match Scaffold.containerColor exactly.
+                    // Color.Transparent was causing a flash: the app bar
+                    // background was the raw window/theme colour, not the
+                    // Scaffold surface. On collapse it snapped to
+                    // scrolledContainerColor — two visual hops = flash.
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -170,9 +175,6 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Charging banner — DampingRatioNoBouncy: functional status
-            // indicators must not overshoot. Only playful UI (FAB, empty-state
-            // illustrations) warrant a bouncy spring.
             AnimatedVisibility(
                 visible = isCharging && thermalEnabled,
                 enter   = expandVertically(

@@ -38,8 +38,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
@@ -52,12 +52,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
@@ -80,9 +80,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         )
     }
 
-    // TopAppBarDefaults.exitUntilCollapsedScrollBehavior is @Composable;
-    // call it directly at the composable call site, never inside remember{}.
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+    // MediumTopAppBar + enterAlwaysScrollBehavior: correct for sub-screens.
+    // See ThermalManagementScreen for full rationale.
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness    = Spring.StiffnessHigh,
@@ -97,11 +97,12 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
-            LargeTopAppBar(
+            MediumTopAppBar(
                 title = {
                     Text(
-                        text  = stringResource(R.string.display_title),
-                        style = MaterialTheme.typography.headlineLarge,
+                        text     = stringResource(R.string.display_title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
@@ -112,9 +113,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -198,8 +199,6 @@ private fun ColorMode.Row(
             MaterialTheme.colorScheme.secondaryContainer
         else
             MaterialTheme.colorScheme.surfaceContainerLow,
-        // StiffnessMediumLow (400): snappy enough to feel responsive,
-        // slow enough to read as a deliberate colour change, not a flicker.
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label         = "color-row-bg-${this.name}",
     )

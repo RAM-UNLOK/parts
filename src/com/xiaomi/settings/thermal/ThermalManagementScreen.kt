@@ -48,8 +48,8 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -68,7 +68,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -140,9 +139,16 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         )
     }
 
-    // TopAppBarDefaults.exitUntilCollapsedScrollBehavior is @Composable;
-    // call it directly at the composable call site, never inside remember{}.
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
+    // MediumTopAppBar is the correct bar type for sub-screens (one level
+    // deep below home). It uses headlineSmall (24sp) expanded →
+    // titleMedium collapsed — fits long titles like "Thermal Management"
+    // without wrapping on 360 dp devices.
+    //
+    // enterAlwaysScrollBehavior is the correct pairing for Medium:
+    // the bar hides on scroll-down and re-appears as soon as the user
+    // scrolls up even a single pixel. exitUntilCollapsed is for Large only
+    // (it would prevent the Medium bar from ever re-showing after collapse).
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness    = Spring.StiffnessHigh,
@@ -155,11 +161,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
-            LargeTopAppBar(
+            MediumTopAppBar(
                 title = {
+                    // No explicit style override — MediumTopAppBar manages
+                    // its own headlineSmall → titleMedium transition.
                     Text(
-                        text  = stringResource(R.string.thermal_title),
-                        style = MaterialTheme.typography.headlineLarge,
+                        text     = stringResource(R.string.thermal_title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
@@ -178,9 +187,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -215,7 +224,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 return@LazyColumn
             }
 
-            // ── Toggle section ──────────────────────────────────────────────
             item(key = "toggle-label") {
                 PartsCategory(stringResource(R.string.thermal_enable))
             }
@@ -269,7 +277,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
 
             if (!enabled) {
-                // ── Disabled hint ───────────────────────────────────────────
                 item(key = "disabled-hint") {
                     Box(
                         modifier         = Modifier
@@ -286,7 +293,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
-                // ── Per-app profiles section ────────────────────────────────
                 item(key = "apps-label") {
                     PartsCategory(stringResource(R.string.thermal_apps_category))
                 }
@@ -334,10 +340,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         }
     }
 }
-
-// ────────────────────────────────────────────────────────────────────────────
-// Per-app row with profile dropdown
-// ────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -446,10 +448,6 @@ private fun ThermalDropdownItem(
         }) else null,
     )
 }
-
-// ────────────────────────────────────────────────────────────────────────────
-// Helpers
-// ────────────────────────────────────────────────────────────────────────────
 
 private fun toggleService(
     context:      Context,
