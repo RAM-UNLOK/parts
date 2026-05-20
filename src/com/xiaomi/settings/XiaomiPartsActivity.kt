@@ -11,6 +11,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -21,44 +22,63 @@ import androidx.navigation.compose.rememberNavController
 import com.xiaomi.settings.display.DisplayColoursScreen
 import com.xiaomi.settings.thermal.ThermalManagementScreen
 import com.xiaomi.settings.touchsampling.TouchBoostScreen
-import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.ui.XiaomiPartsTheme
+
+// ─────────────────────────────────────────────────────────────────────────────
+// M3 Expressive navigation motion constants
+//
+// Spec: https://m3.material.io/styles/motion/transitions/transition-patterns
+//
+// Key rules:
+//   • Enter/PopEnter: short spatial offset (±NAV_SLIDE_DP) + fade-in.
+//     The offset gives spatial context (the screen arrives FROM somewhere)
+//     without a slow full-width theatrical sweep.
+//   • Exit/PopExit: fade-out ONLY. No slide on the leaving screen.
+//     Sliding out while a new screen slides in creates a visual collision
+//     that looks cluttered and slow.
+//   • Spring stiffness: Medium (800) for nav — snappy settle, no overshoot.
+//     MediumLow (400) is correct for scroll snap / in-screen elements but
+//     too slow for a full-screen route change.
+//   • DampingRatioNoBouncy throughout: navigation must never bounce.
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Pixel offset for enter/pop-enter slide. 30dp in density-independent terms. */
+private const val NAV_SLIDE_DP = 30
+
+/**
+ * Fade duration (ms) for exit/pop-exit transitions.
+ * Kept shorter than enter so the leaving screen clears quickly and the
+ * arriving screen has full visual focus.
+ */
+private const val NAV_FADE_EXIT_MS = 150
 
 class XiaomiPartsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        // enableEdgeToEdge() sets the status/nav bars transparent via
-        // WindowCompat.setDecorFitsSystemWindows(false). Called before
-        // super.onCreate so window flags apply before first measure/layout.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
-
-        // Clear the XML windowBackground after Compose has taken ownership
-        // so only the Scaffold surface colour paints. The ?colorBackground
-        // in styles.xml handles the launch frame before this executes.
         window.setBackgroundDrawableResource(android.R.color.transparent)
 
         setContent {
             XiaomiPartsTheme {
                 val navController = rememberNavController()
+                val density = resources.displayMetrics.density
+                val slideOffsetPx = (NAV_SLIDE_DP * density).toInt()
 
                 NavHost(
                     navController    = navController,
                     startDestination = "home",
 
-                    // M3 Expressive motion: spring physics on all route
-                    // transitions. Spring produces physically correct
-                    // deceleration without a fixed duration, which is the
-                    // M3 Expressive motion spec. Do NOT use tween/EaseOutCubic
-                    // for navigational transitions.
-
+                    // ── ENTER (navigate forward) ──────────────────────────
+                    // New screen slides in from the right (+slideOffsetPx),
+                    // short offset so it's spatial not theatrical.
                     enterTransition = {
                         slideInHorizontally(
                             animationSpec  = spring(
                                 dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
-                            initialOffsetX = { it },
+                            initialOffsetX = { slideOffsetPx },
                         ) + fadeIn(
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioNoBouncy,
@@ -67,28 +87,23 @@ class XiaomiPartsActivity : ComponentActivity() {
                         )
                     },
 
+                    // ── EXIT (navigate forward — old screen leaves) ───────
+                    // Old screen fades out only. No slide.
+                    // Sliding out while a new screen slides in = collision.
                     exitTransition = {
-                        slideOutHorizontally(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMedium,
-                            ),
-                            targetOffsetX = { -it / 3 },
-                        ) + fadeOut(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMedium,
-                            ),
-                        )
+                        fadeOut(animationSpec = tween(NAV_FADE_EXIT_MS))
                     },
 
+                    // ── POP ENTER (back — returning screen re-enters) ─────
+                    // Returning screen slides in from the LEFT (negative offset),
+                    // confirming the user is going back spatially.
                     popEnterTransition = {
                         slideInHorizontally(
                             animationSpec  = spring(
                                 dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
-                            initialOffsetX = { -it / 3 },
+                            initialOffsetX = { -slideOffsetPx },
                         ) + fadeIn(
                             animationSpec = spring(
                                 dampingRatio = Spring.DampingRatioNoBouncy,
@@ -97,19 +112,10 @@ class XiaomiPartsActivity : ComponentActivity() {
                         )
                     },
 
+                    // ── POP EXIT (back — current screen leaves) ───────────
+                    // Current screen fades out only. No slide.
                     popExitTransition = {
-                        slideOutHorizontally(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMedium,
-                            ),
-                            targetOffsetX = { it },
-                        ) + fadeOut(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMedium,
-                            ),
-                        )
+                        fadeOut(animationSpec = tween(NAV_FADE_EXIT_MS))
                     },
                 ) {
                     composable("home") {
