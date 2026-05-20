@@ -45,7 +45,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -157,19 +156,36 @@ private fun ColorMode.Row(
 ) {
     val selected = this.id == selectedId
 
-    // M3 state-layer: lerp primaryContainer over surfaceContainerLow at
-    // selectedStateLayerAlpha so the tint is correctly composited over the
-    // card surface colour — not just alpha-overlaid on transparent.
-    val surfaceBase = MaterialTheme.colorScheme.surfaceContainerLow
-    val stateTarget = MaterialTheme.colorScheme.primaryContainer
+    // Use secondaryContainer as the selected-row background.
+    //
+    // Why NOT lerp(surfaceContainerLow, primaryContainer, 0.12f):
+    //   Dynamic colour (wallpaper-derived tonal palette) can place
+    //   primaryContainer very close in lightness to surfaceContainerLow,
+    //   making a 12% lerp invisible — especially when Xiaomi Parts is
+    //   hosted inside the Settings process via Connection Preferences.
+    //
+    // Why secondaryContainer:
+    //   M3 Expressive selected-row pattern (used in Pixel Settings radio
+    //   groups, navigation drawer, etc.) uses secondaryContainer as the
+    //   persistent selected-state fill. It is always tonally distinct from
+    //   every surface level in the dynamic colour system by construction —
+    //   secondary and surface hues are generated from different palette
+    //   keys. This guarantees perceptible contrast regardless of wallpaper.
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
-            lerp(surfaceBase, stateTarget, PartsTokens.selectedStateLayerAlpha)
+            MaterialTheme.colorScheme.secondaryContainer
         else
-            surfaceBase,
+            MaterialTheme.colorScheme.surfaceContainerLow,
         animationSpec = spring(),
         label         = "color-row-bg-${this.name}",
     )
+
+    // Text and radio tint: onSecondaryContainer when selected so the
+    // foreground colour is guaranteed to meet contrast on the new bg.
+    val contentColor = if (selected)
+        MaterialTheme.colorScheme.onSecondaryContainer
+    else
+        MaterialTheme.colorScheme.onSurface
 
     val label   = stringResource(this.labelRes)
     val summary = stringResource(this.summaryRes)
@@ -190,7 +206,7 @@ private fun ColorMode.Row(
             selected = selected,
             onClick  = null,
             colors   = RadioButtonDefaults.colors(
-                selectedColor   = MaterialTheme.colorScheme.primary,
+                selectedColor   = MaterialTheme.colorScheme.onSecondaryContainer,
                 unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant,
             ),
         )
@@ -199,15 +215,15 @@ private fun ColorMode.Row(
                 text       = label,
                 style      = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color      = if (selected)
-                    MaterialTheme.colorScheme.primary
-                else
-                    MaterialTheme.colorScheme.onSurface,
+                color      = contentColor,
             )
             Text(
                 text  = summary,
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (selected)
+                    MaterialTheme.colorScheme.onSecondaryContainer
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
     }
