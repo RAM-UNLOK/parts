@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
@@ -86,19 +87,14 @@ fun XiaomiPartsHomeScreen(
 
     // ── Charging state ────────────────────────────────────────────────────────
     // Seed from sticky ACTION_BATTERY_CHANGED so the UI is correct before any
-    // broadcast arrives. Only register for CONNECTED / DISCONNECTED edge events
-    // — dropping ACTION_BATTERY_CHANGED from the live receiver prevents the
-    // double-fire that produced multiple charging toasts on a single plug event.
+    // broadcast arrives. Only CONNECTED / DISCONNECTED edge events registered
+    // to prevent duplicate toasts from repeated BATTERY_CHANGED fires.
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         mutableStateOf(plugged != 0)
     }
-
-    // Debounce: suppress any second edge event arriving within 2 s (e.g. a
-    // charger that briefly disconnects during negotiation).
     var lastChargingEventMs by remember { mutableLongStateOf(0L) }
-
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
@@ -111,9 +107,6 @@ fun XiaomiPartsHomeScreen(
                 }
             }
         }
-        // Only CONNECTED + DISCONNECTED — no ACTION_BATTERY_CHANGED.
-        // BATTERY_CHANGED fires repeatedly (every % change) and causes
-        // duplicate state updates + duplicate toasts.
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
@@ -136,25 +129,25 @@ fun XiaomiPartsHomeScreen(
     }
 
     // ── Scroll behaviour ──────────────────────────────────────────────────────
-    // exitUntilCollapsed: correct for the home screen LargeTopAppBar so the
-    // title collapses as the user scrolls into the content list.
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
+            dampingRatio = PartsTokens.MotionDampingRatio,
             stiffness    = Spring.StiffnessHigh,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
     // ── Section entrance animation states ─────────────────────────────────────
+    // Each section gets its own MutableTransitionState so they can be
+    // staggered independently. Delay is baked into the tween animationSpec
+    // on BOTH the slide and the fade — previously only the fade was delayed,
+    // causing a visible pop-then-fade artefact.
     val visDisplay     = remember { MutableTransitionState(false).apply { targetState = true } }
     val visPerformance = remember { MutableTransitionState(false).apply { targetState = true } }
     val visDiagnostics = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surface: cards use surfaceContainerLow giving them visible lift against
-        // the page background — matches Pixel/AOSP dynamic-colour Settings look.
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
@@ -174,17 +167,32 @@ fun XiaomiPartsHomeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             // ── Charging banner ───────────────────────────────────────────────
-            // Shown only when thermal is enabled AND device is charging.
-            // spring enter/exit: banner slides in/out smoothly without a hard
-            // pop — matches M3 Expressive motion guidance for contextual cards.
+            // spring enter/exit so the banner slides in with a physical feel
+            // rather than a hard linear pop.
             AnimatedVisibility(
                 visible = isCharging && thermalEnabled,
                 enter   = expandVertically(
-                    spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow)
-                ) + fadeIn(tween(220)),
+                    animationSpec = spring(
+                        dampingRatio = PartsTokens.MotionDampingRatio,
+                        stiffness    = PartsTokens.MotionStiffnessMediumLow,
+                    ),
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        easing         = EaseOutCubic,
+                    ),
+                ),
                 exit    = shrinkVertically(
-                    spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)
-                ) + fadeOut(tween(160)),
+                    animationSpec = spring(
+                        dampingRatio = PartsTokens.MotionDampingRatio,
+                        stiffness    = PartsTokens.MotionStiffnessMedium,
+                    ),
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationExit,
+                        easing         = EaseOutCubic,
+                    ),
+                ),
             ) {
                 ChargingBanner(
                     Modifier.padding(
@@ -194,17 +202,26 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Display section ───────────────────────────────────────────────
+            // ── Display section  (stagger group 0 — no delay) ─────────────────
+            // slideInVertically + fadeIn share the SAME tween duration + delay
+            // so both start simultaneously. Slide uses EaseOutCubic (decelerates
+            // into rest) — the M3 Expressive "Emphasized Decelerate" curve.
             AnimatedVisibility(
                 visibleState = visDisplay,
-                enter = fadeIn(tween(220)) +
-                        slideInVertically(
-                            animationSpec  = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { it / 5 },
-                        ),
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        delayMillis    = 0,
+                        easing         = EaseOutCubic,
+                    ),
+                ) + slideInVertically(
+                    animationSpec  = tween(
+                        durationMillis = PartsTokens.MotionDurationSlide,
+                        delayMillis    = 0,
+                        easing         = EaseOutCubic,
+                    ),
+                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
+                ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
@@ -221,17 +238,23 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Performance section ───────────────────────────────────────────
+            // ── Performance section  (stagger group 1 — 1× step delay) ────────
             AnimatedVisibility(
                 visibleState = visPerformance,
-                enter = fadeIn(tween(220, delayMillis = 60)) +
-                        slideInVertically(
-                            animationSpec  = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { it / 5 },
-                        ),
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        delayMillis    = PartsTokens.MotionStaggerStep,
+                        easing         = EaseOutCubic,
+                    ),
+                ) + slideInVertically(
+                    animationSpec  = tween(
+                        durationMillis = PartsTokens.MotionDurationSlide,
+                        delayMillis    = PartsTokens.MotionStaggerStep,
+                        easing         = EaseOutCubic,
+                    ),
+                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
+                ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
@@ -262,17 +285,23 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // ── Diagnostics section ───────────────────────────────────────────
+            // ── Diagnostics section  (stagger group 2 — 2× step delay) ────────
             AnimatedVisibility(
                 visibleState = visDiagnostics,
-                enter = fadeIn(tween(220, delayMillis = 120)) +
-                        slideInVertically(
-                            animationSpec  = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { it / 5 },
-                        ),
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        delayMillis    = PartsTokens.MotionStaggerStep * 2,
+                        easing         = EaseOutCubic,
+                    ),
+                ) + slideInVertically(
+                    animationSpec  = tween(
+                        durationMillis = PartsTokens.MotionDurationSlide,
+                        delayMillis    = PartsTokens.MotionStaggerStep * 2,
+                        easing         = EaseOutCubic,
+                    ),
+                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
+                ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
@@ -300,16 +329,9 @@ fun XiaomiPartsHomeScreen(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared composables — used by HomeScreen and sub-screens
+// Shared composables
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * M3 Expressive category header.
- *
- * Uses [MaterialTheme.typography.titleSmall] (was labelLarge) to match the
- * M3 Expressive spec for list-section headers. Primary colour so the header
- * reads as a structural landmark without competing with content.
- */
 @Composable
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
@@ -324,14 +346,6 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     )
 }
 
-/**
- * M3 card container for settings rows.
- *
- * Backed by [Surface] with [MaterialTheme.colorScheme.surfaceContainerLow] so
- * the card has a single consistent background colour sourced from the dynamic
- * Monet palette. The shape uses [PartsTokens.cardShape] (28 dp corner radius —
- * M3 Expressive extra-large shape).
- */
 @Composable
 fun PartsCard(
     modifier: Modifier = Modifier,
@@ -349,13 +363,6 @@ fun PartsCard(
     }
 }
 
-/**
- * M3 Expressive settings row.
- *
- * Leading icon sits in a 40 dp tonal container (secondaryContainer fill,
- * onSecondaryContainer icon tint) — the correct M3 Expressive tonal icon
- * treatment. Trailing chevron uses onSurfaceVariant to stay visually quiet.
- */
 @Composable
 fun PartsRow(
     icon:     ImageVector,
@@ -376,9 +383,6 @@ fun PartsRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
     ) {
-        // Tonal icon container — M3 Expressive 40 dp circle with secondaryContainer
-        // background. Replaces the earlier manual Box(CircleShape)+clip pattern
-        // with a semantically equivalent but token-correct version.
         Box(
             modifier = Modifier
                 .size(PartsTokens.leadingIconContainerSize)
@@ -420,8 +424,6 @@ fun PartsRow(
 
 @Composable
 private fun ChargingBanner(modifier: Modifier = Modifier) {
-    // tertiaryContainer / onTertiaryContainer: the correct M3 semantic for
-    // battery / charging context (warm accent, distinct from primary/secondary).
     Surface(
         modifier       = modifier.fillMaxWidth(),
         shape          = PartsTokens.bannerShape,

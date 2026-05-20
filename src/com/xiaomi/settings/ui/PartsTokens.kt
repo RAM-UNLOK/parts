@@ -5,12 +5,13 @@
 
 package com.xiaomi.settings.ui
 
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.dp
 
 /**
- * Single source of truth for all spacing, sizing, shape and alpha tokens
- * used across XiaomiParts screens.
+ * Single source of truth for all spacing, sizing, shape, alpha and
+ * **motion** tokens used across XiaomiParts screens.
  *
  * Tokens are derived from:
  *   - Clover/AOSP Settings themes_expressive.xml
@@ -53,15 +54,15 @@ object PartsTokens {
 
     // ─ App-list rows (denser than preference rows) ──────────────────────
     /**
-     * Vertical padding for an app-list row (app icon + label + chip).
+     * Vertical padding for an app-list row (app icon + label + button).
      * Tighter than a preference row: 12dp top/bottom ≈ 64dp total height.
      */
     val appRowPaddingVertical = 12.dp
     /** Gap between the app icon and the label in an app-list row. */
     val appRowIconSpacing     = 12.dp
 
-    // ─ Per-app thermal chip / dropdown ─────────────────────────────────
-    /** Minimum width for the thermal-state selector chip. */
+    // ─ Per-app thermal dropdown ─────────────────────────────────────────
+    /** Minimum width for the thermal-state selector button. */
     val chipMinWidth = 160.dp
     /** Vertical padding inside each dropdown menu item. */
     val dropdownItemVerticalPadding = 14.dp
@@ -100,8 +101,6 @@ object PartsTokens {
     /**
      * Cards use surfaceContainerLow colour role for tonal elevation.
      * No physical shadow — matches Pixel Settings visual language.
-     * Passed as tonalElevation = 0.dp to Surface; the colour role itself
-     * encodes the correct tonal value without an overlay.
      */
     val cardElevation = 0.dp
 
@@ -114,8 +113,73 @@ object PartsTokens {
      */
     val cardShape   = RoundedCornerShape(28.dp)
     /**
-     * Banner / info-pill corner radius = 28dp (full pill for short banners,
-     * large-radius squircle for multi-line info cards).
+     * Banner / info-pill corner radius = 28dp.
      */
     val bannerShape = RoundedCornerShape(28.dp)
+
+    // ─ Motion ─────────────────────────────────────────────────────────
+    //
+    // Single source of truth for all animation durations, spring params
+    // and stagger values. Every screen references these constants so
+    // changing one value here propagates everywhere automatically.
+    //
+    // Curve: EaseOutCubic — M3 Expressive "Emphasized Decelerate" easing.
+    // Used on ALL tween-based enter transitions (slide, fade, route nav).
+    // Exit transitions use the same curve reversed (element accelerates out).
+    //
+    // Spring params map to M3 Expressive spec:
+    //   DampingRatioNoBouncy + StiffnessMediumLow  → smooth settling, no overshoot
+    //   DampingRatioNoBouncy + StiffnessMedium     → snappier exit / collapse
+    //   DampingRatioNoBouncy + StiffnessHigh       → snap (scroll behaviour)
+
+    /** Fade-in / fade-out duration for content elements entering the screen. */
+    const val MotionDurationEnter: Int = 220
+
+    /** Fade-out duration for content elements leaving the screen. */
+    const val MotionDurationExit: Int = 160
+
+    /**
+     * Slide (translateY) duration for staggered section entrance.
+     * Longer than the fade so the element is still moving as it becomes
+     * fully opaque — produces a more physical, continuous feel.
+     */
+    const val MotionDurationSlide: Int = 400
+
+    /**
+     * Full route transition duration (screen → screen slide).
+     * Asymmetric: enter=350ms (deliberate arrival), exit=250ms (quick departure).
+     */
+    const val MotionDurationRoute: Int = 350
+
+    /**
+     * Stagger step between section groups on the home screen.
+     * Groups: Display (0 ms), Performance (1×step), Diagnostics (2×step).
+     */
+    const val MotionStaggerStep: Int = 60
+
+    /**
+     * Initial Y-offset divisor for slideInVertically.
+     * initialOffsetY = { it / MotionSlideDistance } → 1/5 of item height.
+     * Keeps the slide subtle (not a full-screen swoosh) while still giving
+     * a clear directional cue.
+     */
+    const val MotionSlideDistance: Int = 5
+
+    /**
+     * Spring damping ratio used across all spring-based animations.
+     * NoBouncy = critically damped — settles without oscillation.
+     */
+    val MotionDampingRatio: Float = Spring.DampingRatioNoBouncy
+
+    /**
+     * Spring stiffness for enter / expand animations.
+     * MediumLow = leisurely settle, appropriate for elements arriving on screen.
+     */
+    val MotionStiffnessMediumLow: Float = Spring.StiffnessMediumLow
+
+    /**
+     * Spring stiffness for exit / collapse animations.
+     * Medium = slightly snappier so the exit doesn't drag.
+     */
+    val MotionStiffnessMedium: Float = Spring.StiffnessMedium
 }

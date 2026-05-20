@@ -9,16 +9,19 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.xiaomi.settings.display.DisplayColoursScreen
 import com.xiaomi.settings.thermal.ThermalManagementScreen
 import com.xiaomi.settings.touchsampling.TouchBoostScreen
+import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.ui.XiaomiPartsTheme
 
 class XiaomiPartsActivity : ComponentActivity() {
@@ -31,33 +34,87 @@ class XiaomiPartsActivity : ComponentActivity() {
             XiaomiPartsTheme {
                 val navController = rememberNavController()
 
-                // Plain crossfade transitions for in-process NavHost navigation.
+                // ── M3 Expressive route transitions ───────────────────────────
                 //
-                // WHY NOT scaleIn/scaleOut:
-                //   Scale + fade simultaneously causes a brightness flash.
-                //   The outgoing screen's fadeOut (fast) completes before the
-                //   incoming screen is opaque, briefly exposing the raw window
-                //   background. Scale transitions belong at the Activity window
-                //   level (WindowManager / predictive-back), not inside a
-                //   NavHost composable.
+                // Pattern: slideInHorizontally + fadeIn (enter/popEnter)
+                //          slideOutHorizontally + fadeOut (exit/popExit)
                 //
-                // WHY LinearEasing for fades:
-                //   EaseIn or EaseOut on an opacity-only transition produces a
-                //   perceptual brightness dip at the midpoint — the eye reads
-                //   this as a flash. LinearEasing keeps brightness even
-                //   throughout the crossfade, matching how Android's own
-                //   ActivityOptions.makeSceneTransitionAnimation works.
+                // Direction:
+                //   Forward  (enter)  — slide in from +X (right edge → centre)
+                //   Forward  (exit)   — slide out to   -X (centre → left edge)
+                //   Back     (pop enter) — slide in from -X (left edge → centre)
+                //   Back     (pop exit)  — slide out to  +X (centre → right edge)
                 //
-                // enter 200ms / exit 150ms: asymmetric timing so the outgoing
-                // screen exits slightly faster than the incoming one arrives,
-                // matching Material 3 motion guidance (exit is secondary).
+                // This matches the Android 15 AOSP Settings navigation motion
+                // and the M3 Expressive spec for horizontal container transforms.
+                //
+                // EaseOutCubic: decelerating curve — element moves fast at the
+                // start and slows to rest, matching M3 "Emphasized Decelerate"
+                // easing for entering elements and M3 "Emphasized Accelerate"
+                // (approximated by EaseOutCubic on reverse) for exiting.
+                //
+                // Duration: PartsTokens.MotionDurationRoute (350 ms enter,
+                // 250 ms exit) — asymmetric so the outgoing screen exits fast
+                // and the incoming screen arrives deliberately.
                 NavHost(
-                    navController      = navController,
-                    startDestination   = "home",
-                    enterTransition    = { fadeIn(tween(200, easing = LinearEasing)) },
-                    exitTransition     = { fadeOut(tween(150, easing = LinearEasing)) },
-                    popEnterTransition = { fadeIn(tween(200, easing = LinearEasing)) },
-                    popExitTransition  = { fadeOut(tween(150, easing = LinearEasing)) },
+                    navController    = navController,
+                    startDestination = "home",
+                    enterTransition  = {
+                        slideInHorizontally(
+                            animationSpec  = tween(
+                                durationMillis = PartsTokens.MotionDurationRoute,
+                                easing         = EaseOutCubic,
+                            ),
+                            initialOffsetX = { it },           // from right
+                        ) + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = PartsTokens.MotionDurationEnter,
+                                easing         = EaseOutCubic,
+                            ),
+                        )
+                    },
+                    exitTransition   = {
+                        slideOutHorizontally(
+                            animationSpec = tween(
+                                durationMillis = PartsTokens.MotionDurationExit,
+                                easing         = EaseOutCubic,
+                            ),
+                            targetOffsetX = { -it / 3 },       // subtle push left
+                        ) + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = PartsTokens.MotionDurationExit,
+                                easing         = EaseOutCubic,
+                            ),
+                        )
+                    },
+                    popEnterTransition = {
+                        slideInHorizontally(
+                            animationSpec  = tween(
+                                durationMillis = PartsTokens.MotionDurationRoute,
+                                easing         = EaseOutCubic,
+                            ),
+                            initialOffsetX = { -it / 3 },      // gentle return from left
+                        ) + fadeIn(
+                            animationSpec = tween(
+                                durationMillis = PartsTokens.MotionDurationEnter,
+                                easing         = EaseOutCubic,
+                            ),
+                        )
+                    },
+                    popExitTransition  = {
+                        slideOutHorizontally(
+                            animationSpec = tween(
+                                durationMillis = PartsTokens.MotionDurationExit,
+                                easing         = EaseOutCubic,
+                            ),
+                            targetOffsetX = { it },            // slide out to right
+                        ) + fadeOut(
+                            animationSpec = tween(
+                                durationMillis = PartsTokens.MotionDurationExit,
+                                easing         = EaseOutCubic,
+                            ),
+                        )
+                    },
                 ) {
                     composable("home") {
                         XiaomiPartsHomeScreen(
