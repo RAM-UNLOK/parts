@@ -43,7 +43,7 @@ object PartsTokens {
     val dropdownItemVerticalPadding = 10.dp
 
     // ── Motion ──────────────────────────────────────────
-    const val MotionDampingRatio      = Spring.DampingRatioNoBouncy
+    const val MotionDampingRatio       = Spring.DampingRatioNoBouncy
     const val MotionStiffnessMediumLow = Spring.StiffnessMediumLow
 
     val MotionSpringEnter: SpringSpec<Float> = spring(
@@ -55,10 +55,16 @@ object PartsTokens {
         stiffness    = Spring.StiffnessMedium,
     )
 
-    // Legacy int aliases kept so DisplayColoursScreen.kt compiles
-    // without changes — they are no longer used for animation.
+    // ── Motion durations (ms) ────────────────────────────
+    /** Enter duration: fade-in portion of enter transitions. */
     const val MotionDurationEnter  = 280
+    /** Slide duration for list stagger animations. */
     const val MotionDurationSlide  = 320
+    /** Full route enter transition duration (slide + fade). */
+    const val MotionDurationRoute  = 350
+    /** Exit / pop-exit transition duration — faster than enter. */
+    const val MotionDurationExit   = 250
+    /** Stagger delay step between animated list items. */
     const val MotionStaggerStep    = 60
     const val MotionSlideDistance  = 8
 }

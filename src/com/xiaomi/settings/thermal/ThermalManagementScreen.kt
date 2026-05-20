@@ -55,11 +55,9 @@ import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenu
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -181,14 +179,6 @@ private fun ChargingInfoBanner() {
     }
 }
 
-/**
- * Thermal Management screen.
- *
- * Reset Profiles is now a dedicated [PartsRow] inside its own [PartsCard]
- * between the enable-toggle card and the per-app list, matching the
- * same clickable-container pattern used by every other settings entry.
- * The TopAppBar no longer has an actions IconButton.
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
@@ -265,7 +255,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                // No navigationIcon and no actions — Reset is now a PartsRow below.
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -303,7 +292,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 return@LazyColumn
             }
 
-            // ── Enable toggle ─────────────────────────────────────
             item(key = "toggle-label") {
                 PartsCategory(stringResource(R.string.thermal_enable))
             }
@@ -356,9 +344,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // ── Reset Profiles row ───────────────────────────────
-            // Shown regardless of enabled state so users can always
-            // reset without needing to re-enable first.
             item(key = "reset-label") {
                 PartsCategory(stringResource(R.string.thermal_reset))
             }
@@ -369,7 +354,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         title   = stringResource(R.string.thermal_reset),
                         summary = stringResource(R.string.thermal_reset_confirm),
                         onClick = { showResetDialog = true },
-                        // No trailing chevron needed — this opens a dialog, not a new screen.
                         trailing = {},
                     )
                 }
@@ -475,7 +459,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
     entry:          AppEntry,
@@ -520,23 +503,20 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        ExposedDropdownMenuBox(
-            expanded         = expanded,
-            onExpandedChange = { newValue ->
-                if (chargingLocked) {
-                    Toast.makeText(
-                        context,
-                        R.string.thermal_charging_locked_hint,
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                } else {
-                    expanded = newValue
-                }
-            },
-        ) {
+        // ── Button-anchored dropdown (no ExposedDropdownMenuBox needed) ───
+        Box {
             FilledTonalButton(
-                onClick        = { /* handled by menuAnchor */ },
-                modifier       = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                onClick        = {
+                    if (chargingLocked) {
+                        Toast.makeText(
+                            context,
+                            R.string.thermal_charging_locked_hint,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    } else {
+                        expanded = !expanded
+                    }
+                },
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
             ) {
                 Icon(
@@ -562,7 +542,7 @@ private fun AppThermalRow(
                 )
             }
 
-            ExposedDropdownMenu(
+            DropdownMenu(
                 expanded         = expanded,
                 onDismissRequest = { expanded = false },
                 modifier         = Modifier.width(IntrinsicSize.Max),

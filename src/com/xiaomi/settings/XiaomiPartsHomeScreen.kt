@@ -5,13 +5,27 @@
 
 package com.xiaomi.settings
 
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.os.SystemClock
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -19,27 +33,31 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Palette
-import androidx.compose.material.icons.filled.Science
-import androidx.compose.material.icons.filled.Thermostat
-import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.rounded.Android
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.spring
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,14 +65,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.spring
-import com.xiaomi.settings.thermal.ThermalUtils
 import com.xiaomi.settings.ui.PartsTokens
-import com.xiaomi.settings.utils.CitLauncher
+
+// ── Charging toast debounce ──────────────────────────────────────────────
+private const val TOAST_DEBOUNCE_MS = 2_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,9 +80,61 @@ fun XiaomiPartsHomeScreen(
     onNavigateToThermal: () -> Unit,
     onNavigateToTouch:   () -> Unit,
 ) {
-    val context      = LocalContext.current
-    val thermalUtils = remember { ThermalUtils.getInstance(context) }
+    val context = LocalContext.current
 
+    // ── Charging state ────────────────────────────────────────────────────
+    var isCharging        by remember { mutableStateOf(false) }
+    var showChargingBanner by remember { mutableStateOf(false) }
+    var lastToastTime     by remember { mutableLongStateOf(0L) }
+
+    DisposableEffect(Unit) {
+        // Seed initial charging state from sticky ACTION_BATTERY_CHANGED
+        val stickyIntent = context.registerReceiver(
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
+        )
+        val initialStatus = stickyIntent?.getIntExtra(
+            BatteryManager.EXTRA_STATUS,
+            BatteryManager.BATTERY_STATUS_UNKNOWN,
+        ) ?: BatteryManager.BATTERY_STATUS_UNKNOWN
+        isCharging = initialStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
+                     initialStatus == BatteryManager.BATTERY_STATUS_FULL
+        showChargingBanner = isCharging
+
+        // Only listen for CONNECTED / DISCONNECTED — not ACTION_BATTERY_CHANGED
+        // which fires constantly and causes duplicate toasts.
+        var activeToast: Toast? = null
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                val now = SystemClock.elapsedRealtime()
+                val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
+                isCharging = plugged
+                showChargingBanner = plugged
+
+                // Debounce: ignore if a toast was shown within the last 2 s
+                if (now - lastToastTime < TOAST_DEBOUNCE_MS) return
+                lastToastTime = now
+
+                // Cancel any queued toast before showing a new one
+                activeToast?.cancel()
+                val msgRes = if (plugged) R.string.charging_connected
+                             else         R.string.charging_disconnected
+                activeToast = Toast.makeText(ctx, msgRes, Toast.LENGTH_SHORT)
+                    .also { it.show() }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
+        }
+        context.registerReceiver(receiver, filter)
+        onDispose {
+            context.unregisterReceiver(receiver)
+            activeToast?.cancel()
+        }
+    }
+
+    // ── Scroll behaviour ──────────────────────────────────────────────────
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -79,8 +148,14 @@ fun XiaomiPartsHomeScreen(
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
-                title  = { Text(text = stringResource(R.string.xiaomi_parts_title)) },
-                colors = TopAppBarDefaults.topAppBarColors(
+                title = {
+                    Text(
+                        text     = stringResource(R.string.xiaomi_parts_title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
@@ -88,175 +163,198 @@ fun XiaomiPartsHomeScreen(
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
+        LazyColumn(
+            modifier       = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState()),
+                .padding(innerPadding),
+            contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
-            // ── Display ──────────────────────────────────────────
-            PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
-            PartsCard {
-                PartsRow(
-                    icon    = Icons.Filled.Palette,
-                    title   = stringResource(R.string.display_title),
-                    summary = stringResource(R.string.display_summary),
-                    onClick = onNavigateToDisplay,
-                )
-            }
-
-            // ── Performance ─────────────────────────────────────
-            PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
-            PartsCard {
-                PartsRow(
-                    icon    = Icons.Filled.Thermostat,
-                    title   = stringResource(R.string.thermal_title),
-                    summary = stringResource(
-                        if (thermalUtils.enabled) R.string.thermal_summary_active
-                        else                      R.string.thermal_summary_disabled
+            // ── Charging banner ───────────────────────────────────
+            item(key = "charging-banner") {
+                AnimatedVisibility(
+                    visible = showChargingBanner,
+                    enter   = fadeIn(tween(220)) + slideInVertically(
+                        animationSpec  = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow),
+                        initialOffsetY = { -it / 2 },
                     ),
-                    onClick = onNavigateToThermal,
-                )
-                HorizontalDivider(
-                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                    thickness = 0.5.dp,
-                    color     = MaterialTheme.colorScheme.outlineVariant,
-                )
-                PartsRow(
-                    icon    = Icons.Filled.TouchApp,
-                    title   = stringResource(R.string.htsr_title),
-                    summary = stringResource(R.string.htsr_summary),
-                    onClick = onNavigateToTouch,
-                )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+                            .padding(top = 8.dp)
+                            .clip(PartsTokens.cardShape)
+                            .background(MaterialTheme.colorScheme.tertiaryContainer)
+                            .padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                                vertical   = PartsTokens.rowPaddingVertical,
+                            ),
+                        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
+                        verticalAlignment     = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Filled.BatteryChargingFull,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier           = Modifier.size(20.dp),
+                        )
+                        Text(
+                            text     = stringResource(R.string.charging_connected),
+                            style    = MaterialTheme.typography.labelLarge,
+                            color    = MaterialTheme.colorScheme.onTertiaryContainer,
+                            modifier = Modifier.weight(1f),
+                        )
+                        IconButton(
+                            onClick  = { showChargingBanner = false },
+                            modifier = Modifier.size(20.dp),
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Filled.Close,
+                                contentDescription = stringResource(R.string.dismiss),
+                                tint               = MaterialTheme.colorScheme.onTertiaryContainer,
+                                modifier           = Modifier.size(16.dp),
+                            )
+                        }
+                    }
+                }
             }
 
-            // ── Diagnostics ─────────────────────────────────────
-            PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
-            PartsCard {
-                PartsRow(
-                    icon    = Icons.Filled.Science,
-                    title   = stringResource(R.string.cit_title),
-                    summary = stringResource(R.string.cit_summary),
-                    onClick = {
-                        if (!CitLauncher.launch(context))
-                            Toast.makeText(
-                                context,
-                                R.string.cit_not_found,
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                    },
-                )
+            // ── Display category ──────────────────────────────────
+            item(key = "display-label") {
+                PartsCategory(stringResource(R.string.display_category))
+            }
+            item(key = "display-card") {
+                PartsCard {
+                    PartsRow(
+                        icon    = ImageVector.vectorResource(R.drawable.ic_display_colours),
+                        title   = stringResource(R.string.display_colours_title),
+                        summary = stringResource(R.string.display_colours_summary),
+                        onClick = onNavigateToDisplay,
+                    )
+                }
             }
 
-            Spacer(Modifier.height(PartsTokens.listBottomPadding))
+            // ── Performance category ──────────────────────────────
+            item(key = "perf-label") {
+                PartsCategory(stringResource(R.string.performance_category))
+            }
+            item(key = "perf-card") {
+                PartsCard {
+                    PartsRow(
+                        icon    = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
+                        title   = stringResource(R.string.thermal_title),
+                        summary = stringResource(R.string.thermal_summary),
+                        onClick = onNavigateToThermal,
+                    )
+                    PartsRow(
+                        icon    = ImageVector.vectorResource(R.drawable.ic_touch_boost),
+                        title   = stringResource(R.string.touch_boost_title),
+                        summary = stringResource(R.string.touch_boost_summary),
+                        onClick = onNavigateToTouch,
+                        showDivider = false,
+                    )
+                }
+            }
         }
     }
 }
 
-// ───────────────────────────────────────────────────────────────────────────
-// Shared composables used by HomeScreen and sub-screens
-// ───────────────────────────────────────────────────────────────────────────
+// ── Shared composables ────────────────────────────────────────────────────
 
 @Composable
-fun PartsCategory(label: String, modifier: Modifier = Modifier) {
+fun PartsCategory(
+    title:    String,
+    modifier: Modifier = Modifier,
+) {
     Text(
-        text     = label,
-        style    = MaterialTheme.typography.titleSmall,
+        text     = title,
+        style    = MaterialTheme.typography.labelMedium,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(
-            start  = PartsTokens.contentPaddingHorizontal,
-            top    = PartsTokens.categoryTopPadding,
-            bottom = PartsTokens.categoryBottomPadding,
-        ),
+        modifier = modifier
+            .padding(
+                start  = PartsTokens.contentPaddingHorizontal,
+                end    = PartsTokens.contentPaddingHorizontal,
+                top    = PartsTokens.categoryTopPadding,
+                bottom = PartsTokens.categoryBottomPadding,
+            ),
     )
 }
 
-/**
- * Shared card container used on every screen.
- *
- * Background: [MaterialTheme.colorScheme.surfaceContainer]
- * Why surfaceContainer and not surfaceContainerLow:
- *   On dark Monet palettes (which is the dominant mode for this app),
- *   surfaceContainerLow is only ~1-2% lighter than `surface`, making cards
- *   visually invisible. surfaceContainer is the correct M3 token for
- *   "elevated but not prominent" containers — it matches AOSP Settings
- *   card appearance on both light and dark dynamic-colour schemes.
- *
- * Tonal elevation is intentionally omitted: M3 spec says use either a
- * distinct container colour OR tonal elevation, not both. Adding tonal
- * elevation on top of surfaceContainer double-tints in dark mode.
- */
 @Composable
 fun PartsCard(
     modifier: Modifier = Modifier,
-    content:  @Composable ColumnScope.() -> Unit,
+    content:  @Composable () -> Unit,
 ) {
     Surface(
-        modifier = modifier
+        modifier      = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        shape    = PartsTokens.cardShape,
-        color    = MaterialTheme.colorScheme.surfaceContainer,
+        shape         = PartsTokens.cardShape,
+        color         = MaterialTheme.colorScheme.surfaceContainerLow,
+        tonalElevation = 0.dp,
     ) {
-        Column(content = content)
+        Column {
+            content()
+        }
     }
 }
 
 @Composable
 fun PartsRow(
-    icon:     ImageVector,
-    title:    String,
-    summary:  String,
-    onClick:  () -> Unit,
-    modifier: Modifier = Modifier,
-    trailing: @Composable (() -> Unit)? = null,
+    icon:        ImageVector,
+    title:       String,
+    summary:     String,
+    onClick:     () -> Unit,
+    modifier:    Modifier   = Modifier,
+    showDivider: Boolean    = true,
+    trailing:    @Composable () -> Unit = {
+        Icon(
+            imageVector        = Icons.Filled.ChevronRight,
+            contentDescription = null,
+            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier           = Modifier.size(PartsTokens.trailingIconSize),
+        )
+    },
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(
-                horizontal = PartsTokens.contentPaddingHorizontal,
-                vertical   = PartsTokens.rowPaddingVertical,
-            ),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(PartsTokens.leadingIconContainerSize)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.secondaryContainer),
-            contentAlignment = Alignment.Center,
+    Column {
+        Row(
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable(onClick = onClick)
+                .padding(
+                    horizontal = PartsTokens.contentPaddingHorizontal,
+                    vertical   = PartsTokens.rowPaddingVertical,
+                ),
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
         ) {
-            Icon(
-                imageVector        = icon,
-                contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                modifier           = Modifier.size(PartsTokens.leadingIconSize),
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text  = title,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-            )
-            Text(
-                text  = summary,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (trailing != null) {
+            Box(
+                modifier         = Modifier
+                    .size(PartsTokens.leadingIconContainerSize)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector        = icon,
+                    contentDescription = null,
+                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text  = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text  = summary,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
             trailing()
-        } else {
-            Icon(
-                imageVector        = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier           = Modifier.size(PartsTokens.trailingIconSize),
-            )
         }
     }
 }
