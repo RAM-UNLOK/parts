@@ -75,6 +75,10 @@
     <string name="thermal_charging_active_desc">Charge-optimised thermal applied while plugged in</string>
     <string name="thermal_charging_toast_connected">🔋 Plugged in · charge profile on</string>
     <string name="thermal_charging_toast_disconnected">🔌 Unplugged · normal profiles back</string>
+    <!-- Banner body — shown in the always-visible info card on the Thermal screen -->
+    <string name="thermal_charging_info_body">While plugged in, sconfig 27 (charge-optimised thermal) takes top priority. All per-app profiles are paused and resume automatically once the charger is disconnected.</string>
+    <!-- Dimmed hint shown below the locked app list while charging -->
+    <string name="thermal_charging_override_hint">Charging override active · per-app profiles resume when unplugged</string>
 
     <!-- ── Touch Boost ──────────────────────────────────── -->
     <string name="htsr_title">Touch Boost</string>

@@ -39,9 +39,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.People
@@ -73,6 +75,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -98,6 +101,7 @@ import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.utils.ChargingMonitor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -112,21 +116,6 @@ private data class AppEntry(
 /**
  * Semantic dot/icon colour for each thermal state using M3 colour roles.
  * Adapts automatically to both light and dark themes.
- *
- * Mapping rationale:
- *   DEFAULT         -> outline      (neutral; no special profile)
- *   BENCHMARK       -> error        (red = maximum stress / heat)
- *   BROWSER         -> primary      (calm, everyday use)
- *   CAMERA          -> tertiary     (creative, distinct accent)
- *   DIALER          -> secondary    (communication)
- *   GAMING          -> error        (red = high-performance / heat)
- *   NAVIGATION      -> primary      (blue = directional / maps)
- *   VIDEO_CALL      -> secondary    (real-time communication)
- *   VIDEO_STREAMING -> tertiary     (rich media consumption)
- *   VIDEO           -> tertiary     (media playback)
- *   SOCIAL          -> primary      (blue = connected)
- *   MUSIC           -> secondary    (background / relaxed)
- *   STREAMING       -> tertiary     (live content)
  */
 @Composable
 private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
@@ -148,8 +137,6 @@ private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
 
 /**
  * Per-state vector icon for dropdown menu items.
- * Each icon unambiguously represents its use-case so the list is
- * scannable without reading the label text.
  */
 private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.DEFAULT         -> Icons.Filled.TuneRounded
@@ -168,6 +155,77 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     else                                      -> Icons.Filled.TuneRounded
 }
 
+/**
+ * Info banner explaining charging thermal override behaviour.
+ *
+ * Two states:
+ *   isCharging = false → neutral Info icon + surfaceContainerHigh tint.
+ *                        Always visible when thermals are enabled so the
+ *                        user understands what will happen when they plug in.
+ *   isCharging = true  → BatteryChargingFull icon + secondaryContainer tint.
+ *                        Communicates that the override is live right now.
+ *
+ * Mirrors the TouchBoost info banner style exactly (icon + headline +
+ * body, full-width card with contentPaddingHorizontal).
+ */
+@Composable
+private fun ChargingInfoBanner(isCharging: Boolean) {
+    val containerColor = if (isCharging)
+        MaterialTheme.colorScheme.secondaryContainer
+    else
+        MaterialTheme.colorScheme.surfaceContainerHigh
+
+    val contentColor = if (isCharging)
+        MaterialTheme.colorScheme.onSecondaryContainer
+    else
+        MaterialTheme.colorScheme.onSurfaceVariant
+
+    val icon = if (isCharging)
+        Icons.Filled.BatteryChargingFull
+    else
+        Icons.Filled.Info
+
+    val headline = if (isCharging)
+        stringResource(R.string.thermal_charging_active)
+    else
+        stringResource(R.string.thermal_charging_active)  // same label, tint changes
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+            .clip(PartsTokens.cardShape)
+            .background(containerColor)
+            .padding(
+                horizontal = PartsTokens.contentPaddingHorizontal,
+                vertical   = PartsTokens.rowPaddingVertical,
+            ),
+        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
+        verticalAlignment     = Alignment.Top,
+    ) {
+        Icon(
+            imageVector        = icon,
+            contentDescription = null,
+            tint               = contentColor,
+            modifier           = Modifier
+                .padding(top = 2.dp)
+                .size(18.dp),
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text  = headline,
+                style = MaterialTheme.typography.labelLarge,
+                color = contentColor,
+            )
+            Text(
+                text  = stringResource(R.string.thermal_charging_info_body),
+                style = MaterialTheme.typography.bodySmall,
+                color = contentColor,
+            )
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
@@ -178,6 +236,30 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     var isLoading       by remember { mutableStateOf(true) }
     var enabled         by remember { mutableStateOf(thermalUtils.enabled) }
     var showResetDialog by remember { mutableStateOf(false) }
+
+    // Live charging state — updated by ChargingMonitor's onChange callback.
+    // Initialised from the monitor's current value so there is no flicker
+    // on first composition even if the screen opens while already charging.
+    val chargingMonitor = remember { ChargingMonitor(context) { info ->
+        // onChange fires on ChargingMonitor's HandlerThread; Compose state
+        // writes are safe from any thread (Snapshot system handles it).
+        // The lambda captures the mutableStateOf delegate below via the
+        // DisposableEffect block — see the comment there.
+    }}
+    var isCharging by remember { mutableStateOf(chargingMonitor.isCharging) }
+
+    // Start the monitor and register our state-update callback.
+    // DisposableEffect ensures we stop it when the composable leaves
+    // the composition (e.g. back navigation) to avoid a leak.
+    DisposableEffect(Unit) {
+        val monitor = ChargingMonitor(context) { info ->
+            isCharging = info.isCharging
+        }
+        // Seed the initial value from the first read before any callback fires.
+        isCharging = monitor.isCharging
+        monitor.start()
+        onDispose { monitor.stop(final = true) }
+    }
 
     LaunchedEffect(Unit) {
         appEntries = loadApps(context, thermalUtils)
@@ -356,46 +438,92 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
+                // ── Charging info banner ─────────────────────────────────────
+                // Always shown when thermals are enabled. Switches between
+                // idle-info style (not charging) and active-override style
+                // (charging) based on live ChargingMonitor state.
+                item(key = "charging-info") {
+                    Spacer(Modifier.height(PartsTokens.categoryTopPadding))
+                    ChargingInfoBanner(isCharging = isCharging)
+                }
+
                 item(key = "apps-label") {
                     PartsCategory(stringResource(R.string.thermal_apps_category))
                 }
+
                 item(key = "apps-card") {
-                    PartsCard {
-                        appEntries.forEachIndexed { index, entry ->
-                            AppThermalRow(entry) { newStateId ->
-                                runCatching {
-                                    thermalUtils.writePackage(entry.packageName, newStateId)
-                                    val ns = ThermalUtils.ThermalState.entries
-                                        .firstOrNull { it.id == newStateId }
-                                        ?: ThermalUtils.ThermalState.DEFAULT
-                                    appEntries = appEntries.map {
-                                        if (it.packageName == entry.packageName) it.copy(state = ns)
-                                        else it
+                    // While charging: dim the entire card and show a lock hint
+                    // below it. The dropdowns remain tappable for browsing but
+                    // onStateChange writes are gated inside the callback —
+                    // ThermalService will simply overwrite with sconfig=27 on
+                    // the next applyProfile() call anyway, so UI changes while
+                    // charging are harmless but we discourage them visually.
+                    Column {
+                        Box(
+                            modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
+                        ) {
+                            PartsCard {
+                                appEntries.forEachIndexed { index, entry ->
+                                    AppThermalRow(
+                                        entry         = entry,
+                                        chargingLocked = isCharging,
+                                    ) { newStateId ->
+                                        // Guard: ignore writes while charging.
+                                        // ThermalService priority ensures
+                                        // sconfig=27 is always active while
+                                        // plugged in regardless, but we also
+                                        // skip writing SharedPrefs here to
+                                        // avoid misleading state.
+                                        if (isCharging) return@AppThermalRow
+                                        runCatching {
+                                            thermalUtils.writePackage(entry.packageName, newStateId)
+                                            val ns = ThermalUtils.ThermalState.entries
+                                                .firstOrNull { it.id == newStateId }
+                                                ?: ThermalUtils.ThermalState.DEFAULT
+                                            appEntries = appEntries.map {
+                                                if (it.packageName == entry.packageName) it.copy(state = ns)
+                                                else it
+                                            }
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(
+                                                    R.string.thermal_profile_applied,
+                                                    entry.label,
+                                                    context.getString(ns.label),
+                                                ),
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        }.onFailure {
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.thermal_profile_failed, entry.label),
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        }
                                     }
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(
-                                            R.string.thermal_profile_applied,
-                                            entry.label,
-                                            context.getString(ns.label),
-                                        ),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }.onFailure {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.thermal_profile_failed, entry.label),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
+                                    if (index < appEntries.lastIndex) {
+                                        HorizontalDivider(
+                                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                                            thickness = 0.5.dp,
+                                            color     = MaterialTheme.colorScheme.outlineVariant,
+                                        )
+                                    }
                                 }
                             }
-                            if (index < appEntries.lastIndex) {
-                                HorizontalDivider(
-                                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                                    thickness = 0.5.dp,
-                                    color     = MaterialTheme.colorScheme.outlineVariant,
-                                )
-                            }
+                        }
+                        // Lock hint — only shown while charging
+                        if (isCharging) {
+                            Text(
+                                text     = stringResource(R.string.thermal_charging_override_hint),
+                                style    = MaterialTheme.typography.bodySmall,
+                                color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .padding(
+                                        horizontal = PartsTokens.contentPaddingHorizontal * 2,
+                                        vertical   = PartsTokens.categoryTopPadding,
+                                    )
+                                    .alpha(0.6f),
+                            )
                         }
                     }
                 }
@@ -407,8 +535,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
-    entry:         AppEntry,
-    onStateChange: (Int) -> Unit,
+    entry:          AppEntry,
+    chargingLocked: Boolean,
+    onStateChange:  (Int) -> Unit,
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
 
@@ -445,12 +574,12 @@ private fun AppThermalRow(
         )
 
         ExposedDropdownMenuBox(
-            expanded         = expanded,
-            onExpandedChange = { expanded = it },
+            expanded         = expanded && !chargingLocked,
+            onExpandedChange = { if (!chargingLocked) expanded = it },
         ) {
             ElevatedFilterChip(
                 selected     = entry.state != ThermalUtils.ThermalState.DEFAULT,
-                onClick      = { expanded = true },
+                onClick      = { if (!chargingLocked) expanded = true },
                 label        = {
                     Text(
                         text     = stringResource(entry.state.label),
@@ -488,7 +617,7 @@ private fun AppThermalRow(
             )
 
             ExposedDropdownMenu(
-                expanded         = expanded,
+                expanded         = expanded && !chargingLocked,
                 onDismissRequest = { expanded = false },
                 modifier         = Modifier.width(IntrinsicSize.Max),
             ) {
