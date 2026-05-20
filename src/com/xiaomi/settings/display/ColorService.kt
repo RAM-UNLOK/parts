@@ -85,6 +85,7 @@ class ColorService : Service() {
                 addAction(Intent.ACTION_SCREEN_ON)
                 addAction(Intent.ACTION_SCREEN_OFF)
             },
+            Context.RECEIVER_NOT_EXPORTED,
         )
         setCurrentColorMode()
     }

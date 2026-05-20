@@ -155,8 +155,20 @@ fun XiaomiPartsHomeScreen(
             // thermal management has been disabled.
             AnimatedVisibility(
                 visible = isCharging && thermalEnabled,
-                enter   = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)),
-                exit    = shrinkVertically(spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)),
+                enter   = expandVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                        stiffness    = Spring.StiffnessMediumLow,
+                    ),
+                    expandFrom = Alignment.Top,
+                ),
+                exit = shrinkVertically(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness    = Spring.StiffnessMedium,
+                    ),
+                    shrinkTowards = Alignment.Top,
+                ),
             ) {
                 ChargingBanner(
                     Modifier.padding(

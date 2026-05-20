@@ -88,6 +88,7 @@ class TouchSamplingService : Service() {
                 addAction(Intent.ACTION_USER_PRESENT)
                 addAction(Intent.ACTION_SCREEN_ON)
             },
+            Context.RECEIVER_NOT_EXPORTED,
         )
     }
 
