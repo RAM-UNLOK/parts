@@ -10,11 +10,11 @@
     <!-- ── Xiaomi Parts Hub ─────────────────────────────── -->
     <string name="xiaomi_parts_title">Xiaomi Parts</string>
     <!-- Shown as the subtitle on the Settings homepage tile -->
-    <string name="xiaomi_parts_summary">Display, Thermal and Touch settings</string>
+    <string name="xiaomi_parts_summary">Display, Thermal &amp; Touch</string>
 
     <!-- ── Display Colours ──────────────────────────────── -->
     <string name="display_title">Display Colours</string>
-    <string name="display_summary">Pick your perfect colour profile</string>
+    <string name="display_summary">Choose your colour profile</string>
     <string name="color_mode_vivid">Vivid</string>
     <string name="color_mode_saturated">Saturated</string>
     <string name="color_mode_standard">Standard</string>
@@ -25,7 +25,7 @@
     <string name="color_section_expert">Expert — Wide Gamut</string>
     <!-- %1$s = colour mode name -->
     <string name="color_mode_applied">🎨 %1$s applied</string>
-    <string name="color_mode_failed">❌ Could not apply colour mode</string>
+    <string name="color_mode_failed">❌ Colour mode failed</string>
     <string name="color_mode_vivid_summary">Punchy, boosted saturation</string>
     <string name="color_mode_saturated_summary">Balanced, everyday colours</string>
     <string name="color_mode_standard_summary">Factory-calibrated accuracy</string>
@@ -39,12 +39,12 @@
     <string name="thermal_summary_active">Per-app profiles active</string>
     <string name="thermal_summary_disabled">Tap to enable thermal profiles</string>
     <string name="thermal_enable">Thermal profiles</string>
-    <string name="thermal_enable_summary">Smart per-app thermal tuning in the background</string>
+    <string name="thermal_enable_summary">Per-app thermal tuning, applied automatically</string>
     <string name="thermal_loading">Loading apps…</string>
     <string name="thermal_reset">Reset profiles</string>
     <string name="thermal_reset_confirm">Reset all per-app thermal profiles to Default?</string>
     <string name="thermal_reset_confirm_btn">Reset</string>
-    <string name="thermal_reset_success">✅ Profiles reset to default</string>
+    <string name="thermal_reset_success">✅ Profiles reset</string>
     <string name="thermal_reset_failed">❌ Reset failed</string>
     <!-- %1$s = app name, %2$s = profile name -->
     <string name="thermal_profile_applied">🌡️ %1$s → %2$s</string>
@@ -52,7 +52,7 @@
     <string name="thermal_service_started">🌡️ Thermal profiles on</string>
     <string name="thermal_service_stopped">❄️ Thermal profiles off</string>
     <string name="thermal_toggle_failed">❌ Could not toggle thermal profiles</string>
-    <string name="thermal_disabled_hint">Enable thermal profiles to tune per-app behaviour</string>
+    <string name="thermal_disabled_hint">Enable to configure per-app thermal tuning</string>
     <string name="thermal_apps_category">Per-app profiles</string>
     <string name="thermal_apply_failed">Thermal apply failed</string>
 
@@ -77,24 +77,24 @@
     <!-- Banner title on the Thermal screen while charging -->
     <string name="thermal_charging_active">⚡ Charging profile active</string>
     <!-- Banner body — always-visible info card on the Thermal screen -->
-    <string name="thermal_charging_info_body">While plugged in, a charge-optimised thermal profile takes top priority. All per-app profiles are paused and resume automatically once the charger is disconnected.</string>
+    <string name="thermal_charging_info_body">A charge-optimised thermal profile is active while plugged in. Per-app profiles are paused and resume automatically once unplugged.</string>
     <!-- Dimmed hint shown below the locked app list while charging -->
-    <string name="thermal_charging_override_hint">Charging override active. Per-app profiles resume when unplugged.</string>
+    <string name="thermal_charging_override_hint">Charging override active — profiles resume when unplugged.</string>
     <!-- Toast shown when user taps a locked profile button while charging -->
-    <string name="thermal_charging_locked_hint">🔒 Profiles locked while charging</string>
+    <string name="thermal_charging_locked_hint">🔒 Locked while charging</string>
     <!-- Toast on power connected -->
-    <string name="thermal_charging_toast_connected">⚡ Plugged in — charge profile on</string>
+    <string name="thermal_charging_toast_connected">⚡ Charging profile on</string>
     <!-- Toast on power disconnected -->
-    <string name="thermal_charging_toast_disconnected">🔋 Unplugged — normal profiles restored</string>
+    <string name="thermal_charging_toast_disconnected">🔋 Per-app profiles resumed</string>
 
     <!-- ── Touch Boost ──────────────────────────────────── -->
     <string name="htsr_title">Touch Boost</string>
     <string name="htsr_summary">Higher polling rate, snappier touch</string>
     <string name="htsr_category">Touch Boost</string>
-    <string name="htsr_enable_title">Enhanced Touch Responsiveness</string>
-    <string name="htsr_enable_summary">Raises the touch polling rate for snappier, lower-latency input</string>
+    <string name="htsr_enable_title">Touch Boost</string>
+    <string name="htsr_enable_summary">Boosts touch polling for snappier, lower-latency input</string>
     <string name="htsr_info_title">About Touch Boost</string>
-    <string name="htsr_info_body">Touch boost raises the polling rate of the touch controller, cutting tap-to-response latency. May slightly increase power draw during active use.</string>
+    <string name="htsr_info_body">Raises the touch controller polling rate, reducing tap-to-response latency. May slightly increase power draw during active use.</string>
     <string name="htsr_enabled_toast">👆 Touch boost on</string>
     <string name="htsr_disabled_toast">✋ Touch boost off</string>
     <string name="htsr_failed_toast">❌ Touch boost failed</string>
