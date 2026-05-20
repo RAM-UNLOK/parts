@@ -9,7 +9,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.SystemClock
 import android.widget.Toast
@@ -67,10 +66,9 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.utils.CitLauncher
 
-private const val TOAST_DEBOUNCE_MS   = 2_000L
-private const val CIT_PACKAGE         = "com.xiaomi.cit"
-private const val CIT_ACTIVITY        = "com.xiaomi.cit.MainActivity"
+private const val TOAST_DEBOUNCE_MS = 2_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +84,7 @@ fun XiaomiPartsHomeScreen(
     var lastToastTime      by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
-        // Seed initial state from sticky battery broadcast
+        // Seed initial state from sticky battery broadcast.
         val stickyIntent = context.registerReceiver(
             null,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
@@ -108,6 +106,7 @@ fun XiaomiPartsHomeScreen(
                 isCharging         = plugged
                 showChargingBanner = plugged
 
+                // Debounce: ignore events within TOAST_DEBOUNCE_MS of the last one.
                 if (now - lastToastTime < TOAST_DEBOUNCE_MS) return
                 lastToastTime = now
 
@@ -165,6 +164,7 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
+
             // ── Charging banner ─────────────────────────────────────────
             item(key = "charging-banner") {
                 AnimatedVisibility(
@@ -222,10 +222,10 @@ fun XiaomiPartsHomeScreen(
             item(key = "display-card") {
                 PartsCard {
                     PartsRow(
-                        icon    = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        title   = stringResource(R.string.display_colours_title),
-                        summary = stringResource(R.string.display_colours_summary),
-                        onClick = onNavigateToDisplay,
+                        icon        = ImageVector.vectorResource(R.drawable.ic_display_colours),
+                        title       = stringResource(R.string.display_colours_title),
+                        summary     = stringResource(R.string.display_colours_summary),
+                        onClick     = onNavigateToDisplay,
                         showDivider = false,
                     )
                 }
@@ -259,11 +259,24 @@ fun XiaomiPartsHomeScreen(
             }
             item(key = "diag-card") {
                 PartsCard {
+                    // CitLauncher uses:
+                    //   package  = "com.miui.cit"
+                    //   activity = "com.miui.cit.home.HomeActivity"
+                    // Returns true on success, false if not installed.
                     PartsRow(
                         icon    = Icons.Filled.BugReport,
                         title   = stringResource(R.string.cit_title),
                         summary = stringResource(R.string.cit_summary),
-                        onClick = { launchCit(context) },
+                        onClick = {
+                            val launched = CitLauncher.launch(context)
+                            if (!launched) {
+                                Toast.makeText(
+                                    context,
+                                    R.string.cit_not_found,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        },
                         showDivider = false,
                     )
                 }
@@ -272,29 +285,9 @@ fun XiaomiPartsHomeScreen(
     }
 }
 
-/**
- * Launch the Xiaomi CIT app via explicit intent.
- * Shows a toast if the app is not installed on this device.
- */
-private fun launchCit(context: Context) {
-    runCatching {
-        context.packageManager.getPackageInfo(CIT_PACKAGE, 0)
-        val intent = Intent().apply {
-            setClassName(CIT_PACKAGE, CIT_ACTIVITY)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
-        Toast.makeText(context, R.string.cit_launched, Toast.LENGTH_SHORT).show()
-    }.onFailure { e ->
-        if (e is PackageManager.NameNotFoundException) {
-            Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
-        } else {
-            Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
-        }
-    }
-}
-
-// ── Shared composables ────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
+// Shared composables used by sub-screens as well
+// ────────────────────────────────────────────────────────
 
 @Composable
 fun PartsCategory(
@@ -305,13 +298,12 @@ fun PartsCategory(
         text     = title,
         style    = MaterialTheme.typography.labelMedium,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = modifier
-            .padding(
-                start  = PartsTokens.contentPaddingHorizontal,
-                end    = PartsTokens.contentPaddingHorizontal,
-                top    = PartsTokens.categoryTopPadding,
-                bottom = PartsTokens.categoryBottomPadding,
-            ),
+        modifier = modifier.padding(
+            start  = PartsTokens.contentPaddingHorizontal,
+            end    = PartsTokens.contentPaddingHorizontal,
+            top    = PartsTokens.categoryTopPadding,
+            bottom = PartsTokens.categoryBottomPadding,
+        ),
     )
 }
 
@@ -328,20 +320,18 @@ fun PartsCard(
         color          = MaterialTheme.colorScheme.surfaceContainerLow,
         tonalElevation = 0.dp,
     ) {
-        Column {
-            content()
-        }
+        Column { content() }
     }
 }
 
 /**
  * Standard preference row with leading icon container, title, summary,
- * and an optional trailing slot (defaults to ChevronRight).
+ * and an optional trailing slot (defaults to [ChevronRight]).
  *
- * @param showDivider When true a full-width [HorizontalDivider] is rendered
- *   below this row using [DividerDefaults.Thickness] (1 dp) and
- *   [MaterialTheme.colorScheme.outlineVariant] — matching M3 list divider spec.
- *   Pass false for the last row in a [PartsCard] to avoid a trailing divider.
+ * @param showDivider When true a [HorizontalDivider] is rendered below this
+ *   row using [DividerDefaults.Thickness] (1 dp) and
+ *   [MaterialTheme.colorScheme.outlineVariant] — M3 list-divider spec.
+ *   Pass false for the last (or only) row in a [PartsCard].
  */
 @Composable
 fun PartsRow(
