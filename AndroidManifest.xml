@@ -23,6 +23,24 @@
     <!-- Per-app thermal usage statistics -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
+    <!--
+         BATTERY_STATS: must be declared even though android.uid.system holds it
+         implicitly. Without the declaration the privapp whitelist validator on
+         user/userdebug builds logs a warning and the runtime grant can be
+         silently withheld on strict ROM builds. Required by ChargingMonitor for
+         direct BatteryManager.isCharging() and sticky ACTION_BATTERY_CHANGED
+         reads via registerReceiver(null, filter).
+    -->
+    <uses-permission android:name="android.permission.BATTERY_STATS"
+        tools:ignore="ProtectedPermissions" />
+    <!--
+         WAKE_LOCK: required by ChargingMonitor.start() which acquires a
+         PARTIAL_WAKE_LOCK (500 ms) to keep the CPU awake for the first
+         readBatteryInfo() sticky call after ACTION_SCREEN_ON. Without this
+         the OS-held screen-on wake lock can be released before the
+         HandlerThread runs, allowing the device to re-enter Doze mid-read.
+    -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
         android:label="@string/app_name"
