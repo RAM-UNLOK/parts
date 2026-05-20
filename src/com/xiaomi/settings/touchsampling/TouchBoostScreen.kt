@@ -10,6 +10,7 @@ import android.content.Intent
 import android.os.UserHandle
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
@@ -65,9 +66,9 @@ import com.xiaomi.settings.ui.PartsTokens
 /**
  * Touch Boost sub-screen.
  *
- * Back navigation: removed the [navigationIcon] back button entirely.
- * Predictive-back gesture + gesture navigation handles back natively on
- * Android 13+. [onBack] is kept in the signature for NavHost compatibility.
+ * Back navigation: the [navigationIcon] back button is intentionally absent.
+ * Predictive-back gesture handles back natively on Android 13+.
+ * [onBack] is kept in the signature for NavHost compatibility.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -82,18 +83,21 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
+            dampingRatio = PartsTokens.MotionDampingRatio,
             stiffness    = Spring.StiffnessHigh,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
+    // ── Section entrance animation states ─────────────────────────────────────
+    // Two groups: Toggle (group 0, no delay) and Info banner (group 1, 1x step).
+    // slideInVertically and fadeIn share identical tween(duration, delayMillis)
+    // so both axes animate simultaneously — no pop-then-fade artefact.
     val visToggle = remember { MutableTransitionState(false).apply { targetState = true } }
     val visBanner = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surface: consistent background token across all screens in the Parts flow.
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
@@ -119,16 +123,23 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            // ── Toggle card (group 0 — no delay) ───────────────────────────────
             AnimatedVisibility(
                 visibleState = visToggle,
-                enter = fadeIn(tween(220)) +
-                        slideInVertically(
-                            animationSpec  = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { it / 5 },
-                        ),
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        delayMillis    = 0,
+                        easing         = EaseOutCubic,
+                    ),
+                ) + slideInVertically(
+                    animationSpec  = tween(
+                        durationMillis = PartsTokens.MotionDurationSlide,
+                        delayMillis    = 0,
+                        easing         = EaseOutCubic,
+                    ),
+                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
+                ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.htsr_category))
@@ -147,7 +158,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                             horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                         ) {
                             // Tonal icon container — secondaryContainer / onSecondaryContainer
-                            // consistent with all other PartsRow icons in the flow.
+                            // consistent with all other PartsRow icons across the flow.
                             Box(
                                 modifier = Modifier
                                     .size(PartsTokens.leadingIconContainerSize)
@@ -185,19 +196,27 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
+            // ── Info banner (group 1 — 1× step delay) ─────────────────────────
+            // secondaryContainer: correct M3 role for informational/tip banners.
+            // tertiaryContainer is reserved for battery/charging context (HomeScreen
+            // + ThermalScreen banners). This is a neutral info tip — secondary is right.
             AnimatedVisibility(
                 visibleState = visBanner,
-                enter = fadeIn(tween(220, delayMillis = 100)) +
-                        slideInVertically(
-                            animationSpec  = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { it / 5 },
-                        ),
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        delayMillis    = PartsTokens.MotionStaggerStep,
+                        easing         = EaseOutCubic,
+                    ),
+                ) + slideInVertically(
+                    animationSpec  = tween(
+                        durationMillis = PartsTokens.MotionDurationSlide,
+                        delayMillis    = PartsTokens.MotionStaggerStep,
+                        easing         = EaseOutCubic,
+                    ),
+                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
+                ),
             ) {
-                // secondaryContainer: information/tip banner colour role per M3.
-                // onSecondaryContainer for all text and icons inside.
                 Surface(
                     modifier = Modifier
                         .fillMaxWidth()

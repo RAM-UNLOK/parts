@@ -11,6 +11,7 @@ import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.EaseOutCubic
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
@@ -62,14 +63,9 @@ import com.xiaomi.settings.ui.PartsTokens
 /**
  * Display Colours sub-screen.
  *
- * Back navigation: removed the [navigationIcon] IconButton entirely.
- * Android's predictive-back gesture and gesture navigation handle back
- * natively — an explicit back button in the TopAppBar is redundant and
- * conflicts with the OS-level back animation on Android 13+.
- *
- * The [onBack] lambda is kept in the signature so the NavHost can still
- * pass a popBackStack lambda for any legacy 3-button nav path if needed;
- * it is NOT wired to a visible button.
+ * Back navigation: the [navigationIcon] IconButton is intentionally absent.
+ * Android's predictive-back gesture handles back natively on Android 13+.
+ * [onBack] is kept in the signature for NavHost popBackStack compatibility.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,23 +83,23 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         )
     }
 
-    // enterAlwaysScrollBehavior: correct for sub-screens (MediumTopAppBar).
-    // Snaps with a stiff spring so the bar never rests mid-collapsed.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
+            dampingRatio = PartsTokens.MotionDampingRatio,
             stiffness    = Spring.StiffnessHigh,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
+    // ── Section entrance animation states ─────────────────────────────────────
+    // Two groups: Standard (group 0, no delay) and Expert (group 1, 1x step).
+    // slideInVertically and fadeIn share identical tween(duration, delayMillis)
+    // so both axes start at the same moment — no pop-then-fade artefact.
     val visStandard = remember { MutableTransitionState(false).apply { targetState = true } }
     val visExpert   = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surface: consistent with HomeScreen background token so the M3 dynamic
-        // colour palette reads uniformly across the full settings flow.
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
@@ -132,19 +128,23 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             val standardModes = listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
             val expertModes   = listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
 
-            // Section entrance: spring slide (M3 Expressive) + short fade.
-            // spring(DampingRatioNoBouncy, StiffnessMediumLow) matches the
-            // HomeScreen stagger so transitions feel consistent across the flow.
+            // ── Standard section (group 0 — no delay) ─────────────────────────
             AnimatedVisibility(
                 visibleState = visStandard,
-                enter = fadeIn(tween(220)) +
-                        slideInVertically(
-                            animationSpec  = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { it / 5 },
-                        ),
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        delayMillis    = 0,
+                        easing         = EaseOutCubic,
+                    ),
+                ) + slideInVertically(
+                    animationSpec  = tween(
+                        durationMillis = PartsTokens.MotionDurationSlide,
+                        delayMillis    = 0,
+                        easing         = EaseOutCubic,
+                    ),
+                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
+                ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.color_section_standard))
@@ -163,16 +163,23 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 }
             }
 
+            // ── Expert section (group 1 — 1× step delay) ──────────────────────
             AnimatedVisibility(
                 visibleState = visExpert,
-                enter = fadeIn(tween(220, delayMillis = 80)) +
-                        slideInVertically(
-                            animationSpec  = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetY = { it / 5 },
-                        ),
+                enter = fadeIn(
+                    animationSpec = tween(
+                        durationMillis = PartsTokens.MotionDurationEnter,
+                        delayMillis    = PartsTokens.MotionStaggerStep,
+                        easing         = EaseOutCubic,
+                    ),
+                ) + slideInVertically(
+                    animationSpec  = tween(
+                        durationMillis = PartsTokens.MotionDurationSlide,
+                        delayMillis    = PartsTokens.MotionStaggerStep,
+                        easing         = EaseOutCubic,
+                    ),
+                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
+                ),
             ) {
                 Column {
                     PartsCategory(stringResource(R.string.color_section_expert))
@@ -205,15 +212,18 @@ private fun ColorMode.Row(
 ) {
     val selected = this.id == selectedId
 
-    // Animate background with a spring so selection transitions feel physical
-    // rather than linear — matches M3 Expressive state-change motion guidance.
+    // Animate background with a spring so selection transitions feel physical.
+    // secondaryContainer / onSecondaryContainer: M3 selection highlight role.
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
             MaterialTheme.colorScheme.secondaryContainer
         else
             MaterialTheme.colorScheme.surfaceContainerLow,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label         = "color-row-bg-${this.name}",
+        animationSpec = spring(
+            dampingRatio = PartsTokens.MotionDampingRatio,
+            stiffness    = PartsTokens.MotionStiffnessMediumLow,
+        ),
+        label = "color-row-bg-${this.name}",
     )
 
     val contentColor = if (selected)
