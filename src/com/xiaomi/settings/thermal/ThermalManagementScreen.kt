@@ -55,6 +55,7 @@ import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -255,6 +256,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
+                // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -280,7 +282,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator(strokeWidth = 3.dp)
-                            Spacer(Modifier.height(12.dp))
+                            // Use token instead of hardcoded 12.dp.
+                            Spacer(Modifier.height(PartsTokens.loadingSpinnerLabelSpacing))
                             Text(
                                 text  = stringResource(R.string.thermal_loading),
                                 style = MaterialTheme.typography.bodySmall,
@@ -349,12 +352,15 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
             item(key = "reset-card") {
                 PartsCard {
+                    // showDivider=false: this is the only row in the card,
+                    // so no bottom divider should be rendered.
                     PartsRow(
-                        icon    = Icons.Filled.RestartAlt,
-                        title   = stringResource(R.string.thermal_reset),
-                        summary = stringResource(R.string.thermal_reset_confirm),
-                        onClick = { showResetDialog = true },
-                        trailing = {},
+                        icon        = Icons.Filled.RestartAlt,
+                        title       = stringResource(R.string.thermal_reset),
+                        summary     = stringResource(R.string.thermal_reset_confirm),
+                        onClick     = { showResetDialog = true },
+                        showDivider = false,
+                        trailing    = {},
                     )
                 }
             }
@@ -432,22 +438,30 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 },
                             )
                             if (index < appEntries.lastIndex) {
+                                // DividerDefaults.Thickness = 1.dp (M3 spec).
+                                // Removed explicit 0.5.dp — sub-pixel on xxhdpi+
+                                // displays and could render invisible.
                                 HorizontalDivider(
-                                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                                    thickness = 0.5.dp,
-                                    color     = MaterialTheme.colorScheme.outlineVariant,
+                                    modifier = Modifier.padding(
+                                        horizontal = PartsTokens.contentPaddingHorizontal,
+                                    ),
+                                    color = MaterialTheme.colorScheme.outlineVariant,
                                 )
                             }
                         }
                     }
                     if (isCharging) {
+                        // chargingHintIndent (32.dp) aligns caption with the
+                        // text portion of each app row (past the app icon).
+                        // Replaces the non-standard contentPaddingHorizontal*2
+                        // arithmetic.
                         Text(
                             text     = stringResource(R.string.thermal_charging_override_hint),
                             style    = MaterialTheme.typography.bodySmall,
                             color    = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier
                                 .padding(
-                                    horizontal = PartsTokens.contentPaddingHorizontal * 2,
+                                    horizontal = PartsTokens.chargingHintIndent,
                                     vertical   = PartsTokens.categoryTopPadding,
                                 )
                                 .alpha(0.6f),

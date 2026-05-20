@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2025 Paranoid Android
+     SPDX-License-Identifier: Apache-2.0
+
+     Settings preference-header declaration for Xiaomi Parts.
+
+     This file is read by the AOSP Settings app via the
+     com.android.settings.action.EXTRA_SETTINGS intent-filter on
+     XiaomiPartsActivity. It injects the Xiaomi Parts tile onto the
+     Settings homepage under the "Device" group (ia.homepage category).
+
+     Fields:
+       android:key         — unique stable identifier for this header
+       android:title       — tile primary label (string resource)
+       android:summary     — tile subtitle shown below the label
+       android:icon        — vector drawable shown on the left of the tile
+       settings:keywords   — space-separated search keywords so the tile
+                             appears in Settings search results
+-->
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:settings="http://schemas.android.com/apk/res-auto">
+
+    <Preference
+        android:key="xiaomi_parts_settings"
+        android:title="@string/xiaomi_parts_title"
+        android:summary="@string/xiaomi_parts_summary"
+        android:icon="@drawable/ic_xiaomi_parts"
+        settings:keywords="@string/xiaomi_parts_keywords" />
+
+</PreferenceScreen>

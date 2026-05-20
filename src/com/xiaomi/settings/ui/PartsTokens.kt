@@ -13,36 +13,52 @@ import androidx.compose.ui.unit.dp
 
 /**
  * Central design-token object for the Xiaomi Parts UI.
+ *
+ * All spacing, shape, icon-size, motion, and colour-role constants
+ * live here so every screen stays visually consistent without
+ * hardcoded dp/ms values scattered across composables.
  */
 object PartsTokens {
 
-    // ── Spacing ──────────────────────────────────────────
-    val contentPaddingHorizontal = 16.dp
-    val rowPaddingVertical        = 16.dp
-    val appRowPaddingVertical     = 10.dp
-    val appRowIconSpacing         = 12.dp
-    val rowElementSpacing         = 12.dp
-    val categoryTopPadding        = 24.dp
-    val categoryBottomPadding     = 8.dp
-    val listBottomPadding         = 32.dp
-    val loadingTopPadding         = 48.dp
-    val disabledHintTopPadding    = 24.dp
+    // ── Spacing ─────────────────────────────────────────────
+    val contentPaddingHorizontal  = 16.dp
+    val rowPaddingVertical         = 16.dp
+    val appRowPaddingVertical      = 10.dp
+    val appRowIconSpacing          = 12.dp
+    val rowElementSpacing          = 12.dp
+    val categoryTopPadding         = 24.dp
+    val categoryBottomPadding      = 8.dp
+    val listBottomPadding          = 32.dp
+    val loadingTopPadding          = 48.dp
+    val disabledHintTopPadding     = 24.dp
     /** Vertical gap between category blocks on the HomeScreen. */
-    val cardBlockSpacing          = 8.dp
+    val cardBlockSpacing           = 8.dp
+    /**
+     * Vertical space between the [CircularProgressIndicator] and its
+     * label text in the loading state. Replaces hardcoded 12 dp.
+     */
+    val loadingSpinnerLabelSpacing = 12.dp
+    /**
+     * Horizontal indent for the charging-override hint caption that
+     * appears below the app thermal list while charging is active.
+     * Larger than [contentPaddingHorizontal] to visually align the
+     * caption with the text portion of each app row (past the icon).
+     */
+    val chargingHintIndent         = 32.dp
 
-    // ── Shape ───────────────────────────────────────────
+    // ── Shape ──────────────────────────────────────────────
     /** M3 Expressive large-component corner radius. */
     val cardShape = RoundedCornerShape(28.dp)
 
-    // ── Icon sizes ────────────────────────────────────────
+    // ── Icon sizes ──────────────────────────────────────────
     val leadingIconContainerSize = 48.dp
     val leadingIconSize          = 24.dp
     val trailingIconSize         = 24.dp
 
-    // ── Dropdown ────────────────────────────────────────
+    // ── Dropdown ───────────────────────────────────────────
     val dropdownItemVerticalPadding = 10.dp
 
-    // ── Motion ──────────────────────────────────────────
+    // ── Motion ─────────────────────────────────────────────
     const val MotionDampingRatio       = Spring.DampingRatioNoBouncy
     const val MotionStiffnessMediumLow = Spring.StiffnessMediumLow
 
@@ -55,7 +71,7 @@ object PartsTokens {
         stiffness    = Spring.StiffnessMedium,
     )
 
-    // ── Motion durations (ms) ────────────────────────────
+    // ── Motion durations (ms) ──────────────────────────────
     /** Enter duration: fade-in portion of enter transitions. */
     const val MotionDurationEnter  = 280
     /** Slide duration for list stagger animations. */
