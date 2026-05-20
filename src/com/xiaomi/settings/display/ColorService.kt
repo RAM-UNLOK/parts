@@ -128,8 +128,8 @@ class ColorService : Service() {
         val value    : Int,
         val cookie   : Int,
         val isExpert : Boolean = false,
-        @StringRes val labelRes  : Int,
-        @StringRes val summaryRes: Int,
+        @param:StringRes val labelRes  : Int,
+        @param:StringRes val summaryRes: Int,
     ) {
         VIVID    (258, 0,  2, 255, labelRes = R.string.color_mode_vivid,     summaryRes = R.string.color_mode_vivid_summary),
         SATURATED(256, 1,  2, 255, labelRes = R.string.color_mode_saturated, summaryRes = R.string.color_mode_saturated_summary),

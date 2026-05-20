@@ -64,10 +64,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.utils.CitLauncher
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Home screen
-// ─────────────────────────────────────────────────────────────────────────────
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
@@ -85,11 +81,17 @@ fun XiaomiPartsHomeScreen(
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val plugged = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)
-                isCharging = plugged != 0
+                when (intent.action) {
+                    Intent.ACTION_POWER_CONNECTED    -> isCharging = true
+                    Intent.ACTION_POWER_DISCONNECTED -> isCharging = false
+                }
             }
         }
-        context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_POWER_CONNECTED)
+            addAction(Intent.ACTION_POWER_DISCONNECTED)
+        }
+        context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
         onDispose { context.unregisterReceiver(receiver) }
     }
 
@@ -106,7 +108,7 @@ fun XiaomiPartsHomeScreen(
                         style = MaterialTheme.typography.headlineMedium,
                     )
                 },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
@@ -179,11 +181,6 @@ fun XiaomiPartsHomeScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared M3 components  (Clover Settings design language)
-// ─────────────────────────────────────────────────────────────────────────────
-
-/** Section label — primary colour, label-medium, left-padded. */
 @Composable
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
@@ -194,10 +191,6 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     )
 }
 
-/**
- * Tonal card block — surfaceContainer fill, extraLarge corners, no stroke.
- * Matches Clover ContextualCardStyle.
- */
 @Composable
 fun PartsCard(
     modifier : Modifier = Modifier,
@@ -215,9 +208,6 @@ fun PartsCard(
     }
 }
 
-/**
- * Single preference row inside a PartsCard.
- */
 @Composable
 fun PartsRow(
     icon     : ImageVector,
@@ -273,10 +263,6 @@ fun PartsRow(
         }
     }
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Charging banner
-// ─────────────────────────────────────────────────────────────────────────────
 
 @Composable
 private fun ChargingBanner(modifier: Modifier = Modifier) {

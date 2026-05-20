@@ -50,10 +50,6 @@ class ThermalUtils private constructor(private val context: Context) {
         setThermalProfileInternal(packageName)
     }
 
-    /**
-     * Applies the thermal-charge.conf (sconfig=27) for charging state.
-     * Returns true on success.
-     */
     fun setChargingThermalProfile(): Boolean {
         return runCatching {
             writeLine(THERMAL_SCONFIG, SCONFIG_CHARGE)
@@ -77,21 +73,17 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     fun getStateForPackage(packageName: String): ThermalState {
-        // 1. Explicit user preference
         val savedId = getPackagePreference(packageName)
         if (savedId != ThermalState.DEFAULT.id) {
             ThermalState.entries.find { it.id == savedId }?.let { return it }
         }
-        // 2. Automatic classification
         return classifyApp(packageName)
     }
 
     private fun classifyApp(packageName: String): ThermalState {
         val pm = context.packageManager
         runCatching {
-            val appInfo = pm.getApplicationInfo(
-                packageName, PackageManager.GET_META_DATA
-            )
+            val appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
             return when {
                 isGameApp(appInfo)                                        -> ThermalState.GAMING
                 isCameraApp(packageName, pm)                              -> ThermalState.CAMERA
@@ -108,8 +100,8 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     private fun isGameApp(appInfo: ApplicationInfo): Boolean {
-        return (appInfo.category == ApplicationInfo.CATEGORY_GAME) ||
-               (appInfo.flags and ApplicationInfo.FLAG_IS_GAME != 0)
+        // FLAG_IS_GAME is deprecated since API 26; CATEGORY_GAME is the modern replacement.
+        return appInfo.category == ApplicationInfo.CATEGORY_GAME
     }
 
     private fun isCameraApp(packageName: String, pm: PackageManager): Boolean {
@@ -168,7 +160,7 @@ class ThermalUtils private constructor(private val context: Context) {
     enum class ThermalState(
         val id     : Int,
         val sconfig: String,
-        @StringRes val label: Int,
+        @param:StringRes val label: Int,
     ) {
         BENCHMARK      (0,  "10", R.string.thermal_benchmark),
         BROWSER        (1,  "6",  R.string.thermal_browser),

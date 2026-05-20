@@ -41,6 +41,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
@@ -48,7 +49,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -92,9 +92,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    var enabled         by remember { mutableStateOf(thermalUtils.enabled) }
     var appEntries      by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
     var isLoading       by remember { mutableStateOf(true) }
+    var enabled         by remember { mutableStateOf(thermalUtils.enabled) }
     var showResetDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -161,7 +161,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.largeTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
@@ -176,7 +176,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
-            // Loading spinner as a list item so nestedScroll is never broken
             if (isLoading) {
                 item(key = "loading") {
                     Box(
@@ -199,7 +198,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 return@LazyColumn
             }
 
-            // Service toggle
             item(key = "toggle-label") {
                 PartsCategory(stringResource(R.string.thermal_enable))
             }
@@ -249,7 +247,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // Per-app profiles
             if (!enabled) {
                 item(key = "disabled-hint") {
                     Box(
@@ -354,7 +351,7 @@ private fun AppThermalRow(
                 },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                 modifier     = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     .widthIn(min = 140.dp),
             )
             ExposedDropdownMenu(
