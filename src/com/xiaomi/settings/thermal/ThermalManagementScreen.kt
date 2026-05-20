@@ -52,10 +52,10 @@ import androidx.compose.material.icons.filled.PlayCircle
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Stream
-import androidx.compose.material.icons.filled.TuneRounded
 import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material.icons.filled.Web
 import androidx.compose.material.icons.outlined.ExpandMore
+import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -139,7 +139,7 @@ private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
  * Per-state vector icon for dropdown menu items.
  */
 private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
-    ThermalUtils.ThermalState.DEFAULT         -> Icons.Filled.TuneRounded
+    ThermalUtils.ThermalState.DEFAULT         -> Icons.Rounded.Tune
     ThermalUtils.ThermalState.BENCHMARK       -> Icons.Filled.BugReport
     ThermalUtils.ThermalState.BROWSER         -> Icons.Filled.Web
     ThermalUtils.ThermalState.CAMERA          -> Icons.Filled.CameraAlt
@@ -152,7 +152,7 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.SOCIAL          -> Icons.Filled.People
     ThermalUtils.ThermalState.MUSIC           -> Icons.AutoMirrored.Filled.VolumeUp
     ThermalUtils.ThermalState.STREAMING       -> Icons.Filled.Stream
-    else                                      -> Icons.Filled.TuneRounded
+    else                                      -> Icons.Rounded.Tune
 }
 
 /**
@@ -185,10 +185,7 @@ private fun ChargingInfoBanner(isCharging: Boolean) {
     else
         Icons.Filled.Info
 
-    val headline = if (isCharging)
-        stringResource(R.string.thermal_charging_active)
-    else
-        stringResource(R.string.thermal_charging_active)  // same label, tint changes
+    val headline = stringResource(R.string.thermal_charging_active)
 
     Row(
         modifier = Modifier
@@ -237,25 +234,15 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     var enabled         by remember { mutableStateOf(thermalUtils.enabled) }
     var showResetDialog by remember { mutableStateOf(false) }
 
-    // Live charging state — updated by ChargingMonitor's onChange callback.
-    // Initialised from the monitor's current value so there is no flicker
-    // on first composition even if the screen opens while already charging.
-    val chargingMonitor = remember { ChargingMonitor(context) { info ->
-        // onChange fires on ChargingMonitor's HandlerThread; Compose state
-        // writes are safe from any thread (Snapshot system handles it).
-        // The lambda captures the mutableStateOf delegate below via the
-        // DisposableEffect block — see the comment there.
-    }}
-    var isCharging by remember { mutableStateOf(chargingMonitor.isCharging) }
+    // Live charging state — seeded from ChargingMonitor's current value,
+    // then updated via DisposableEffect so it tracks plug/unplug events
+    // for the lifetime of this composable only (no leaks on back-nav).
+    var isCharging by remember { mutableStateOf(false) }
 
-    // Start the monitor and register our state-update callback.
-    // DisposableEffect ensures we stop it when the composable leaves
-    // the composition (e.g. back navigation) to avoid a leak.
     DisposableEffect(Unit) {
         val monitor = ChargingMonitor(context) { info ->
             isCharging = info.isCharging
         }
-        // Seed the initial value from the first read before any callback fires.
         isCharging = monitor.isCharging
         monitor.start()
         onDispose { monitor.stop(final = true) }
@@ -395,7 +382,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector        = Icons.Filled.TuneRounded,
+                                imageVector        = Icons.Rounded.Tune,
                                 contentDescription = null,
                                 tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                                 modifier           = Modifier.size(PartsTokens.leadingIconSize),
@@ -452,12 +439,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
 
                 item(key = "apps-card") {
-                    // While charging: dim the entire card and show a lock hint
-                    // below it. The dropdowns remain tappable for browsing but
-                    // onStateChange writes are gated inside the callback —
-                    // ThermalService will simply overwrite with sconfig=27 on
-                    // the next applyProfile() call anyway, so UI changes while
-                    // charging are harmless but we discourage them visually.
                     Column {
                         Box(
                             modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
@@ -465,15 +446,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             PartsCard {
                                 appEntries.forEachIndexed { index, entry ->
                                     AppThermalRow(
-                                        entry         = entry,
+                                        entry          = entry,
                                         chargingLocked = isCharging,
                                     ) { newStateId ->
-                                        // Guard: ignore writes while charging.
-                                        // ThermalService priority ensures
-                                        // sconfig=27 is always active while
-                                        // plugged in regardless, but we also
-                                        // skip writing SharedPrefs here to
-                                        // avoid misleading state.
                                         if (isCharging) return@AppThermalRow
                                         runCatching {
                                             thermalUtils.writePackage(entry.packageName, newStateId)
@@ -511,7 +486,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 }
                             }
                         }
-                        // Lock hint — only shown while charging
                         if (isCharging) {
                             Text(
                                 text     = stringResource(R.string.thermal_charging_override_hint),
