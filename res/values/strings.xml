@@ -22,8 +22,8 @@
     <string name="color_mode_srgb">sRGB</string>
     <string name="color_section_standard">Standard</string>
     <string name="color_section_expert">Expert · Wide Gamut</string>
-    <string name="color_mode_applied">%1$s applied</string>
-    <string name="color_mode_failed">Couldn\'t apply colour mode</string>
+    <string name="color_mode_applied">🎨 %1$s</string>
+    <string name="color_mode_failed">❌ Couldn\'t apply colour mode</string>
     <string name="color_mode_vivid_summary">Punchy, boosted saturation</string>
     <string name="color_mode_saturated_summary">Balanced, everyday colours</string>
     <string name="color_mode_standard_summary">Factory-calibrated accuracy</string>
@@ -34,7 +34,7 @@
     <!-- ── Thermal Management ───────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
     <string name="thermal_summary">Per-app thermal profiles</string>
-    <string name="thermal_summary_active">Per-app profiles active</string>
+    <string name="thermal_summary_active">✅ Per-app profiles active</string>
     <string name="thermal_summary_disabled">Tap to enable thermal profiles</string>
     <string name="thermal_enable">Thermal profiles</string>
     <string name="thermal_enable_summary">Smart per-app thermal tuning in the background</string>
@@ -42,16 +42,16 @@
     <string name="thermal_reset">Reset profiles</string>
     <string name="thermal_reset_confirm">Reset all per-app thermal profiles?</string>
     <string name="thermal_reset_confirm_btn">Reset</string>
-    <string name="thermal_reset_success">Profiles reset</string>
-    <string name="thermal_reset_failed">Reset failed</string>
-    <string name="thermal_profile_applied">%1$s → %2$s</string>
-    <string name="thermal_profile_failed">Profile failed for %1$s</string>
-    <string name="thermal_service_started">Thermal on</string>
-    <string name="thermal_service_stopped">Thermal off</string>
-    <string name="thermal_toggle_failed">Couldn\'t toggle thermal</string>
+    <string name="thermal_reset_success">♻️ Profiles reset</string>
+    <string name="thermal_reset_failed">❌ Reset failed</string>
+    <string name="thermal_profile_applied">🌡️ %1$s → %2$s</string>
+    <string name="thermal_profile_failed">❌ Profile failed for %1$s</string>
+    <string name="thermal_service_started">🌡️ Thermal on</string>
+    <string name="thermal_service_stopped">🌡️ Thermal off</string>
+    <string name="thermal_toggle_failed">❌ Couldn\'t toggle thermal</string>
     <string name="thermal_disabled_hint">Enable thermal profiles to tune per-app behaviour</string>
     <string name="thermal_apps_category">Per-app profiles</string>
-    <string name="thermal_apply_failed">Thermal apply failed</string>
+    <string name="thermal_apply_failed">⚠️ Thermal apply failed</string>
 
     <!--
         Thermal profile labels — must match ThermalState enum order in ThermalUtils.kt
@@ -73,8 +73,8 @@
     <!-- ── Charging Thermal ──────────────────────────────── -->
     <string name="thermal_charging_active">Charging profile active</string>
     <string name="thermal_charging_active_desc">Charge-optimised thermal applied while plugged in</string>
-    <string name="thermal_charging_toast_connected">Plugged in · charge profile on</string>
-    <string name="thermal_charging_toast_disconnected">Unplugged · normal profiles back</string>
+    <string name="thermal_charging_toast_connected">🔋 Plugged in · charge profile on</string>
+    <string name="thermal_charging_toast_disconnected">🔌 Unplugged · normal profiles back</string>
 
     <!-- ── Touch Boost ──────────────────────────────────── -->
     <string name="htsr_title">Touch Boost</string>
@@ -83,15 +83,15 @@
     <string name="htsr_enable_title">Enhanced Touch Responsiveness</string>
     <string name="htsr_enable_summary">Cranks up the touch polling rate for snappier, lower-latency input</string>
     <string name="htsr_info_body">Touch boost raises the polling rate of the touch controller, cutting tap-to-response latency. May slightly increase power draw during active use.</string>
-    <string name="htsr_enabled_toast">Touch boost on</string>
+    <string name="htsr_enabled_toast">👆 Touch boost on</string>
     <string name="htsr_disabled_toast">Touch boost off</string>
-    <string name="htsr_failed_toast">Touch boost failed</string>
+    <string name="htsr_failed_toast">❌ Touch boost failed</string>
 
     <!-- ── Xiaomi CIT ───────────────────────────────────── -->
     <string name="cit_title">Xiaomi CIT</string>
     <string name="cit_summary">Hardware diagnostics &amp; calibration</string>
-    <string name="cit_not_found">CIT not installed</string>
-    <string name="cit_launched">Opening CIT…</string>
+    <string name="cit_not_found">⚠️ CIT not installed</string>
+    <string name="cit_launched">🔧 Opening CIT…</string>
 
     <!-- ── Categories ──────────────────────────────────── -->
     <string name="xiaomi_parts_category_display">Display</string>
