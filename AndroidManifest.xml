@@ -83,34 +83,38 @@
         <!-- ════════════════════════════════════════════════
              XIAOMI PARTS HUB — Settings entry point.
 
-             Two intent-filters are required for correct placement:
+             Three intent-filters are required for correct placement
+             across all supported AOSP/Paranoid-Android/Pixel-close builds:
 
              1. android.intent.action.MAIN + DEFAULT
-                AOSP Settings uses this pair to resolve the activity's
-                top-level category anchor. Without it the Settings app
-                falls back to heuristic placement and the tile can end
-                up in unexpected buckets on Android 14+.
+                Top-level anchor. AOSP Settings uses this pair to resolve
+                the activity category. Without it Settings falls back to
+                heuristic placement on Android 14+.
 
-             2. com.android.settings.action.IA_SETTINGS
-                Declares this as an Injectable Activity Settings tile
-                so Settings can query it via PackageManager and render
-                it with the correct icon, label and summary.
+             2. com.android.settings.action.EXTRA_SETTINGS + DEFAULT
+                The primary homepage-injection filter. Settings queries
+                this action when building the root page injected-settings
+                section (the block that appears alongside Display, Battery,
+                Network, etc.). This is the filter that makes the tile
+                visible on the Settings homepage itself.
+                category=DEFAULT is required by SettingsActivity's
+                PackageManager query contract — without it the activity
+                is not returned as a valid candidate.
 
-             Category: ia.homepage — renders the tile directly on the
-             Settings root page alongside Network, Battery, Display,
-             Sound, etc. This is the correct location for a
-             first-party hardware-feature hub shipped as part of a
-             device-specific ROM.
+             3. com.android.settings.action.IA_SETTINGS
+                Injectable Activity Settings tile declaration used by
+                newer AOSP 14+ / Android 15 builds in addition to, or
+                instead of, EXTRA_SETTINGS depending on the Settings fork.
+                Retained for forward compatibility.
 
-             Using ia.device would instead place the tile inside the
-             "Device" group (Connected devices / Apps / Notifications),
-             which is the wrong semantic group for hardware tuning
-             controls that affect the whole device.
+             Category meta-data: ia.homepage — renders the tile directly
+             on the Settings root page. Use ia.device for Connected-devices
+             group (wrong for hardware-feature hubs).
 
-             Order: 110 — below all standard AOSP homepage categories
-             so it doesn't disrupt the default page order, but above
-             any other injected EXTRA_SETTINGS tiles from third-party
-             apps (which conventionally start at 200+).
+             Order: 110 — below all standard AOSP homepage categories so
+             it doesn't disrupt the default page order, but above any
+             other injected EXTRA_SETTINGS tiles from third-party apps
+             (which conventionally start at 200+).
 
              Theme: XiaomiParts.Theme — transparent window bg so
              Compose's dynamic Material You surface colour owns the
@@ -122,20 +126,29 @@
             android:exported="true"
             android:theme="@style/XiaomiParts.Theme">
 
-            <!-- Required anchor: MAIN/DEFAULT pair for correct top-level placement -->
+            <!-- 1. Required anchor: MAIN/DEFAULT pair for top-level placement -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- Injectable Activity Settings tile declaration -->
+            <!-- 2. EXTRA_SETTINGS: surfaces tile on Settings homepage block
+                 (primary injection path for AOSP / Paranoid Android builds) -->
+            <intent-filter>
+                <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+
+            <!-- 3. IA_SETTINGS: Injectable Activity tile for Android 14+ builds -->
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
             </intent-filter>
 
+            <!-- Category: ia.homepage — renders on the Settings root page -->
             <meta-data
                 android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.homepage" />
+            <!-- Order 110: below standard AOSP categories, above third-party tiles -->
             <meta-data
                 android:name="com.android.settings.order"
                 android:value="110" />
