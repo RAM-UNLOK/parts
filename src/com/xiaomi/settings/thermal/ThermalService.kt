@@ -31,7 +31,11 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Handler
 import android.os.IBinder
+import android.os.Looper
+import android.widget.Toast
+import com.xiaomi.settings.R
 import com.xiaomi.settings.utils.ChargingMonitor
 import com.xiaomi.settings.utils.dlog
 
@@ -40,6 +44,7 @@ class ThermalService : Service() {
 
     private lateinit var thermalUtils    : ThermalUtils
     private lateinit var chargingMonitor : ChargingMonitor
+    private lateinit var mainHandler     : Handler
 
     private var currentApp = ""
         set(value) {
@@ -64,6 +69,16 @@ class ThermalService : Service() {
             }
             applyProfile()
         }
+
+    /**
+     * Tracks the charging state as of the last applyProfile() call.
+     *
+     * Initialised to null so the very first applyProfile() always sees a
+     * transition and writes the correct sconfig from a clean state, but
+     * does NOT show a toast (the user didn't just plug in — the service
+     * simply started).
+     */
+    private var wasCharging: Boolean? = null
 
     private val taskListener = object : TaskStackListener() {
         override fun onTaskStackChanged() {
@@ -90,6 +105,9 @@ class ThermalService : Service() {
 
     override fun onCreate() {
         dlog(TAG, "onCreate")
+        // Must be created on or after super.onCreate() so the main looper
+        // is guaranteed to be attached to the process.
+        mainHandler  = Handler(Looper.getMainLooper())
         thermalUtils = ThermalUtils.getInstance(this)
         super.onCreate()
     }
@@ -139,21 +157,54 @@ class ThermalService : Service() {
      * Applies the correct thermal sconfig based on current state.
      *
      * Priority (highest wins):
-     *   1. Charging      → sconfig=27
+     *   1. Charging      → sconfig=27  + toast on plug-in / plug-out edge
      *   2. Screen off    → sconfig=0
      *   3. App known     → per-app sconfig via ThermalUtils
      *   4. No app yet    → skip; TaskStackListener will fire shortly
+     *
+     * Toast logic:
+     *   wasCharging is null only on the very first call (service start).
+     *   In that case we write the correct sconfig but skip the toast so
+     *   the user doesn't see a "Plugged in" notification just because the
+     *   service restarted while the phone was already on charge.
+     *   On every subsequent call, a toast fires only when isCharging flips
+     *   (true→false or false→true) — never on repeated calls with the same
+     *   state.
      */
     private fun applyProfile() {
+        val isCharging = chargingMonitor.isCharging
+        val prevCharging = wasCharging
+
         runCatching {
             when {
-                chargingMonitor.isCharging   -> thermalUtils.setChargingThermalProfile()
-                !screenOn                    -> thermalUtils.setDefaultThermalProfile()
-                currentApp.isNotEmpty()      -> thermalUtils.setThermalProfile(currentApp)
+                isCharging            -> thermalUtils.setChargingThermalProfile()
+                !screenOn             -> thermalUtils.setDefaultThermalProfile()
+                currentApp.isNotEmpty() -> thermalUtils.setThermalProfile(currentApp)
                 else -> dlog(TAG, "applyProfile: skipped — no foreground app yet")
             }
         }.onFailure { e ->
             dlog(TAG, "applyProfile failed: ${e.message}")
+        }
+
+        // Update edge-tracking state AFTER applying so wasCharging always
+        // reflects what we just acted on.
+        wasCharging = isCharging
+
+        // Show a toast only on a real plug-in / plug-out transition.
+        // prevCharging == null means this is the first call (service start) —
+        // skip the toast regardless of current charging state.
+        if (prevCharging == null) return
+        if (isCharging == prevCharging) return
+
+        val msgRes = if (isCharging)
+            R.string.thermal_charging_toast_connected
+        else
+            R.string.thermal_charging_toast_disconnected
+
+        // Toast.makeText() requires the main looper. applyProfile() can be
+        // called from ChargingMonitor's HandlerThread, so we always post.
+        mainHandler.post {
+            Toast.makeText(applicationContext, msgRes, Toast.LENGTH_SHORT).show()
         }
     }
 
