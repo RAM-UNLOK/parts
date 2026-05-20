@@ -12,10 +12,10 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -41,7 +41,6 @@ import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.LiveTv
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.People
@@ -58,13 +57,12 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
@@ -97,6 +95,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
+import com.xiaomi.settings.PartsRow
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.ChargingMonitor
@@ -144,13 +143,6 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.STREAMING       -> Icons.Filled.Stream
 }
 
-/**
- * Charging-override banner shown inside the Thermal screen while a charger
- * is physically connected.
- *
- * Colour role: tertiaryContainer / onTertiaryContainer — battery/charging
- * semantic. No colour logic changes — this is the existing token assignment.
- */
 @Composable
 private fun ChargingInfoBanner() {
     Row(
@@ -192,8 +184,10 @@ private fun ChargingInfoBanner() {
 /**
  * Thermal Management screen.
  *
- * Back navigation: no [navigationIcon] back button — predictive-back
- * gesture handles it natively. [onBack] is kept for NavHost popBackStack.
+ * Reset Profiles is now a dedicated [PartsRow] inside its own [PartsCard]
+ * between the enable-toggle card and the per-app list, matching the
+ * same clickable-container pattern used by every other settings entry.
+ * The TopAppBar no longer has an actions IconButton.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -271,14 +265,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                actions = {
-                    IconButton(onClick = { showResetDialog = true }) {
-                        Icon(
-                            imageVector        = Icons.Filled.RestartAlt,
-                            contentDescription = stringResource(R.string.thermal_reset),
-                        )
-                    }
-                },
+                // No navigationIcon and no actions — Reset is now a PartsRow below.
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
@@ -316,6 +303,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 return@LazyColumn
             }
 
+            // ── Enable toggle ─────────────────────────────────────
             item(key = "toggle-label") {
                 PartsCategory(stringResource(R.string.thermal_enable))
             }
@@ -365,6 +353,25 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             onCheckedChange = { toggleService(context, thermalUtils, it) { enabled = it } },
                         )
                     }
+                }
+            }
+
+            // ── Reset Profiles row ───────────────────────────────
+            // Shown regardless of enabled state so users can always
+            // reset without needing to re-enable first.
+            item(key = "reset-label") {
+                PartsCategory(stringResource(R.string.thermal_reset))
+            }
+            item(key = "reset-card") {
+                PartsCard {
+                    PartsRow(
+                        icon    = Icons.Filled.RestartAlt,
+                        title   = stringResource(R.string.thermal_reset),
+                        summary = stringResource(R.string.thermal_reset_confirm),
+                        onClick = { showResetDialog = true },
+                        // No trailing chevron needed — this opens a dialog, not a new screen.
+                        trailing = {},
+                    )
                 }
             }
 
@@ -468,27 +475,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-/**
- * Per-app thermal profile row.
- *
- * Dropdown fix
- * ──────────────
- * The previous version had a double-toggle race condition:
- *   1. ExposedDropdownMenuBox.onExpandedChange receives the new boolean
- *      and sets expanded = it.
- *   2. FilledTonalButton.onClick then also ran `expanded = !expanded`,
- *      flipping it back in the same composition pass.
- * Result: menu opened for one frame then immediately closed.
- *
- * Fix:
- *   - Remove onClick from FilledTonalButton entirely.
- *     menuAnchor(PrimaryNotEditable) already wires the button tap to
- *     ExposedDropdownMenuBox, which calls onExpandedChange. One toggle,
- *     one place.
- *   - onExpandedChange: when charging-locked, show the toast and leave
- *     expanded = false. When unlocked, set expanded = newValue directly
- *     (no manual toggle needed — the Box provides the correct value).
- */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
@@ -499,7 +485,6 @@ private fun AppThermalRow(
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
     val context = LocalContext.current
 
-    // Chevron rotation: 0° closed → 180° open.
     val chevronRotation by animateFloatAsState(
         targetValue   = if (expanded) 180f else 0f,
         animationSpec = spring(
@@ -535,13 +520,10 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // ExposedDropdownMenuBox owns the open/close state.
-        // onExpandedChange is the single source of truth for `expanded`.
         ExposedDropdownMenuBox(
             expanded         = expanded,
             onExpandedChange = { newValue ->
                 if (chargingLocked) {
-                    // Show locked-toast; do not open the menu.
                     Toast.makeText(
                         context,
                         R.string.thermal_charging_locked_hint,
@@ -552,7 +534,6 @@ private fun AppThermalRow(
                 }
             },
         ) {
-            // No onClick on the button — menuAnchor handles taps.
             FilledTonalButton(
                 onClick        = { /* handled by menuAnchor */ },
                 modifier       = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),

@@ -6,15 +6,6 @@
 package com.xiaomi.settings
 
 import android.widget.Toast
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.EaseOutCubic
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -46,6 +37,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.spring
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -57,6 +49,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import com.xiaomi.settings.thermal.ThermalUtils
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
@@ -71,19 +66,13 @@ fun XiaomiPartsHomeScreen(
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    // ── Scroll behaviour ──────────────────────────────────────────────────────
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
-            stiffness    = Spring.StiffnessHigh,
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
-
-    // ── Section entrance animation states ─────────────────────────────────────
-    val visDisplay     = remember { MutableTransitionState(false).apply { targetState = true } }
-    val visPerformance = remember { MutableTransitionState(false).apply { targetState = true } }
-    val visDiagnostics = remember { MutableTransitionState(false).apply { targetState = true } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -105,122 +94,58 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // ── Display section  (stagger group 0 — no delay) ─────────────────
-            AnimatedVisibility(
-                visibleState = visDisplay,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = PartsTokens.MotionDurationEnter,
-                        delayMillis    = 0,
-                        easing         = EaseOutCubic,
-                    ),
-                ) + slideInVertically(
-                    animationSpec  = tween(
-                        durationMillis = PartsTokens.MotionDurationSlide,
-                        delayMillis    = 0,
-                        easing         = EaseOutCubic,
-                    ),
-                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
-                ),
-            ) {
-                Column {
-                    PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
-                    PartsCard {
-                        PartsRow(
-                            icon    = Icons.Filled.Palette,
-                            title   = stringResource(R.string.display_title),
-                            summary = stringResource(R.string.display_summary),
-                            onClick = onNavigateToDisplay,
-                        )
-                    }
-                }
+            // ── Display ──────────────────────────────────────────
+            PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
+            PartsCard {
+                PartsRow(
+                    icon    = Icons.Filled.Palette,
+                    title   = stringResource(R.string.display_title),
+                    summary = stringResource(R.string.display_summary),
+                    onClick = onNavigateToDisplay,
+                )
             }
 
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-
-            // ── Performance section  (stagger group 1 — 1× step delay) ────────
-            AnimatedVisibility(
-                visibleState = visPerformance,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = PartsTokens.MotionDurationEnter,
-                        delayMillis    = PartsTokens.MotionStaggerStep,
-                        easing         = EaseOutCubic,
+            // ── Performance ─────────────────────────────────────
+            PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
+            PartsCard {
+                PartsRow(
+                    icon    = Icons.Filled.Thermostat,
+                    title   = stringResource(R.string.thermal_title),
+                    summary = stringResource(
+                        if (thermalUtils.enabled) R.string.thermal_summary_active
+                        else                      R.string.thermal_summary_disabled
                     ),
-                ) + slideInVertically(
-                    animationSpec  = tween(
-                        durationMillis = PartsTokens.MotionDurationSlide,
-                        delayMillis    = PartsTokens.MotionStaggerStep,
-                        easing         = EaseOutCubic,
-                    ),
-                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
-                ),
-            ) {
-                Column {
-                    PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
-                    PartsCard {
-                        PartsRow(
-                            icon    = Icons.Filled.Thermostat,
-                            title   = stringResource(R.string.thermal_title),
-                            summary = stringResource(
-                                if (thermalUtils.enabled) R.string.thermal_summary_active
-                                else                      R.string.thermal_summary_disabled
-                            ),
-                            onClick = onNavigateToThermal,
-                        )
-                        HorizontalDivider(
-                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                            thickness = 0.5.dp,
-                            color     = MaterialTheme.colorScheme.outlineVariant,
-                        )
-                        PartsRow(
-                            icon    = Icons.Filled.TouchApp,
-                            title   = stringResource(R.string.htsr_title),
-                            summary = stringResource(R.string.htsr_summary),
-                            onClick = onNavigateToTouch,
-                        )
-                    }
-                }
+                    onClick = onNavigateToThermal,
+                )
+                HorizontalDivider(
+                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                    thickness = 0.5.dp,
+                    color     = MaterialTheme.colorScheme.outlineVariant,
+                )
+                PartsRow(
+                    icon    = Icons.Filled.TouchApp,
+                    title   = stringResource(R.string.htsr_title),
+                    summary = stringResource(R.string.htsr_summary),
+                    onClick = onNavigateToTouch,
+                )
             }
 
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-
-            // ── Diagnostics section  (stagger group 2 — 2× step delay) ────────
-            AnimatedVisibility(
-                visibleState = visDiagnostics,
-                enter = fadeIn(
-                    animationSpec = tween(
-                        durationMillis = PartsTokens.MotionDurationEnter,
-                        delayMillis    = PartsTokens.MotionStaggerStep * 2,
-                        easing         = EaseOutCubic,
-                    ),
-                ) + slideInVertically(
-                    animationSpec  = tween(
-                        durationMillis = PartsTokens.MotionDurationSlide,
-                        delayMillis    = PartsTokens.MotionStaggerStep * 2,
-                        easing         = EaseOutCubic,
-                    ),
-                    initialOffsetY = { it / PartsTokens.MotionSlideDistance },
-                ),
-            ) {
-                Column {
-                    PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
-                    PartsCard {
-                        PartsRow(
-                            icon    = Icons.Filled.Science,
-                            title   = stringResource(R.string.cit_title),
-                            summary = stringResource(R.string.cit_summary),
-                            onClick = {
-                                if (!CitLauncher.launch(context))
-                                    Toast.makeText(
-                                        context,
-                                        R.string.cit_not_found,
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                            },
-                        )
-                    }
-                }
+            // ── Diagnostics ─────────────────────────────────────
+            PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
+            PartsCard {
+                PartsRow(
+                    icon    = Icons.Filled.Science,
+                    title   = stringResource(R.string.cit_title),
+                    summary = stringResource(R.string.cit_summary),
+                    onClick = {
+                        if (!CitLauncher.launch(context))
+                            Toast.makeText(
+                                context,
+                                R.string.cit_not_found,
+                                Toast.LENGTH_SHORT,
+                            ).show()
+                    },
+                )
             }
 
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
@@ -228,9 +153,9 @@ fun XiaomiPartsHomeScreen(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Shared composables
-// ─────────────────────────────────────────────────────────────────────────────
+// ───────────────────────────────────────────────────────────────────────────
+// Shared composables used by HomeScreen and sub-screens
+// ───────────────────────────────────────────────────────────────────────────
 
 @Composable
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
@@ -246,18 +171,32 @@ fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     )
 }
 
+/**
+ * Shared card container used on every screen.
+ *
+ * Background: [MaterialTheme.colorScheme.surfaceContainer]
+ * Why surfaceContainer and not surfaceContainerLow:
+ *   On dark Monet palettes (which is the dominant mode for this app),
+ *   surfaceContainerLow is only ~1-2% lighter than `surface`, making cards
+ *   visually invisible. surfaceContainer is the correct M3 token for
+ *   "elevated but not prominent" containers — it matches AOSP Settings
+ *   card appearance on both light and dark dynamic-colour schemes.
+ *
+ * Tonal elevation is intentionally omitted: M3 spec says use either a
+ * distinct container colour OR tonal elevation, not both. Adding tonal
+ * elevation on top of surfaceContainer double-tints in dark mode.
+ */
 @Composable
 fun PartsCard(
     modifier: Modifier = Modifier,
     content:  @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
-        modifier       = modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        shape          = PartsTokens.cardShape,
-        color          = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = PartsTokens.cardElevation,
+        shape    = PartsTokens.cardShape,
+        color    = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(content = content)
     }
