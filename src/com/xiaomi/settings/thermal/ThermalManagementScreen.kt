@@ -45,6 +45,7 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -179,6 +180,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             modifier       = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
+            // Let the layout handle inter-card vertical spacing uniformly.
+            verticalArrangement = Arrangement.spacedBy(0.dp),
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
             if (isLoading) {
@@ -186,7 +189,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     Box(
                         modifier         = Modifier
                             .fillMaxWidth()
-                            .padding(top = 80.dp),
+                            .padding(top = PartsTokens.loadingTopPadding),
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -203,6 +206,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 return@LazyColumn
             }
 
+            // ── Toggle section ──────────────────────────────────────────
             item(key = "toggle-label") {
                 PartsCategory(stringResource(R.string.thermal_enable))
             }
@@ -256,11 +260,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
 
             if (!enabled) {
+                // ── Disabled hint ───────────────────────────────────────
                 item(key = "disabled-hint") {
                     Box(
                         modifier         = Modifier
                             .fillMaxWidth()
-                            .padding(top = 48.dp)
+                            .padding(top = PartsTokens.disabledHintTopPadding)
                             .alpha(0.4f),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -272,44 +277,49 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 }
             } else {
+                // ── Per-app profiles section ────────────────────────────
                 item(key = "apps-label") {
                     PartsCategory(stringResource(R.string.thermal_apps_category))
                 }
-                items(
-                    items = appEntries,
-                    key   = { it.packageName },
-                ) { entry ->
-                    PartsCard(
-                        modifier = Modifier.padding(
-                            horizontal = 0.dp,
-                            vertical   = (PartsTokens.cardBlockSpacing / 2),
-                        )
-                    ) {
-                        AppThermalRow(entry) { newStateId ->
-                            runCatching {
-                                thermalUtils.writePackage(entry.packageName, newStateId)
-                                val ns = ThermalUtils.ThermalState.entries
-                                    .firstOrNull { it.id == newStateId }
-                                    ?: ThermalUtils.ThermalState.DEFAULT
-                                appEntries = appEntries.map {
-                                    if (it.packageName == entry.packageName) it.copy(state = ns)
-                                    else it
+                // All app rows live inside a single PartsCard separated by
+                // HorizontalDividers — matches the AOSP/Pixel Settings dense
+                // list pattern and avoids individual-card-per-row clutter.
+                item(key = "apps-card") {
+                    PartsCard {
+                        appEntries.forEachIndexed { index, entry ->
+                            AppThermalRow(entry) { newStateId ->
+                                runCatching {
+                                    thermalUtils.writePackage(entry.packageName, newStateId)
+                                    val ns = ThermalUtils.ThermalState.entries
+                                        .firstOrNull { it.id == newStateId }
+                                        ?: ThermalUtils.ThermalState.DEFAULT
+                                    appEntries = appEntries.map {
+                                        if (it.packageName == entry.packageName) it.copy(state = ns)
+                                        else it
+                                    }
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(
+                                            R.string.thermal_profile_applied,
+                                            entry.label,
+                                            context.getString(ns.label),
+                                        ),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }.onFailure {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.thermal_profile_failed, entry.label),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
                                 }
-                                Toast.makeText(
-                                    context,
-                                    context.getString(
-                                        R.string.thermal_profile_applied,
-                                        entry.label,
-                                        context.getString(ns.label),
-                                    ),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }.onFailure {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.thermal_profile_failed, entry.label),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                            }
+                            if (index < appEntries.lastIndex) {
+                                HorizontalDivider(
+                                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                                    thickness = 0.5.dp,
+                                    color     = MaterialTheme.colorScheme.outlineVariant,
+                                )
                             }
                         }
                     }
@@ -319,9 +329,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 // Per-app row with profile dropdown
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -336,10 +346,10 @@ private fun AppThermalRow(
             .fillMaxWidth()
             .padding(
                 horizontal = PartsTokens.contentPaddingHorizontal,
-                vertical   = 12.dp,
+                vertical   = PartsTokens.appRowPaddingVertical,
             ),
         verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(PartsTokens.appRowIconSpacing),
     ) {
         Image(
             bitmap             = entry.icon,
@@ -381,8 +391,8 @@ private fun AppThermalRow(
             )
 
             // ExposedDropdownMenu in the AOSP prebuilt snapshot does NOT have
-            // a `shape` parameter — wrap it in a clipped Surface instead to
-            // get the expressive 28dp corner radius.
+            // a `shape` parameter — wrap in a clipped Surface to apply the
+            // 28dp expressive corner radius.
             Surface(
                 shape = PartsTokens.cardShape,
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -392,10 +402,6 @@ private fun AppThermalRow(
                     onDismissRequest = { expanded = false },
                     modifier         = Modifier.width(IntrinsicSize.Max),
                 ) {
-                    // Use an index-based for-loop so the Kotlin compiler sees
-                    // DropdownMenuItem as called directly inside a @Composable
-                    // lambda. forEach{} passes a non-inline lambda which breaks
-                    // @Composable inference on older compose snapshots.
                     val states = ThermalUtils.ThermalState.entries
                     for (i in states.indices) {
                         val state = states[i]
@@ -438,9 +444,9 @@ private fun ThermalDropdownItem(
     )
 }
 
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
-// ---------------------------------------------------------------------------
+// ─────────────────────────────────────────────────────────────────────────────
 
 private fun toggleService(
     context:      Context,

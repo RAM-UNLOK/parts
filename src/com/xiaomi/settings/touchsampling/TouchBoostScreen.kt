@@ -52,6 +52,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import com.xiaomi.settings.PartsCard
+import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 
@@ -106,6 +107,9 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            // Category label — consistent with ThermalManagementScreen pattern.
+            PartsCategory(stringResource(R.string.htsr_category))
+
             PartsCard {
                 Row(
                     modifier = Modifier
@@ -155,13 +159,15 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // Info banner — 28dp pill, surfaceContainerHigh = neutral info surface
+            // Info banner — use secondaryContainer so it is visually distinct
+            // from the surfaceContainer scaffold background. surfaceContainerHigh
+            // blended into surfaceContainer with zero perceived separation.
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal),
                 shape          = PartsTokens.bannerShape,
-                color          = MaterialTheme.colorScheme.surfaceContainerHigh,
+                color          = MaterialTheme.colorScheme.secondaryContainer,
                 tonalElevation = PartsTokens.cardElevation,
             ) {
                 Row(
@@ -175,13 +181,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier           = Modifier.size(PartsTokens.leadingIconSize),
                     )
                     Text(
                         text  = stringResource(R.string.htsr_info_body),
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 }
             }

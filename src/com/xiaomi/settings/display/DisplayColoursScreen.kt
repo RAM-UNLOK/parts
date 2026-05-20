@@ -27,6 +27,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -45,11 +46,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
@@ -106,20 +109,37 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
+            val standardModes = listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
+            val expertModes   = listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
+
             PartsCategory(stringResource(R.string.color_section_standard))
             PartsCard(modifier = Modifier.selectableGroup()) {
-                ColorMode.VIVID.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
-                ColorMode.SATURATED.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                ColorMode.STANDARD.Row(selectedId)  { applyMode(context, it) { selectedId = it.id } }
+                standardModes.forEachIndexed { index, mode ->
+                    mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                    if (index < standardModes.lastIndex) {
+                        HorizontalDivider(
+                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                            thickness = 0.5.dp,
+                            color     = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
             PartsCategory(stringResource(R.string.color_section_expert))
             PartsCard(modifier = Modifier.selectableGroup()) {
-                ColorMode.ORIGINAL.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                ColorMode.P3.Row(selectedId)       { applyMode(context, it) { selectedId = it.id } }
-                ColorMode.SRGB.Row(selectedId)     { applyMode(context, it) { selectedId = it.id } }
+                expertModes.forEachIndexed { index, mode ->
+                    mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
+                    if (index < expertModes.lastIndex) {
+                        HorizontalDivider(
+                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                            thickness = 0.5.dp,
+                            color     = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
@@ -135,14 +155,21 @@ private fun ColorMode.Row(
     onSelected: (ColorMode) -> Unit,
 ) {
     val selected = this.id == selectedId
+
+    // M3 state-layer: lerp primaryContainer over surfaceContainerLow at
+    // selectedStateLayerAlpha so the tint is correctly composited over the
+    // card surface colour — not just alpha-overlaid on transparent.
+    val surfaceBase = MaterialTheme.colorScheme.surfaceContainerLow
+    val stateTarget = MaterialTheme.colorScheme.primaryContainer
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = PartsTokens.selectedStateLayerAlpha)
+            lerp(surfaceBase, stateTarget, PartsTokens.selectedStateLayerAlpha)
         else
-            MaterialTheme.colorScheme.surfaceContainerLow,
+            surfaceBase,
         animationSpec = spring(),
         label         = "color-row-bg-${this.name}",
     )
+
     val label   = stringResource(this.labelRes)
     val summary = stringResource(this.summaryRes)
 
@@ -198,8 +225,11 @@ private fun applyMode(
             UserHandle.USER_CURRENT,
         )
         onSuccess(mode)
-        val label = context.getString(mode.labelRes)
-        Toast.makeText(context, context.getString(R.string.color_mode_applied, label), Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            context.getString(R.string.color_mode_applied, context.getString(mode.labelRes)),
+            Toast.LENGTH_SHORT,
+        ).show()
     }.onFailure {
         Toast.makeText(context, R.string.color_mode_failed, Toast.LENGTH_SHORT).show()
     }

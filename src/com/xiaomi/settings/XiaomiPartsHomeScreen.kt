@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Science
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material.icons.filled.TouchApp
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +63,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.thermal.ThermalUtils
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
@@ -76,17 +78,16 @@ fun XiaomiPartsHomeScreen(
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    // ── Charging state ──────────────────────────────────────────────────────
+    // ── Charging state ────────────────────────────────────────────────────
     // Initial value from sticky broadcast (synchronous, no allocation).
     var isCharging by remember {
         val sticky  = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         mutableStateOf(plugged != 0)
     }
-
-    // Live updates — same dual-path strategy as ThermalService:
-    //   • POWER_CONNECTED / POWER_DISCONNECTED for immediate response
-    //   • BATTERY_CHANGED for USB connections that don't fire POWER_CONNECTED
+    // Live updates — dual-path: POWER_CONNECTED/DISCONNECTED for immediate
+    // response + BATTERY_CHANGED for USB connections that may not fire the
+    // POWER_CONNECTED action on some Xiaomi kernels.
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
@@ -109,13 +110,13 @@ fun XiaomiPartsHomeScreen(
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    // ── Thermal enabled state ────────────────────────────────────────────────
-    // Observed via the same SharedPreferences that ThermalUtils writes to,
-    // so toggling in ThermalManagementScreen is reflected here immediately.
+    // ── Thermal-enabled state ─────────────────────────────────────────────
+    // Observed via SharedPreferences so toggling in ThermalManagementScreen
+    // propagates back here immediately without a recompose trigger.
     var thermalEnabled by remember { mutableStateOf(thermalUtils.enabled) }
     DisposableEffect(Unit) {
-        val prefListener = android.content.SharedPreferences.OnSharedPreferenceChangeListener
-            { _, key ->
+        val prefListener = android.content.SharedPreferences
+            .OnSharedPreferenceChangeListener { _, key ->
                 if (key == "thermal_enabled") thermalEnabled = thermalUtils.enabled
             }
         val prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
@@ -127,6 +128,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        // surfaceContainer matches Theme.Settings.Home.Expressive colorBackground.
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
@@ -150,34 +152,24 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // Banner only shows when charger is connected AND thermal is
-            // actually managing profiles — avoids misleading the user when
-            // thermal management has been disabled.
+            // Charging banner — only shown when thermal is active AND charger
+            // is connected. Using both conditions avoids the misleading state
+            // where the banner claims a charging profile is active but the
+            // ThermalService is not running.
             AnimatedVisibility(
                 visible = isCharging && thermalEnabled,
-                enter   = expandVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioMediumBouncy,
-                        stiffness    = Spring.StiffnessMediumLow,
-                    ),
-                    expandFrom = Alignment.Top,
-                ),
-                exit = shrinkVertically(
-                    animationSpec = spring(
-                        dampingRatio = Spring.DampingRatioNoBouncy,
-                        stiffness    = Spring.StiffnessMedium,
-                    ),
-                    shrinkTowards = Alignment.Top,
-                ),
+                enter   = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)),
+                exit    = shrinkVertically(spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMedium)),
             ) {
                 ChargingBanner(
                     Modifier.padding(
-                        horizontal = PartsTokens.bannerPaddingHorizontal,
+                        horizontal = PartsTokens.contentPaddingHorizontal,
                         vertical   = PartsTokens.bannerPaddingVertical,
                     )
                 )
             }
 
+            // ── Display section ───────────────────────────────────────────
             PartsCategory(stringResource(R.string.xiaomi_parts_category_display))
             PartsCard {
                 PartsRow(
@@ -190,18 +182,25 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
+            // ── Performance section ───────────────────────────────────────
             PartsCategory(stringResource(R.string.xiaomi_parts_category_performance))
             PartsCard {
                 PartsRow(
                     icon    = Icons.Filled.Thermostat,
                     title   = stringResource(R.string.thermal_title),
-                    // Live summary: reflects current enabled state so the
-                    // user can see at a glance without entering the sub-screen.
                     summary = stringResource(
                         if (thermalEnabled) R.string.thermal_summary_active
                         else               R.string.thermal_summary_disabled
                     ),
                     onClick = onNavigateToThermal,
+                )
+                // Divider between Thermal and Touch rows — matches Pixel
+                // Settings which separates rows inside a card with a 0.5dp
+                // outlineVariant line inset by the content horizontal margin.
+                HorizontalDivider(
+                    modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                    thickness = 0.5.dp,
+                    color     = MaterialTheme.colorScheme.outlineVariant,
                 )
                 PartsRow(
                     icon    = Icons.Filled.TouchApp,
@@ -213,6 +212,7 @@ fun XiaomiPartsHomeScreen(
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
+            // ── Diagnostics section ───────────────────────────────────────
             PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
             PartsCard {
                 PartsRow(
