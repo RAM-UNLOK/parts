@@ -75,13 +75,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
                 title = {
                     Text(
                         text  = stringResource(R.string.htsr_title),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge,
                     )
                 },
                 navigationIcon = {
@@ -94,7 +94,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -142,7 +142,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         )
                         Text(
                             text  = stringResource(R.string.htsr_enable_summary),
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
@@ -155,18 +155,20 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // Info banner — surfaceContainerHigh is the M3 role for
-            // informational chips/banners that are not actionable.
+            // Info banner — 28dp pill, surfaceContainerHigh = neutral info surface
             Surface(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                shape          = MaterialTheme.shapes.large,
+                shape          = PartsTokens.bannerShape,
                 color          = MaterialTheme.colorScheme.surfaceContainerHigh,
                 tonalElevation = PartsTokens.cardElevation,
             ) {
                 Row(
-                    modifier              = Modifier.padding(PartsTokens.contentPaddingHorizontal),
+                    modifier              = Modifier.padding(
+                        horizontal = PartsTokens.bannerInnerPaddingH,
+                        vertical   = PartsTokens.bannerInnerPaddingV,
+                    ),
                     horizontalArrangement = Arrangement.spacedBy(PartsTokens.bannerIconSpacing),
                     verticalAlignment     = Alignment.Top,
                 ) {

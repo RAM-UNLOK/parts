@@ -5,12 +5,27 @@
 -->
 <resources>
 
+    <!--
+        Expressive window theme for XiaomiPartsActivity.
+
+        Mirrors Theme.Settings.Home.Expressive from Clover/AOSP Settings:
+          - colorBackground -> materialColorSurfaceContainer (warm tonal,
+            not the harsh dark DeviceDefault window background)
+          - Transparent bars for edge-to-edge
+          - windowBackground transparent so Compose owns all painting
+
+        Reference: The-Clover-Project/packages_apps_Settings
+                   res/values/themes_expressive.xml
+                   Theme.Settings.Home.Expressive
+    -->
     <style name="XiaomiParts.Theme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">false</item>
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:clipToPadding">false</item>
+        <item name="android:clipChildren">false</item>
     </style>
 
 </resources>

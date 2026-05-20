@@ -75,13 +75,13 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
                 title = {
                     Text(
                         text  = stringResource(R.string.display_title),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge,
                     )
                 },
                 navigationIcon = {
@@ -94,7 +94,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -137,10 +137,9 @@ private fun ColorMode.Row(
     val selected = this.id == selectedId
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
-            // selectedStateLayerAlpha = 0.24f — standard M3 selected state layer
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = PartsTokens.selectedStateLayerAlpha)
         else
-            MaterialTheme.colorScheme.surfaceContainer,
+            MaterialTheme.colorScheme.surfaceContainerLow,
         animationSpec = spring(),
         label         = "color-row-bg-${this.name}",
     )
@@ -179,7 +178,7 @@ private fun ColorMode.Row(
             )
             Text(
                 text  = summary,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }

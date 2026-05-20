@@ -100,20 +100,19 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // background is the correct M3 role for screen-level containers
-        containerColor = MaterialTheme.colorScheme.background,
+        // surfaceContainer matches Theme.Settings.Home.Expressive colorBackground
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
                 title = {
                     Text(
                         text  = stringResource(R.string.xiaomi_parts_title),
-                        style = MaterialTheme.typography.headlineMedium,
+                        style = MaterialTheme.typography.headlineLarge,
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    // transparent so scaffold background shows through while expanded
                     containerColor         = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -190,7 +189,8 @@ fun XiaomiPartsHomeScreen(
 fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
         text     = label,
-        style    = MaterialTheme.typography.labelMedium,
+        // labelLarge matches expressive Settings section headers
+        style    = MaterialTheme.typography.labelLarge,
         color    = MaterialTheme.colorScheme.primary,
         modifier = modifier.padding(
             start  = PartsTokens.contentPaddingHorizontal,
@@ -209,9 +209,11 @@ fun PartsCard(
         modifier       = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        shape          = MaterialTheme.shapes.extraLarge,
-        // surfaceContainer = the standard M3 tonal surface for list/card containers
-        color          = MaterialTheme.colorScheme.surfaceContainer,
+        // 28dp expressive card shape
+        shape          = PartsTokens.cardShape,
+        // surfaceContainerLow = slightly lighter than the page surfaceContainer bg,
+        // creating the subtle card lift the expressive theme uses
+        color          = MaterialTheme.colorScheme.surfaceContainerLow,
         tonalElevation = PartsTokens.cardElevation,
     ) {
         Column(content = content)
@@ -260,7 +262,7 @@ fun PartsRow(
             )
             Text(
                 text  = summary,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -281,8 +283,7 @@ fun PartsRow(
 private fun ChargingBanner(modifier: Modifier = Modifier) {
     Surface(
         modifier       = modifier.fillMaxWidth(),
-        shape          = MaterialTheme.shapes.extraLarge,
-        // tertiaryContainer = M3 role for positive/contextual status banners
+        shape          = PartsTokens.bannerShape,
         color          = MaterialTheme.colorScheme.tertiaryContainer,
         tonalElevation = PartsTokens.cardElevation,
     ) {
@@ -303,13 +304,12 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text  = stringResource(R.string.thermal_charging_active),
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
                 Text(
                     text  = stringResource(R.string.thermal_charging_active_desc),
                     style = MaterialTheme.typography.bodySmall,
-                    // containerSubtitleAlpha: M3 secondary text inside a coloured container
                     color = MaterialTheme.colorScheme.onTertiaryContainer
                         .copy(alpha = PartsTokens.containerSubtitleAlpha),
                 )

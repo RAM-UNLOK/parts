@@ -77,40 +77,41 @@ import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
+import com.xiaomi.settings.ui.PartsTokens
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 @Immutable
 private data class AppEntry(
     val packageName: String,
-    val label: String,
-    val icon: ImageBitmap,
-    val state: ThermalUtils.ThermalState,
+    val label:       String,
+    val icon:        ImageBitmap,
+    val state:       ThermalUtils.ThermalState,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
+    val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    var appEntries by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
-    var isLoading by remember { mutableStateOf(true) }
-    var enabled by remember { mutableStateOf(thermalUtils.enabled) }
+    var appEntries      by remember { mutableStateOf<List<AppEntry>>(emptyList()) }
+    var isLoading       by remember { mutableStateOf(true) }
+    var enabled         by remember { mutableStateOf(thermalUtils.enabled) }
     var showResetDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         appEntries = loadApps(context, thermalUtils)
-        isLoading = false
+        isLoading  = false
     }
 
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            icon = { Icon(Icons.Filled.RestartAlt, null, tint = MaterialTheme.colorScheme.primary) },
-            title = { Text(stringResource(R.string.thermal_reset), style = MaterialTheme.typography.headlineSmall) },
-            text = { Text(stringResource(R.string.thermal_reset_confirm), style = MaterialTheme.typography.bodyMedium) },
-            shape = MaterialTheme.shapes.extraLarge,
+            icon    = { Icon(Icons.Filled.RestartAlt, null, tint = MaterialTheme.colorScheme.primary) },
+            title   = { Text(stringResource(R.string.thermal_reset), style = MaterialTheme.typography.headlineSmall) },
+            text    = { Text(stringResource(R.string.thermal_reset_confirm), style = MaterialTheme.typography.bodyMedium) },
+            shape   = PartsTokens.cardShape,
             confirmButton = {
                 TextButton(onClick = {
                     runCatching {
@@ -134,23 +135,23 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val listState = rememberLazyListState()
+    val listState      = rememberLazyListState()
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.thermal_title),
-                        style = MaterialTheme.typography.headlineMedium,
+                        text  = stringResource(R.string.thermal_title),
+                        style = MaterialTheme.typography.headlineLarge,
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = stringResource(R.string.back),
                         )
                     }
@@ -158,39 +159,41 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 actions = {
                     IconButton(onClick = { showResetDialog = true }) {
                         Icon(
-                            imageVector = Icons.Filled.RestartAlt,
+                            imageVector        = Icons.Filled.RestartAlt,
                             contentDescription = stringResource(R.string.thermal_reset),
                         )
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.Transparent,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surface,
+                    containerColor         = Color.Transparent,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
         },
     ) { innerPadding ->
         LazyColumn(
-            state = listState,
-            modifier = Modifier
+            state          = listState,
+            modifier       = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 24.dp),
+            contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
             if (isLoading) {
                 item(key = "loading") {
                     Box(
-                        modifier = Modifier
+                        modifier         = Modifier
                             .fillMaxWidth()
                             .padding(top = 80.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        androidx.compose.foundation.layout.Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        androidx.compose.foundation.layout.Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
                             CircularProgressIndicator(strokeWidth = 3.dp)
                             Spacer(Modifier.height(12.dp))
                             Text(
-                                text = stringResource(R.string.thermal_loading),
+                                text  = stringResource(R.string.thermal_loading),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -211,38 +214,41 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             .clickable(role = Role.Switch) {
                                 toggleService(context, thermalUtils, !enabled) { enabled = it }
                             }
-                            .padding(horizontal = 16.dp, vertical = 14.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            .padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                                vertical   = PartsTokens.rowPaddingVertical,
+                            ),
+                        verticalAlignment     = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                     ) {
                         Box(
-                            modifier = Modifier
-                                .size(40.dp)
+                            modifier         = Modifier
+                                .size(PartsTokens.leadingIconContainerSize)
                                 .clip(CircleShape)
                                 .background(MaterialTheme.colorScheme.secondaryContainer),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
-                                imageVector = Icons.Filled.Thermostat,
+                                imageVector        = Icons.Filled.Thermostat,
                                 contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier = Modifier.size(22.dp),
+                                tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                                modifier           = Modifier.size(PartsTokens.leadingIconSize),
                             )
                         }
                         androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = stringResource(R.string.thermal_enable),
+                                text  = stringResource(R.string.thermal_enable),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                             Text(
-                                text = stringResource(R.string.thermal_enable_summary),
-                                style = MaterialTheme.typography.bodySmall,
+                                text  = stringResource(R.string.thermal_enable_summary),
+                                style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                         Switch(
-                            checked = enabled,
+                            checked         = enabled,
                             onCheckedChange = { toggleService(context, thermalUtils, it) { enabled = it } },
                         )
                     }
@@ -252,14 +258,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             if (!enabled) {
                 item(key = "disabled-hint") {
                     Box(
-                        modifier = Modifier
+                        modifier         = Modifier
                             .fillMaxWidth()
                             .padding(top = 48.dp)
                             .alpha(0.4f),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
-                            text = stringResource(R.string.thermal_disabled_hint),
+                            text  = stringResource(R.string.thermal_disabled_hint),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -271,9 +277,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
                 items(
                     items = appEntries,
-                    key = { it.packageName },
+                    key   = { it.packageName },
                 ) { entry ->
-                    PartsCard(modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                    PartsCard(
+                        modifier = Modifier.padding(
+                            horizontal = 0.dp,
+                            vertical   = (PartsTokens.cardBlockSpacing / 2),
+                        )
+                    ) {
                         AppThermalRow(entry) { newStateId ->
                             runCatching {
                                 thermalUtils.writePackage(entry.packageName, newStateId)
@@ -281,7 +292,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                     .firstOrNull { it.id == newStateId }
                                     ?: ThermalUtils.ThermalState.DEFAULT
                                 appEntries = appEntries.map {
-                                    if (it.packageName == entry.packageName) it.copy(state = ns) else it
+                                    if (it.packageName == entry.packageName) it.copy(state = ns)
+                                    else it
                                 }
                                 Toast.makeText(
                                     context,
@@ -310,68 +322,81 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
-    entry: AppEntry,
+    entry:        AppEntry,
     onStateChange: (Int) -> Unit,
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
     Row(
-        modifier = Modifier
+        modifier              = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 10.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .padding(
+                horizontal = PartsTokens.contentPaddingHorizontal,
+                vertical   = 12.dp,
+            ),
+        verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Image(bitmap = entry.icon, contentDescription = null, modifier = Modifier.size(36.dp).clip(CircleShape))
+        Image(
+            bitmap             = entry.icon,
+            contentDescription = null,
+            modifier           = Modifier
+                .size(PartsTokens.appIconSize)
+                .clip(CircleShape),
+        )
         Text(
-            text = entry.label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
+            text     = entry.label,
+            style    = MaterialTheme.typography.bodyMedium,
+            color    = MaterialTheme.colorScheme.onSurface,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
         ExposedDropdownMenuBox(
-            expanded = expanded,
+            expanded         = expanded,
             onExpandedChange = { expanded = it },
-            modifier = Modifier.widthIn(min = 140.dp),
+            modifier         = Modifier.widthIn(min = 140.dp),
         ) {
             FilterChip(
-                selected = entry.state != ThermalUtils.ThermalState.DEFAULT,
-                onClick = { expanded = true },
-                label = {
+                selected     = entry.state != ThermalUtils.ThermalState.DEFAULT,
+                onClick      = { expanded = true },
+                label        = {
                     Text(
-                        text = stringResource(entry.state.label),
-                        style = MaterialTheme.typography.labelSmall,
+                        text     = stringResource(entry.state.label),
+                        style    = MaterialTheme.typography.labelSmall,
                         maxLines = 1,
                         softWrap = false,
                         overflow = TextOverflow.Clip,
                     )
                 },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                modifier = Modifier
+                modifier     = Modifier
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     .widthIn(min = 140.dp),
             )
             androidx.compose.material3.ExposedDropdownMenu(
-                expanded = expanded,
+                expanded         = expanded,
                 onDismissRequest = { expanded = false },
-                shape = MaterialTheme.shapes.extraLarge,
-                modifier = Modifier.width(IntrinsicSize.Max),
+                shape            = PartsTokens.cardShape,
+                modifier         = Modifier.width(IntrinsicSize.Max),
             ) {
                 ThermalUtils.ThermalState.entries.forEach { state ->
                     DropdownMenuItem(
                         text = {
                             Text(
-                                text = stringResource(state.label),
-                                style = MaterialTheme.typography.bodyMedium,
+                                text     = stringResource(state.label),
+                                style    = MaterialTheme.typography.bodyMedium,
                                 maxLines = 1,
                                 softWrap = false,
                                 overflow = TextOverflow.Clip,
                             )
                         },
-                        onClick = { onStateChange(state.id); expanded = false },
+                        onClick     = { onStateChange(state.id); expanded = false },
                         leadingIcon = if (state == entry.state) ({
-                            RadioButton(selected = true, onClick = null, modifier = Modifier.size(18.dp))
+                            RadioButton(
+                                selected = true,
+                                onClick  = null,
+                                modifier = Modifier.size(18.dp),
+                            )
                         }) else null,
                     )
                 }
@@ -381,10 +406,10 @@ private fun AppThermalRow(
 }
 
 private fun toggleService(
-    context: Context,
+    context:      Context,
     thermalUtils: ThermalUtils,
-    target: Boolean,
-    onResult: (Boolean) -> Unit,
+    target:       Boolean,
+    onResult:     (Boolean) -> Unit,
 ) {
     runCatching {
         thermalUtils.enabled = target
@@ -397,7 +422,7 @@ private fun toggleService(
 }
 
 private suspend fun loadApps(
-    context: Context,
+    context:      Context,
     thermalUtils: ThermalUtils,
 ): List<AppEntry> = withContext(Dispatchers.IO) {
     val launcherApps = context.getSystemService(Context.LAUNCHER_APPS_SERVICE) as LauncherApps
@@ -405,12 +430,11 @@ private suspend fun loadApps(
         .mapNotNull { info ->
             runCatching {
                 val drawable = info.getIcon(0) ?: return@runCatching null
-                val bmp = drawable.toBitmapSafe()
                 AppEntry(
                     packageName = info.applicationInfo.packageName,
-                    label = info.label.toString(),
-                    icon = bmp,
-                    state = thermalUtils.getStateForPackage(info.applicationInfo.packageName),
+                    label       = info.label.toString(),
+                    icon        = drawable.toBitmapSafe(),
+                    state       = thermalUtils.getStateForPackage(info.applicationInfo.packageName),
                 )
             }.getOrNull()
         }

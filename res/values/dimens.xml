@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     Copyright (C) 2025 Paranoid Android
+     SPDX-License-Identifier: Apache-2.0
+
+     Expressive spacing tokens derived from:
+       - Clover/AOSP Settings clover_dimens.xml
+       - Clover/AOSP Settings themes_expressive.xml
+       - Material 3 Expressive spec
+-->
+<resources>
+
+    <!-- Horizontal content margin. Expressive Settings uses 0dp for
+         full-bleed cards, but we keep a small 16dp gutter so cards
+         don't clip the rounded corners against the screen edge. -->
+    <dimen name="parts_content_padding_horizontal">16dp</dimen>
+
+    <!-- Vertical padding inside a preference row.
+         Expressive listPreferredItemHeight = 72dp; with bodyLarge +
+         bodySmall text this lands at ~16dp top + 16dp bottom. -->
+    <dimen name="parts_row_padding_vertical">16dp</dimen>
+
+    <!-- Gap between icon, text, trailing in a row -->
+    <dimen name="parts_row_element_spacing">16dp</dimen>
+
+    <!-- Vertical gap between card blocks.
+         Clover about_phone_info_cards_card_spacing = 12dp -->
+    <dimen name="parts_card_block_spacing">12dp</dimen>
+
+    <!-- Bottom padding at end of scrollable list -->
+    <dimen name="parts_list_bottom_padding">32dp</dimen>
+
+    <!-- Top/bottom padding around category label -->
+    <dimen name="parts_category_top_padding">24dp</dimen>
+    <dimen name="parts_category_bottom_padding">8dp</dimen>
+
+    <!-- Charging banner outer margin -->
+    <dimen name="parts_banner_padding_horizontal">16dp</dimen>
+    <dimen name="parts_banner_padding_vertical">8dp</dimen>
+
+    <!-- Charging banner internal padding -->
+    <dimen name="parts_banner_inner_padding_h">20dp</dimen>
+    <dimen name="parts_banner_inner_padding_v">16dp</dimen>
+    <dimen name="parts_banner_icon_spacing">14dp</dimen>
+
+    <!-- Leading icon container.
+         Expressive = 48dp circle (up from 40dp) -->
+    <dimen name="parts_leading_icon_container_size">48dp</dimen>
+    <dimen name="parts_leading_icon_size">24dp</dimen>
+    <dimen name="parts_trailing_icon_size">20dp</dimen>
+    <dimen name="parts_banner_icon_size">24dp</dimen>
+
+    <!-- App icon in per-app thermal rows -->
+    <dimen name="parts_app_icon_size">40dp</dimen>
+
+    <!-- Card corner radius.
+         Clover about_phone_info_card_corner_radius = 28dp -->
+    <dimen name="parts_card_corner_radius">28dp</dimen>
+
+    <!-- Info banner corner radius -->
+    <dimen name="parts_info_banner_corner_radius">28dp</dimen>
+
+</resources>
