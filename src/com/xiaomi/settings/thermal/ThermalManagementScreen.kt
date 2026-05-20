@@ -17,6 +17,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -50,6 +51,7 @@ import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -187,9 +189,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             .padding(top = 80.dp),
                         contentAlignment = Alignment.Center,
                     ) {
-                        androidx.compose.foundation.layout.Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator(strokeWidth = 3.dp)
                             Spacer(Modifier.height(12.dp))
                             Text(
@@ -235,7 +235,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 modifier           = Modifier.size(PartsTokens.leadingIconSize),
                             )
                         }
-                        androidx.compose.foundation.layout.Column(modifier = Modifier.weight(1f)) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text  = stringResource(R.string.thermal_enable),
                                 style = MaterialTheme.typography.bodyLarge,
@@ -319,13 +319,18 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
+// ---------------------------------------------------------------------------
+// Per-app row with profile dropdown
+// ---------------------------------------------------------------------------
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
-    entry:        AppEntry,
+    entry:         AppEntry,
     onStateChange: (Int) -> Unit,
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
+
     Row(
         modifier              = Modifier
             .fillMaxWidth()
@@ -351,6 +356,7 @@ private fun AppThermalRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
+
         ExposedDropdownMenuBox(
             expanded         = expanded,
             onExpandedChange = { expanded = it },
@@ -373,37 +379,68 @@ private fun AppThermalRow(
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                     .widthIn(min = 140.dp),
             )
-            androidx.compose.material3.ExposedDropdownMenu(
-                expanded         = expanded,
-                onDismissRequest = { expanded = false },
-                shape            = PartsTokens.cardShape,
-                modifier         = Modifier.width(IntrinsicSize.Max),
+
+            // ExposedDropdownMenu in the AOSP prebuilt snapshot does NOT have
+            // a `shape` parameter — wrap it in a clipped Surface instead to
+            // get the expressive 28dp corner radius.
+            Surface(
+                shape = PartsTokens.cardShape,
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
             ) {
-                ThermalUtils.ThermalState.entries.forEach { state ->
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text     = stringResource(state.label),
-                                style    = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                softWrap = false,
-                                overflow = TextOverflow.Clip,
-                            )
-                        },
-                        onClick     = { onStateChange(state.id); expanded = false },
-                        leadingIcon = if (state == entry.state) ({
-                            RadioButton(
-                                selected = true,
-                                onClick  = null,
-                                modifier = Modifier.size(18.dp),
-                            )
-                        }) else null,
-                    )
+                ExposedDropdownMenu(
+                    expanded         = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier         = Modifier.width(IntrinsicSize.Max),
+                ) {
+                    // Use an index-based for-loop so the Kotlin compiler sees
+                    // DropdownMenuItem as called directly inside a @Composable
+                    // lambda. forEach{} passes a non-inline lambda which breaks
+                    // @Composable inference on older compose snapshots.
+                    val states = ThermalUtils.ThermalState.entries
+                    for (i in states.indices) {
+                        val state = states[i]
+                        ThermalDropdownItem(
+                            state      = state,
+                            isSelected = state == entry.state,
+                            onClick    = { onStateChange(state.id); expanded = false },
+                        )
+                    }
                 }
             }
         }
     }
 }
+
+@Composable
+private fun ThermalDropdownItem(
+    state:      ThermalUtils.ThermalState,
+    isSelected: Boolean,
+    onClick:    () -> Unit,
+) {
+    DropdownMenuItem(
+        text = {
+            Text(
+                text     = stringResource(state.label),
+                style    = MaterialTheme.typography.bodyMedium,
+                maxLines = 1,
+                softWrap = false,
+                overflow = TextOverflow.Clip,
+            )
+        },
+        onClick     = onClick,
+        leadingIcon = if (isSelected) ({
+            RadioButton(
+                selected = true,
+                onClick  = null,
+                modifier = Modifier.size(18.dp),
+            )
+        }) else null,
+    )
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 private fun toggleService(
     context:      Context,
