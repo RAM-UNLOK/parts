@@ -79,6 +79,8 @@
     <string name="thermal_charging_info_body">While plugged in, sconfig 27 (charge-optimised thermal) takes top priority. All per-app profiles are paused and resume automatically once the charger is disconnected.</string>
     <!-- Dimmed hint shown below the locked app list while charging -->
     <string name="thermal_charging_override_hint">Charging override active · per-app profiles resume when unplugged</string>
+    <!-- Toast shown when user taps a locked profile chip while charging -->
+    <string name="thermal_charging_locked_hint">🔋 Profiles locked while charging</string>
 
     <!-- ── Touch Boost ──────────────────────────────────── -->
     <string name="htsr_title">Touch Boost</string>

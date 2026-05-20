@@ -408,16 +408,21 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             AppThermalRow(
                                 entry          = entry,
                                 chargingLocked = isCharging,
-                                onStateChange  = { newStateId ->
+                                onStateChange  = onStateChange@{ newStateId ->
+                                    // Guard: if the charging-locked toast path sent us -1,
+                                    // or if isCharging flipped between the chip tap and
+                                    // this lambda executing, show the toast and stop.
+                                    // return@onStateChange is the correct label here —
+                                    // return@AppThermalRow would exit the forEachIndexed
+                                    // iteration instead, letting execution fall through
+                                    // into the runCatching block and writing -1 to disk.
                                     if (isCharging) {
-                                        // Inform the user why nothing happened instead of
-                                        // swallowing the tap silently.
                                         Toast.makeText(
                                             context,
                                             R.string.thermal_charging_locked_hint,
                                             Toast.LENGTH_SHORT,
                                         ).show()
-                                        return@AppThermalRow
+                                        return@onStateChange
                                     }
                                     runCatching {
                                         thermalUtils.writePackage(entry.packageName, newStateId)
@@ -529,7 +534,9 @@ private fun AppThermalRow(
                 selected     = entry.state != ThermalUtils.ThermalState.DEFAULT,
                 onClick      = {
                     if (chargingLocked) {
-                        onStateChange(-1)   // triggers the locked-toast path in the caller
+                        // Delegate to the caller so the toast fires from the
+                        // onStateChange lambda with the correct return label.
+                        onStateChange(-1)
                     } else {
                         expanded = true
                     }
