@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.BatteryManager
 import android.os.SystemClock
 import android.widget.Toast
@@ -35,6 +36,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -65,7 +67,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.ui.PartsTokens
 
-private const val TOAST_DEBOUNCE_MS = 2_000L
+private const val TOAST_DEBOUNCE_MS   = 2_000L
+private const val CIT_PACKAGE         = "com.xiaomi.cit"
+private const val CIT_ACTIVITY        = "com.xiaomi.cit.MainActivity"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -98,7 +102,7 @@ fun XiaomiPartsHomeScreen(
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val now    = SystemClock.elapsedRealtime()
+                val now     = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
@@ -160,7 +164,7 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
-            // ── Charging banner ──────────────────────────────────
+            // ── Charging banner ─────────────────────────────────────────
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
@@ -210,7 +214,7 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Display category ─────────────────────────────────
+            // ── Display category ──────────────────────────────────────
             item(key = "display-label") {
                 PartsCategory(stringResource(R.string.display_category))
             }
@@ -225,7 +229,7 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Performance category ─────────────────────────────
+            // ── Performance category ─────────────────────────────────
             item(key = "perf-label") {
                 PartsCategory(stringResource(R.string.performance_category))
             }
@@ -246,6 +250,46 @@ fun XiaomiPartsHomeScreen(
                     )
                 }
             }
+
+            // ── Diagnostics category ────────────────────────────────
+            item(key = "diag-label") {
+                PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
+            }
+            item(key = "diag-card") {
+                PartsCard {
+                    PartsRow(
+                        icon    = Icons.Filled.BugReport,
+                        title   = stringResource(R.string.cit_title),
+                        summary = stringResource(R.string.cit_summary),
+                        onClick = { launchCit(context) },
+                        showDivider = false,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Launch the Xiaomi CIT app via explicit intent.
+ * Shows a toast if the app is not installed on this device.
+ */
+private fun launchCit(context: Context) {
+    runCatching {
+        context.packageManager.getPackageInfo(CIT_PACKAGE, 0)
+        val intent = Intent().apply {
+            setClassName(CIT_PACKAGE, CIT_ACTIVITY)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+        Toast.makeText(context, R.string.cit_launched, Toast.LENGTH_SHORT).show()
+    }.onFailure { e ->
+        if (e is PackageManager.NameNotFoundException) {
+            Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
+        } else {
+            // CIT is installed but the activity failed to launch — show not_found
+            // to avoid exposing a raw exception message to the user.
+            Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
         }
     }
 }
