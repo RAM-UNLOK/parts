@@ -53,7 +53,7 @@ class ThermalService : Service() {
     private lateinit var mainHandler     : Handler
 
     /**
-     * Tracks the last Toast shown by this service so we can cancel it before
+     * Holds the last Toast shown by this service so we can cancel it before
      * showing a new one. Prevents stacked / queued toasts when charging events
      * fire in rapid succession (e.g. charger wiggle, USB handshake retries).
      * Always accessed on the main thread via mainHandler.post{}.
@@ -74,11 +74,11 @@ class ThermalService : Service() {
             field = value
             dlog(TAG, "Screen: $value")
             if (value) {
-                // Screen on: immediately re-read charging state and restart
-                // the poller. Catches USB connections made during screen-off.
+                // Screen on: re-read charging state and restart the poller.
+                // Catches USB connections made while the screen was off.
                 chargingMonitor.start()
             } else {
-                // Screen off: stop poller — no reason to wake CPU in the dark.
+                // Screen off: stop poller — no need to wake the CPU in the dark.
                 chargingMonitor.stop()
             }
             applyProfile()
@@ -87,10 +87,9 @@ class ThermalService : Service() {
     /**
      * Tracks the charging state as of the last applyProfile() call.
      *
-     * Initialised to null so the very first applyProfile() always sees a
-     * transition and writes the correct sconfig from a clean state, but
-     * does NOT show a toast (the user didn't just plug in — the service
-     * simply started).
+     * Initialised to null so the very first applyProfile() always writes
+     * the correct sconfig from a clean state but does NOT show a toast
+     * (the user didn't just plug in — the service simply started).
      */
     private var wasCharging: Boolean? = null
 
@@ -107,7 +106,7 @@ class ThermalService : Service() {
     // ChargingMonitor with no BroadcastReceiver at all.
     // @Suppress is intentional: these are genuine system-only broadcasts that
     // cannot originate from third-party apps. NOT_EXPORTED is incorrect for
-    // system broadcasts and causes StrictMode on AOSP 16.
+    // system broadcasts and causes a StrictMode warning on AOSP 16.
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
             when (intent.action) {
@@ -120,7 +119,7 @@ class ThermalService : Service() {
     override fun onCreate() {
         dlog(TAG, "onCreate")
         // Must be created on or after super.onCreate() so the main looper
-        // is guaranteed to be attached to the process.
+        // is guaranteed to be attached to this process.
         mainHandler  = Handler(Looper.getMainLooper())
         thermalUtils = ThermalUtils.getInstance(this)
         super.onCreate()
@@ -130,8 +129,10 @@ class ThermalService : Service() {
         dlog(TAG, "onStartCommand")
 
         chargingMonitor = ChargingMonitor(this) { info ->
+            // NOTE: ° is the real degree-sign character (U+00B0).
+            // Kotlin does not process \uXXXX escapes in string literals.
             dlog(TAG, "Charging changed: ${info.isCharging} via ${info.plugType} " +
-                      "level=${info.level}% temp=${info.tempTenthsC / 10.0}\u00b0C")
+                      "level=${info.level}% temp=${info.tempTenthsC / 10.0}°C")
             applyProfile()
         }
         chargingMonitor.start()
@@ -158,7 +159,7 @@ class ThermalService : Service() {
         dlog(TAG, "onDestroy")
         thermalUtils.setDefaultThermalProfile()
         // Pass final = true so the ChargingMonitor HandlerThread is quit
-        // and does not leak after the service is destroyed.
+        // cleanly and does not leak after the service is destroyed.
         chargingMonitor.stop(final = true)
         unregisterReceiver(screenReceiver)
         runCatching { ActivityTaskManager.getService().unregisterTaskStackListener(taskListener) }
@@ -178,13 +179,12 @@ class ThermalService : Service() {
      *
      * Toast logic:
      *   wasCharging is null only on the very first call (service start).
-     *   In that case we write the correct sconfig but skip the toast so
-     *   the user doesn't see a notification just because the service
-     *   restarted while the phone was already on charge.
-     *   On every subsequent call, a toast fires only when isCharging flips
-     *   (true→false or false→true) — never on repeated calls with the same
-     *   state. currentToast?.cancel() dismisses any queued toast before
-     *   the new one is shown, preventing visible stacking.
+     *   We write the correct sconfig but skip the toast so the user doesn't
+     *   see a notification just because the service restarted while already
+     *   on charge.
+     *   On every subsequent call a toast fires only when isCharging flips
+     *   (true→false or false→true). currentToast?.cancel() dismisses any
+     *   queued toast before the new one shows, preventing visible stacking.
      */
     private fun applyProfile() {
         val isCharging   = chargingMonitor.isCharging
@@ -201,8 +201,8 @@ class ThermalService : Service() {
             dlog(TAG, "applyProfile failed: ${e.message}")
         }
 
-        // Update edge-tracking state AFTER applying so wasCharging always
-        // reflects what we just acted on.
+        // Update edge-tracking state AFTER applying, so wasCharging always
+        // reflects what was just acted on.
         wasCharging = isCharging
 
         // Show a toast only on a real plug-in / plug-out transition.
@@ -215,8 +215,8 @@ class ThermalService : Service() {
         else
             R.string.thermal_charging_toast_disconnected
 
-        // Toast.makeText() requires the main looper. applyProfile() can be
-        // called from ChargingMonitor's HandlerThread, so we always post.
+        // Toast.makeText() requires the main looper. applyProfile() may be
+        // called from ChargingMonitor's HandlerThread, so always post.
         // Cancel the previous toast first to prevent stacking.
         mainHandler.post {
             currentToast?.cancel()
