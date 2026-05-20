@@ -12,6 +12,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -30,29 +31,28 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -66,8 +66,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -93,6 +94,15 @@ private data class AppEntry(
     val icon:        ImageBitmap,
     val state:       ThermalUtils.ThermalState,
 )
+
+/** Semantic colour for each thermal state, derived from the M3 colour scheme. */
+@Composable
+private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
+    ThermalUtils.ThermalState.DEFAULT     -> MaterialTheme.colorScheme.outline
+    ThermalUtils.ThermalState.POWERSAVE   -> MaterialTheme.colorScheme.tertiary
+    ThermalUtils.ThermalState.BALANCED    -> MaterialTheme.colorScheme.primary
+    ThermalUtils.ThermalState.PERFORMANCE -> MaterialTheme.colorScheme.error
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -139,15 +149,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         )
     }
 
-    // MediumTopAppBar is the correct bar type for sub-screens (one level
-    // deep below home). It uses headlineSmall (24sp) expanded →
-    // titleMedium collapsed — fits long titles like "Thermal Management"
-    // without wrapping on 360 dp devices.
-    //
-    // enterAlwaysScrollBehavior is the correct pairing for Medium:
-    // the bar hides on scroll-down and re-appears as soon as the user
-    // scrolls up even a single pixel. exitUntilCollapsed is for Large only
-    // (it would prevent the Medium bar from ever re-showing after collapse).
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -163,8 +164,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         topBar = {
             MediumTopAppBar(
                 title = {
-                    // No explicit style override — MediumTopAppBar manages
-                    // its own headlineSmall → titleMedium transition.
                     Text(
                         text     = stringResource(R.string.thermal_title),
                         maxLines = 1,
@@ -341,6 +340,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
+// Missing import needed for alpha modifier
+import androidx.compose.ui.draw.alpha
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppThermalRow(
@@ -348,6 +350,13 @@ private fun AppThermalRow(
     onStateChange: (Int) -> Unit,
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
+
+    // Animate the chevron 180° when the dropdown opens.
+    val chevronRotation by animateFloatAsState(
+        targetValue   = if (expanded) 180f else 0f,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label         = "chevron-rotation-${entry.packageName}",
+    )
 
     Row(
         modifier              = Modifier
@@ -378,75 +387,99 @@ private fun AppThermalRow(
         ExposedDropdownMenuBox(
             expanded         = expanded,
             onExpandedChange = { expanded = it },
-            modifier         = Modifier.widthIn(min = 140.dp),
         ) {
-            FilterChip(
+            // ── Chip ────────────────────────────────────────────────────────
+            // ElevatedFilterChip lifts off the card surface so it reads
+            // as an interactive control rather than plain text.
+            // The colour dot gives instant scannable state feedback without
+            // requiring the user to read the label text.
+            ElevatedFilterChip(
                 selected     = entry.state != ThermalUtils.ThermalState.DEFAULT,
                 onClick      = { expanded = true },
                 label        = {
                     Text(
                         text     = stringResource(entry.state.label),
-                        style    = MaterialTheme.typography.labelSmall,
+                        style    = MaterialTheme.typography.labelMedium,
                         maxLines = 1,
-                        softWrap = false,
-                        overflow = TextOverflow.Clip,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                modifier     = Modifier
+                leadingIcon  = {
+                    // Colour dot = instant semantic state indicator.
+                    // 8dp circle whose colour maps to the thermal level.
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(entry.state.dotColor()),
+                    )
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector        = Icons.Filled.ExpandMore,
+                        contentDescription = null,
+                        modifier           = Modifier
+                            .size(18.dp)
+                            .rotate(chevronRotation),
+                    )
+                },
+                modifier = Modifier
                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                    .widthIn(min = 140.dp),
+                    .widthIn(min = PartsTokens.chipMinWidth),
+                colors = FilterChipDefaults.elevatedFilterChipColors(
+                    selectedContainerColor    = MaterialTheme.colorScheme.secondaryContainer,
+                    selectedLabelColor        = MaterialTheme.colorScheme.onSecondaryContainer,
+                    selectedLeadingIconColor  = MaterialTheme.colorScheme.onSecondaryContainer,
+                    selectedTrailingIconColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                ),
             )
 
-            Surface(
-                shape = PartsTokens.cardShape,
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            // ── Dropdown menu ───────────────────────────────────────────────
+            // No Surface wrapper — ExposedDropdownMenu owns its own
+            // surfaceContainer background + M3 elevation shadow.
+            ExposedDropdownMenu(
+                expanded         = expanded,
+                onDismissRequest = { expanded = false },
+                modifier         = Modifier.width(IntrinsicSize.Max),
             ) {
-                ExposedDropdownMenu(
-                    expanded         = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier         = Modifier.width(IntrinsicSize.Max),
-                ) {
-                    val states = ThermalUtils.ThermalState.entries
-                    for (i in states.indices) {
-                        val state = states[i]
-                        ThermalDropdownItem(
-                            state      = state,
-                            isSelected = state == entry.state,
-                            onClick    = { onStateChange(state.id); expanded = false },
-                        )
-                    }
+                ThermalUtils.ThermalState.entries.forEach { state ->
+                    val isSelected = state == entry.state
+                    DropdownMenuItem(
+                        text = {
+                            Text(
+                                text  = stringResource(state.label),
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        },
+                        onClick      = { onStateChange(state.id); expanded = false },
+                        leadingIcon  = {
+                            // Colour dot for every item — same semantic
+                            // mapping as the chip, so the colour language
+                            // is consistent throughout the UI.
+                            Box(
+                                modifier = Modifier
+                                    .size(10.dp)
+                                    .clip(CircleShape)
+                                    .background(state.dotColor()),
+                            )
+                        },
+                        trailingIcon = if (isSelected) ({
+                            Icon(
+                                imageVector        = Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier           = Modifier.size(20.dp),
+                                tint               = MaterialTheme.colorScheme.primary,
+                            )
+                        }) else null,
+                        contentPadding = PaddingValues(
+                            horizontal = 16.dp,
+                            vertical   = PartsTokens.dropdownItemVerticalPadding,
+                        ),
+                    )
                 }
             }
         }
     }
-}
-
-@Composable
-private fun ThermalDropdownItem(
-    state:      ThermalUtils.ThermalState,
-    isSelected: Boolean,
-    onClick:    () -> Unit,
-) {
-    DropdownMenuItem(
-        text = {
-            Text(
-                text     = stringResource(state.label),
-                style    = MaterialTheme.typography.bodyMedium,
-                maxLines = 1,
-                softWrap = false,
-                overflow = TextOverflow.Clip,
-            )
-        },
-        onClick     = onClick,
-        leadingIcon = if (isSelected) ({
-            RadioButton(
-                selected = true,
-                onClick  = null,
-                modifier = Modifier.size(18.dp),
-            )
-        }) else null,
-    )
 }
 
 private fun toggleService(

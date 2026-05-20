@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.dp
  */
 object PartsTokens {
 
-    // ─ Screen-level layout ───────────────────────────────────────
+    // ─ Screen-level layout ────────────────────────────────────────────
     /** Horizontal margin for all cards and banners — 16dp system gutter. */
     val contentPaddingHorizontal = 16.dp
     /** Top padding for the first item below the app bar. */
@@ -29,20 +29,20 @@ object PartsTokens {
     /** Bottom padding so the last card clears the nav bar gesture zone. */
     val listBottomPadding        = 32.dp
 
-    // ─ Category labels ───────────────────────────────────────
+    // ─ Category labels ──────────────────────────────────────────────
     /** Space above a section-category label ("Display", "Performance" …). */
     val categoryTopPadding    = 24.dp
     /** Space between a category label and the card that follows it. */
     val categoryBottomPadding = 8.dp
 
-    // ─ Card spacing ──────────────────────────────────────────
+    // ─ Card spacing ────────────────────────────────────────────────
     /**
      * Vertical gap between two stacked PartsCards inside one category.
      * M3 Expressive spec: 16dp between list-group cards.
      */
     val cardBlockSpacing = 16.dp
 
-    // ─ Preference rows (inside a card) ──────────────────────────
+    // ─ Preference rows (inside a card) ─────────────────────────────────
     /**
      * Vertical padding for a standard preference row.
      * Expressive row height ≈ 72dp = 16dp top + text content + 16dp bottom.
@@ -51,7 +51,7 @@ object PartsTokens {
     /** Horizontal gap between the leading icon container and text column. */
     val rowElementSpacing  = 16.dp
 
-    // ─ App-list rows (denser than preference rows) ────────────────────
+    // ─ App-list rows (denser than preference rows) ──────────────────────
     /**
      * Vertical padding for an app-list row (app icon + label + chip).
      * Tighter than a preference row: 12dp top/bottom ≈ 64dp total height.
@@ -60,13 +60,19 @@ object PartsTokens {
     /** Gap between the app icon and the label in an app-list row. */
     val appRowIconSpacing     = 12.dp
 
-    // ─ Loading / empty-state helpers ─────────────────────────────
+    // ─ Per-app thermal chip / dropdown ─────────────────────────────────
+    /** Minimum width for the thermal-state selector chip. */
+    val chipMinWidth = 160.dp
+    /** Vertical padding inside each dropdown menu item. */
+    val dropdownItemVerticalPadding = 14.dp
+
+    // ─ Loading / empty-state helpers ─────────────────────────────────
     /** Top padding for a centred loading spinner or empty-state label. */
     val loadingTopPadding      = 80.dp
     /** Top padding for the "thermal disabled" hint text. */
     val disabledHintTopPadding = 48.dp
 
-    // ─ Icon / container sizes ────────────────────────────────────
+    // ─ Icon / container sizes ─────────────────────────────────────────
     /** Expressive leading icon circle — 48dp (increased from 40dp in M3). */
     val leadingIconContainerSize = 48.dp
     /** Icon size inside the leading icon circle. */
@@ -76,7 +82,7 @@ object PartsTokens {
     /** App icon size in the per-app thermal list. */
     val appIconSize              = 40.dp
 
-    // ─ Banners ─────────────────────────────────────────────
+    // ─ Banners ──────────────────────────────────────────────────
     /** Outer horizontal margin for a full-width banner chip. */
     val bannerPaddingHorizontal = 16.dp
     /** Outer vertical margin for a full-width banner chip. */
@@ -90,7 +96,7 @@ object PartsTokens {
     /** Banner icon size. */
     val bannerIconSize          = 24.dp
 
-    // ─ Elevation ─────────────────────────────────────────────
+    // ─ Elevation ──────────────────────────────────────────────────
     /**
      * Cards use surfaceContainerLow colour role for tonal elevation.
      * No physical shadow — matches Pixel Settings visual language.
@@ -99,7 +105,7 @@ object PartsTokens {
      */
     val cardElevation = 0.dp
 
-    // ─ Shapes ───────────────────────────────────────────────
+    // ─ Shapes ─────────────────────────────────────────────────────
     /**
      * Expressive card corner radius = 28dp.
      * Reference: Clover clover_dimens.xml
