@@ -28,10 +28,10 @@
 
     <!-- ── Common UI ─────────────────────────────────────── -->
     <string name="dismiss">Dismiss</string>
+    <string name="cancel">Cancel</string>
 
     <!-- ── Display Colours ─────────────────────────────── -->
     <string name="display_title">Display Colours</string>
-    <string name="display_summary">Choose your colour profile</string>
     <string name="color_mode_vivid">Vivid</string>
     <string name="color_mode_saturated">Saturated</string>
     <string name="color_mode_standard">Standard</string>
@@ -53,8 +53,6 @@
     <!-- ── Thermal Management ───────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
     <string name="thermal_summary">Per-app thermal profiles</string>
-    <string name="thermal_summary_active">Per-app profiles active</string>
-    <string name="thermal_summary_disabled">Tap to enable thermal profiles</string>
     <string name="thermal_enable">Thermal profiles</string>
     <string name="thermal_enable_summary">Per-app thermal tuning, applied automatically</string>
     <string name="thermal_loading">Loading apps…</string>
@@ -71,7 +69,6 @@
     <string name="thermal_toggle_failed">❌ Could not toggle thermal profiles</string>
     <string name="thermal_disabled_hint">Enable to configure per-app thermal tuning</string>
     <string name="thermal_apps_category">Per-app profiles</string>
-    <string name="thermal_apply_failed">Thermal apply failed</string>
 
     <!--
         Thermal profile labels — must match ThermalState enum order in ThermalUtils.kt.
@@ -95,34 +92,15 @@
     <string name="thermal_charging_info_body">A charge-optimised thermal profile is active while plugged in. Per-app profiles are paused and resume automatically once unplugged.</string>
     <string name="thermal_charging_override_hint">Charging override active — profiles resume when unplugged.</string>
     <string name="thermal_charging_locked_hint">🔒 Locked while charging</string>
-    <string name="thermal_charging_toast_connected">⚡ Charging profile on</string>
-    <string name="thermal_charging_toast_disconnected">🔋 Per-app profiles resumed</string>
 
     <!-- ── Touch Boost ──────────────────────────────────── -->
     <string name="htsr_title">Touch Boost</string>
-    <string name="htsr_summary">Higher polling rate, snappier touch</string>
     <string name="htsr_category">Touch Boost</string>
     <string name="htsr_enable_title">Touch Boost</string>
     <string name="htsr_enable_summary">Boosts touch polling for snappier, lower-latency input</string>
-    <string name="htsr_info_title">About Touch Boost</string>
     <string name="htsr_info_body">Raises the touch controller polling rate, reducing tap-to-response latency. May slightly increase power draw during active use.</string>
     <string name="htsr_enabled_toast">👆 Touch boost on</string>
     <string name="htsr_disabled_toast">✋ Touch boost off</string>
     <string name="htsr_failed_toast">❌ Touch boost failed</string>
-
-    <!-- ── Xiaomi CIT ─────────────────────────────────────── -->
-    <string name="cit_title">Xiaomi CIT</string>
-    <string name="cit_summary">Hardware diagnostics and calibration</string>
-    <string name="cit_not_found">❌ CIT app not installed</string>
-    <string name="cit_launched">🔧 Opening CIT…</string>
-
-    <!-- ── Categories (legacy, kept for any XML preferences) ────────── -->
-    <string name="xiaomi_parts_category_display">Display</string>
-    <string name="xiaomi_parts_category_performance">Performance</string>
-    <string name="xiaomi_parts_category_diagnostics">Diagnostics</string>
-
-    <!-- ── Common ──────────────────────────────────────────── -->
-    <string name="back">Back</string>
-    <string name="cancel">Cancel</string>
 
 </resources>
