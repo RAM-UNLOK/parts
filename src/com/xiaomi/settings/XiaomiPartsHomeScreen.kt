@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -39,7 +38,9 @@ import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
@@ -225,6 +226,7 @@ fun XiaomiPartsHomeScreen(
                         title   = stringResource(R.string.display_colours_title),
                         summary = stringResource(R.string.display_colours_summary),
                         onClick = onNavigateToDisplay,
+                        showDivider = false,
                     )
                 }
             }
@@ -287,8 +289,6 @@ private fun launchCit(context: Context) {
         if (e is PackageManager.NameNotFoundException) {
             Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
         } else {
-            // CIT is installed but the activity failed to launch — show not_found
-            // to avoid exposing a raw exception message to the user.
             Toast.makeText(context, R.string.cit_not_found, Toast.LENGTH_SHORT).show()
         }
     }
@@ -334,6 +334,15 @@ fun PartsCard(
     }
 }
 
+/**
+ * Standard preference row with leading icon container, title, summary,
+ * and an optional trailing slot (defaults to ChevronRight).
+ *
+ * @param showDivider When true a full-width [HorizontalDivider] is rendered
+ *   below this row using [DividerDefaults.Thickness] (1 dp) and
+ *   [MaterialTheme.colorScheme.outlineVariant] — matching M3 list divider spec.
+ *   Pass false for the last row in a [PartsCard] to avoid a trailing divider.
+ */
 @Composable
 fun PartsRow(
     icon:        ImageVector,
@@ -390,6 +399,13 @@ fun PartsRow(
                 )
             }
             trailing()
+        }
+        if (showDivider) {
+            HorizontalDivider(
+                modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                thickness = DividerDefaults.Thickness,
+                color     = MaterialTheme.colorScheme.outlineVariant,
+            )
         }
     }
 }

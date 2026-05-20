@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Vibration
@@ -76,7 +75,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
-    // Fix: MediumLow stiffness matches all other screens.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = PartsTokens.MotionDampingRatio,
@@ -112,7 +110,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // No entrance AnimatedVisibility — removed to prevent first-composition flash.
             PartsCategory(stringResource(R.string.htsr_category))
             PartsCard {
                 Row(
@@ -165,15 +162,19 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             // Info banner — secondaryContainer: correct M3 role for informational
             // tip banners. tertiaryContainer is reserved for battery/charging
-            // context. No tonalElevation: see M3 double-tint rule.
+            // context. cardShape (28 dp) matches all other cards in the app.
+            // All spacing via PartsTokens — no hardcoded dp values.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                    .clip(RoundedCornerShape(16.dp))
+                    .clip(PartsTokens.cardShape)
                     .background(MaterialTheme.colorScheme.secondaryContainer)
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .padding(
+                        horizontal = PartsTokens.contentPaddingHorizontal,
+                        vertical   = PartsTokens.appRowPaddingVertical,
+                    ),
+                horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                 verticalAlignment     = Alignment.Top,
             ) {
                 Icon(

@@ -26,6 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -59,7 +60,7 @@ import com.xiaomi.settings.ui.PartsTokens
  * Display Colours sub-screen.
  *
  * Back navigation: the [navigationIcon] IconButton is intentionally absent.
- * Android’s predictive-back gesture handles back natively on Android 13+.
+ * Android's predictive-back gesture handles back natively on Android 13+.
  * [onBack] is kept in the signature for NavHost popBackStack compatibility.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -78,8 +79,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         )
     }
 
-    // Fix: MediumLow stiffness matches HomeScreen and ThermalScreen.
-    // StiffnessHigh caused an abrupt snap that felt inconsistent.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = PartsTokens.MotionDampingRatio,
@@ -118,18 +117,19 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             val standardModes = listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
             val expertModes   = listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
 
-            // No entrance AnimatedVisibility — removed to prevent first-composition
-            // flash. Sections render immediately; state transitions animate via
-            // animateColorAsState spring in each Row.
             PartsCategory(stringResource(R.string.color_section_standard))
             PartsCard(modifier = Modifier.selectableGroup()) {
                 standardModes.forEachIndexed { index, mode ->
                     mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                     if (index < standardModes.lastIndex) {
+                        // DividerDefaults.Thickness = 1.dp (M3 spec).
+                        // Explicit 0.5.dp was sub-pixel on xxhdpi+ and could
+                        // render as invisible. Colour: outlineVariant per M3 list spec.
                         HorizontalDivider(
-                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                            thickness = 0.5.dp,
-                            color     = MaterialTheme.colorScheme.outlineVariant,
+                            modifier = Modifier.padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                            ),
+                            color = MaterialTheme.colorScheme.outlineVariant,
                         )
                     }
                 }
@@ -141,9 +141,10 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                     if (index < expertModes.lastIndex) {
                         HorizontalDivider(
-                            modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                            thickness = 0.5.dp,
-                            color     = MaterialTheme.colorScheme.outlineVariant,
+                            modifier = Modifier.padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                            ),
+                            color = MaterialTheme.colorScheme.outlineVariant,
                         )
                     }
                 }
@@ -165,8 +166,7 @@ private fun ColorMode.Row(
 
     // Selected rows: secondaryContainer highlight.
     // Unselected rows: Color.Transparent so they are flush with the
-    // surfaceContainer card background — NOT surfaceContainerLow which
-    // was darker than the card and created inverted visual depth.
+    // surfaceContainer card background.
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
             MaterialTheme.colorScheme.secondaryContainer
