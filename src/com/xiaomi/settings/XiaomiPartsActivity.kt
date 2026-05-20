@@ -9,12 +9,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.EaseOutCubic
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -28,22 +28,14 @@ class XiaomiPartsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // enableEdgeToEdge() sets the status/nav bars transparent via
-        // WindowCompat.setDecorFitsSystemWindows(false).  We call it before
-        // super.onCreate so the window flags are applied before the first
-        // measure/layout pass.
+        // WindowCompat.setDecorFitsSystemWindows(false). Called before
+        // super.onCreate so window flags apply before first measure/layout.
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        // Clear the XML windowBackground (which is ?colorBackground — correct
-        // for the launch frame) so that Compose's Scaffold surface colour is
-        // the ONLY painter once the Compose tree is ready.  Without this the
-        // XML background and the Scaffold colour both paint in sequence,
-        // occasionally causing a single-frame colour mismatch on slow devices.
-        //
-        // android.R.color.transparent is correct here: we are clearing the
-        // *window drawable* after Compose has taken ownership, not setting
-        // the initial launch colour (that is handled by ?colorBackground in
-        // styles.xml which runs before this line executes).
+        // Clear the XML windowBackground after Compose has taken ownership
+        // so only the Scaffold surface colour paints. The ?colorBackground
+        // in styles.xml handles the launch frame before this executes.
         window.setBackgroundDrawableResource(android.R.color.transparent)
 
         setContent {
@@ -53,59 +45,69 @@ class XiaomiPartsActivity : ComponentActivity() {
                 NavHost(
                     navController    = navController,
                     startDestination = "home",
-                    enterTransition  = {
+
+                    // M3 Expressive motion: spring physics on all route
+                    // transitions. Spring produces physically correct
+                    // deceleration without a fixed duration, which is the
+                    // M3 Expressive motion spec. Do NOT use tween/EaseOutCubic
+                    // for navigational transitions.
+
+                    enterTransition = {
                         slideInHorizontally(
-                            animationSpec  = tween(
-                                durationMillis = PartsTokens.MotionDurationRoute,
-                                easing         = EaseOutCubic,
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
                             ),
                             initialOffsetX = { it },
                         ) + fadeIn(
-                            animationSpec = tween(
-                                durationMillis = PartsTokens.MotionDurationEnter,
-                                easing         = EaseOutCubic,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
                         )
                     },
-                    exitTransition   = {
+
+                    exitTransition = {
                         slideOutHorizontally(
-                            animationSpec = tween(
-                                durationMillis = PartsTokens.MotionDurationExit,
-                                easing         = EaseOutCubic,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
                             targetOffsetX = { -it / 3 },
                         ) + fadeOut(
-                            animationSpec = tween(
-                                durationMillis = PartsTokens.MotionDurationExit,
-                                easing         = EaseOutCubic,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
                         )
                     },
+
                     popEnterTransition = {
                         slideInHorizontally(
-                            animationSpec  = tween(
-                                durationMillis = PartsTokens.MotionDurationRoute,
-                                easing         = EaseOutCubic,
+                            animationSpec  = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMediumLow,
                             ),
                             initialOffsetX = { -it / 3 },
                         ) + fadeIn(
-                            animationSpec = tween(
-                                durationMillis = PartsTokens.MotionDurationEnter,
-                                easing         = EaseOutCubic,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
                         )
                     },
-                    popExitTransition  = {
+
+                    popExitTransition = {
                         slideOutHorizontally(
-                            animationSpec = tween(
-                                durationMillis = PartsTokens.MotionDurationExit,
-                                easing         = EaseOutCubic,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
                             targetOffsetX = { it },
                         ) + fadeOut(
-                            animationSpec = tween(
-                                durationMillis = PartsTokens.MotionDurationExit,
-                                easing         = EaseOutCubic,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioNoBouncy,
+                                stiffness    = Spring.StiffnessMedium,
                             ),
                         )
                     },

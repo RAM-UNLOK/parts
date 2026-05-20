@@ -246,7 +246,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        // M3 Expressive: surfaceContainer matches all other screens.
+        // Do NOT use surface (M2 pattern).
+        containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -258,7 +260,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 },
                 // No navigationIcon: back handled by predictive-back gesture.
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    // surfaceContainer: matches Scaffold so bar is flush
+                    // when not scrolled. surfaceContainerHighest on scroll.
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -282,7 +286,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             CircularProgressIndicator(strokeWidth = 3.dp)
-                            // Use token instead of hardcoded 12.dp.
                             Spacer(Modifier.height(PartsTokens.loadingSpinnerLabelSpacing))
                             Text(
                                 text  = stringResource(R.string.thermal_loading),
@@ -352,8 +355,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
             item(key = "reset-card") {
                 PartsCard {
-                    // showDivider=false: this is the only row in the card,
-                    // so no bottom divider should be rendered.
                     PartsRow(
                         icon        = Icons.Filled.RestartAlt,
                         title       = stringResource(R.string.thermal_reset),
@@ -398,6 +399,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
                     ) {
                         appEntries.forEachIndexed { index, entry ->
+                            // animateItem: M3 placement animation when the list
+                            // reorders or filters — items slide instead of snapping.
                             AppThermalRow(
                                 entry          = entry,
                                 chargingLocked = isCharging,
@@ -438,9 +441,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 },
                             )
                             if (index < appEntries.lastIndex) {
-                                // DividerDefaults.Thickness = 1.dp (M3 spec).
-                                // Removed explicit 0.5.dp — sub-pixel on xxhdpi+
-                                // displays and could render invisible.
                                 HorizontalDivider(
                                     modifier = Modifier.padding(
                                         horizontal = PartsTokens.contentPaddingHorizontal,
@@ -451,10 +451,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         }
                     }
                     if (isCharging) {
-                        // chargingHintIndent (32.dp) aligns caption with the
-                        // text portion of each app row (past the app icon).
-                        // Replaces the non-standard contentPaddingHorizontal*2
-                        // arithmetic.
                         Text(
                             text     = stringResource(R.string.thermal_charging_override_hint),
                             style    = MaterialTheme.typography.bodySmall,
@@ -517,7 +513,6 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // ── Button-anchored dropdown (no ExposedDropdownMenuBox needed) ───
         Box {
             FilledTonalButton(
                 onClick        = {
