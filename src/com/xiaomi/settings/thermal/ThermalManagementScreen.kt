@@ -295,7 +295,7 @@ private fun ThermalProfileDialog(
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
 
-                LazyColumn(
+                androidx.compose.foundation.lazy.LazyColumn(
                     modifier       = Modifier
                         .fillMaxWidth()
                         .height(
@@ -455,7 +455,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -466,8 +466,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -675,16 +675,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 // App row
 // ─────────────────────────────────────────────────────────────────────────────
 
-/**
- * Fixed height for the profile chip. Width is NOT fixed — it uses
- * widthIn(min, max) so every profile name fits without ellipsizing
- * while still keeping chips visually consistent:
- *
- *   min = 96.dp  — "Music" / "Video" won't produce a tiny sliver
- *   max = 148.dp — "Video Streaming" fits comfortably at labelSmall
- *
- * The chip wraps its content and centres it within these bounds.
- */
 private val CHIP_HEIGHT = 36.dp
 private val CHIP_MIN_W  = 96.dp
 private val CHIP_MAX_W  = 148.dp
@@ -708,7 +698,6 @@ private fun AppThermalRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PartsTokens.appRowIconSpacing),
     ) {
-        // App icon
         Image(
             bitmap             = entry.icon,
             contentDescription = null,
@@ -717,7 +706,6 @@ private fun AppThermalRow(
                 .clip(CircleShape),
         )
 
-        // App label — takes remaining horizontal space
         Text(
             text     = entry.label,
             style    = MaterialTheme.typography.bodyMedium,
@@ -727,10 +715,6 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // ── Adaptive-width profile chip ───────────────────────────────────
-        // widthIn(min, max) + wrapContentWidth lets the chip grow from
-        // CHIP_MIN_W to CHIP_MAX_W based on the text — never truncates,
-        // but also never balloons past 148.dp.
         Surface(
             onClick        = {
                 if (chargingLocked) {
@@ -775,7 +759,6 @@ private fun AppThermalRow(
         }
     }
 
-    // Pop-out centred dialog
     if (showDialog) {
         ThermalProfileDialog(
             entry         = entry,

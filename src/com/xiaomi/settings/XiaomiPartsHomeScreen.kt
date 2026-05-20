@@ -138,11 +138,11 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surfaceContainer gives the Scaffold the correct Monet tonal
-        // background — one step above window background so cards on top
-        // (surfaceContainer) are flush and look like part of the page,
-        // not floating panels with hairline ghost borders.
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+        // surfaceContainerLowest = darkest tonal surface step.
+        // Cards use surfaceContainerHigh, giving ~15-20% luminance gap
+        // on all Monet palettes — cards are clearly visible in both
+        // light and dark themes regardless of wallpaper colour.
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -153,8 +153,8 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -304,16 +304,9 @@ fun PartsCategory(
 /**
  * Standard card container for preference rows.
  *
- * Uses [MaterialTheme.colorScheme.surfaceContainerHigh] as the card colour.
- *
- * Colour token rationale:
- *   The Scaffold background is surfaceContainer.  Cards must sit visibly
- *   above the background so the page has depth.  surfaceContainerHigh is
- *   exactly one tonal step above surfaceContainer — enough contrast to
- *   distinguish the card from the page without creating a harsh border or
- *   looking like a floating panel.  This eliminates the hairline ghost-
- *   border artefact that appeared when the card and background were the
- *   same near-identical tonal value.
+ * Background: surfaceContainerHigh — clearly above the page bg
+ * (surfaceContainerLowest), giving consistent visual lift on all
+ * Monet palettes in both light and dark themes.
  */
 @Composable
 fun PartsCard(
@@ -325,8 +318,6 @@ fun PartsCard(
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
         shape          = PartsTokens.cardShape,
-        // One tonal step above the surfaceContainer Scaffold background.
-        // Provides clean visual lift without any explicit border.
         color          = MaterialTheme.colorScheme.surfaceContainerHigh,
         tonalElevation = 0.dp,
     ) {
