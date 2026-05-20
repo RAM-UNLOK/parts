@@ -18,106 +18,184 @@ import androidx.compose.ui.unit.dp
  *   - Clover/AOSP Settings clover_dimens.xml
  *   - Material 3 Expressive spec (Android 16 / Pixel 10 baseline)
  *
+ * Every value here has a matching entry in res/values/dimens.xml for
+ * XML-side consumers. When changing a value, update both files.
+ *
  * Editing a value here propagates everywhere automatically.
  */
 object PartsTokens {
 
     // ─ Screen-level layout ────────────────────────────────────────────
+
     /** Horizontal margin for all cards and banners — 16dp system gutter. */
     val contentPaddingHorizontal = 16.dp
-    /** Top padding for the first item below the app bar. */
-    val listTopPadding           = 8.dp
-    /** Bottom padding so the last card clears the nav bar gesture zone. */
-    val listBottomPadding        = 32.dp
 
-    // ─ Category labels ──────────────────────────────────────────────
+    /** Top padding for the first item below the app bar. */
+    val listTopPadding = 8.dp
+
+    /** Bottom padding so the last card clears the nav bar gesture zone. */
+    val listBottomPadding = 32.dp
+
+    // ─ Category labels ───────────────────────────────────────────────
+
     /** Space above a section-category label ("Display", "Performance" …). */
-    val categoryTopPadding    = 24.dp
+    val categoryTopPadding = 24.dp
+
     /** Space between a category label and the card that follows it. */
     val categoryBottomPadding = 8.dp
 
-    // ─ Card spacing ────────────────────────────────────────────────
+    // ─ Card spacing ──────────────────────────────────────────────────
+
     /**
      * Vertical gap between two stacked PartsCards inside one category.
      * M3 Expressive spec: 16dp between list-group cards.
+     * SYNC: dimens.xml parts_card_block_spacing = 16dp
      */
     val cardBlockSpacing = 16.dp
 
-    // ─ Preference rows (inside a card) ─────────────────────────────────
+    // ─ Preference rows (inside a card) ──────────────────────────────
+
     /**
      * Vertical padding for a standard preference row.
      * Expressive row height ≈ 72dp = 16dp top + text content + 16dp bottom.
+     * SYNC: dimens.xml parts_row_padding_vertical = 16dp
      */
     val rowPaddingVertical = 16.dp
-    /** Horizontal gap between the leading icon container and text column. */
-    val rowElementSpacing  = 16.dp
 
-    // ─ App-list rows (denser than preference rows) ──────────────────────
+    /** Horizontal gap between the leading icon container and text column.
+     * SYNC: dimens.xml parts_row_element_spacing = 16dp
+     */
+    val rowElementSpacing = 16.dp
+
+    // ─ App-list rows (denser than preference rows) ───────────────────
+
     /**
      * Vertical padding for an app-list row (app icon + label + button).
      * Tighter than a preference row: 12dp top/bottom ≈ 64dp total height.
+     * SYNC: dimens.xml parts_app_row_padding_vertical = 12dp
      */
     val appRowPaddingVertical = 12.dp
-    /** Gap between the app icon and the label in an app-list row. */
-    val appRowIconSpacing     = 12.dp
 
-    // ─ Per-app thermal dropdown ─────────────────────────────────────────
-    /** Minimum width for the thermal-state selector button. */
-    val chipMinWidth = 160.dp
-    /** Vertical padding inside each dropdown menu item. */
+    /** Gap between the app icon and the label in an app-list row.
+     * SYNC: dimens.xml parts_app_row_icon_spacing = 12dp
+     */
+    val appRowIconSpacing = 12.dp
+
+    // ─ Per-app thermal dropdown ──────────────────────────────────────
+
+    /**
+     * Minimum width for the thermal-profile selector button.
+     * Renamed from chipMinWidth: the selector is now a FilledTonalButton,
+     * not a chip. The dimens.xml key is parts_dropdown_button_min_width.
+     * SYNC: dimens.xml parts_dropdown_button_min_width = 160dp
+     */
+    val dropdownButtonMinWidth = 160.dp
+
+    /**
+     * Vertical padding inside each dropdown menu item.
+     * SYNC: dimens.xml parts_dropdown_item_vertical_padding = 14dp
+     */
     val dropdownItemVerticalPadding = 14.dp
 
     // ─ Loading / empty-state helpers ─────────────────────────────────
-    /** Top padding for a centred loading spinner or empty-state label. */
-    val loadingTopPadding      = 80.dp
-    /** Top padding for the "thermal disabled" hint text. */
+
+    /**
+     * Top padding for a centred loading spinner or empty-state label.
+     * SYNC: dimens.xml parts_loading_top_padding = 80dp
+     */
+    val loadingTopPadding = 80.dp
+
+    /**
+     * Top padding for the "thermal disabled" hint text.
+     * SYNC: dimens.xml parts_disabled_hint_top_padding = 48dp
+     */
     val disabledHintTopPadding = 48.dp
 
-    // ─ Icon / container sizes ─────────────────────────────────────────
-    /** Expressive leading icon circle — 48dp (increased from 40dp in M3). */
+    // ─ Icon / container sizes ────────────────────────────────────────
+
+    /**
+     * Expressive leading icon circle — 48dp (increased from 40dp in M3).
+     * SYNC: dimens.xml parts_leading_icon_container_size = 48dp
+     */
     val leadingIconContainerSize = 48.dp
-    /** Icon size inside the leading icon circle. */
-    val leadingIconSize          = 24.dp
-    /** Trailing chevron / secondary icon size. */
-    val trailingIconSize         = 20.dp
-    /** App icon size in the per-app thermal list. */
-    val appIconSize              = 40.dp
 
-    // ─ Banners ──────────────────────────────────────────────────
-    /** Outer horizontal margin for a full-width banner chip. */
+    /**
+     * Icon size inside the leading icon circle.
+     * SYNC: dimens.xml parts_leading_icon_size = 24dp
+     */
+    val leadingIconSize = 24.dp
+
+    /**
+     * Trailing chevron / secondary icon size.
+     * SYNC: dimens.xml parts_trailing_icon_size = 20dp
+     */
+    val trailingIconSize = 20.dp
+
+    /**
+     * App icon size in the per-app thermal list.
+     * SYNC: dimens.xml parts_app_icon_size = 40dp
+     */
+    val appIconSize = 40.dp
+
+    // ─ Banners ───────────────────────────────────────────────────────
+
+    /** Outer horizontal margin for a full-width banner chip.
+     * SYNC: dimens.xml parts_banner_padding_horizontal = 16dp
+     */
     val bannerPaddingHorizontal = 16.dp
-    /** Outer vertical margin for a full-width banner chip. */
-    val bannerPaddingVertical   = 8.dp
-    /** Inner horizontal padding inside a banner chip. */
-    val bannerInnerPaddingH     = 20.dp
-    /** Inner vertical padding inside a banner chip. */
-    val bannerInnerPaddingV     = 16.dp
-    /** Gap between the banner icon and the text column. */
-    val bannerIconSpacing       = 14.dp
-    /** Banner icon size. */
-    val bannerIconSize          = 24.dp
 
-    // ─ Elevation ──────────────────────────────────────────────────
+    /** Outer vertical margin for a full-width banner chip.
+     * SYNC: dimens.xml parts_banner_padding_vertical = 8dp
+     */
+    val bannerPaddingVertical = 8.dp
+
+    /** Inner horizontal padding inside a banner chip.
+     * SYNC: dimens.xml parts_banner_inner_padding_h = 20dp
+     */
+    val bannerInnerPaddingH = 20.dp
+
+    /** Inner vertical padding inside a banner chip.
+     * SYNC: dimens.xml parts_banner_inner_padding_v = 16dp
+     */
+    val bannerInnerPaddingV = 16.dp
+
+    /** Gap between the banner icon and the text column.
+     * SYNC: dimens.xml parts_banner_icon_spacing = 14dp
+     */
+    val bannerIconSpacing = 14.dp
+
+    /**
+     * Banner icon size.
+     * SYNC: dimens.xml parts_banner_icon_size = 24dp
+     */
+    val bannerIconSize = 24.dp
+
+    // ─ Elevation ─────────────────────────────────────────────────────
+
     /**
      * Cards use surfaceContainerLow colour role for tonal elevation.
      * No physical shadow — matches Pixel Settings visual language.
      */
     val cardElevation = 0.dp
 
-    // ─ Shapes ─────────────────────────────────────────────────────
+    // ─ Shapes ────────────────────────────────────────────────────────
+
     /**
      * Expressive card corner radius = 28dp.
      * Reference: Clover clover_dimens.xml
      *   about_phone_info_card_corner_radius  = 28dp
      *   about_phone_brand_card_corner_radius = 28dp
+     * SYNC: dimens.xml parts_card_corner_radius = 28dp
      */
-    val cardShape   = RoundedCornerShape(28.dp)
+    val cardShape = RoundedCornerShape(28.dp)
+
     /**
      * Banner / info-pill corner radius = 28dp.
+     * SYNC: dimens.xml parts_info_banner_corner_radius = 28dp
      */
     val bannerShape = RoundedCornerShape(28.dp)
 
-    // ─ Motion ─────────────────────────────────────────────────────────
+    // ─ Motion ────────────────────────────────────────────────────────
     //
     // Single source of truth for all animation durations, spring params
     // and stagger values. Every screen references these constants so
@@ -131,6 +209,10 @@ object PartsTokens {
     //   DampingRatioNoBouncy + StiffnessMediumLow  → smooth settling, no overshoot
     //   DampingRatioNoBouncy + StiffnessMedium     → snappier exit / collapse
     //   DampingRatioNoBouncy + StiffnessHigh       → snap (scroll behaviour)
+    //
+    // Note: Spring.StiffnessHigh is used directly in scroll snap specs and
+    // is intentionally NOT a constant here — it is a physics parameter, not
+    // a UI motion constant, and should not be confused with motion tokens.
 
     /** Fade-in / fade-out duration for content elements entering the screen. */
     const val MotionDurationEnter: Int = 220
@@ -146,14 +228,20 @@ object PartsTokens {
     const val MotionDurationSlide: Int = 400
 
     /**
-     * Full route transition duration (screen → screen slide).
-     * Asymmetric: enter=350ms (deliberate arrival), exit=250ms (quick departure).
+     * Full route transition duration — screen sliding IN.
+     * Asymmetric: enter = 350ms (deliberate arrival), exit = 250ms (quick departure).
      */
     const val MotionDurationRoute: Int = 350
 
     /**
+     * Full route transition duration — screen sliding OUT.
+     * Quicker than enter so the departing screen doesn't linger.
+     */
+    const val MotionDurationRouteExit: Int = 250
+
+    /**
      * Stagger step between section groups on the home screen.
-     * Groups: Display (0 ms), Performance (1×step), Diagnostics (2×step).
+     * Groups: Display (0ms), Performance (1×step), Diagnostics (2×step).
      */
     const val MotionStaggerStep: Int = 60
 
@@ -166,20 +254,23 @@ object PartsTokens {
     const val MotionSlideDistance: Int = 5
 
     /**
-     * Spring damping ratio used across all spring-based animations.
+     * Spring damping ratio used across all spring-based UI animations.
      * NoBouncy = critically damped — settles without oscillation.
+     * Maps to Spring.DampingRatioNoBouncy.
      */
     val MotionDampingRatio: Float = Spring.DampingRatioNoBouncy
 
     /**
-     * Spring stiffness for enter / expand animations.
+     * Spring stiffness for enter / expand / open animations.
      * MediumLow = leisurely settle, appropriate for elements arriving on screen.
+     * Maps to Spring.StiffnessMediumLow.
      */
     val MotionStiffnessMediumLow: Float = Spring.StiffnessMediumLow
 
     /**
-     * Spring stiffness for exit / collapse animations.
-     * Medium = slightly snappier so the exit doesn't drag.
+     * Spring stiffness for exit / collapse / close animations.
+     * Medium = slightly snappier so the exit does not drag.
+     * Maps to Spring.StiffnessMedium.
      */
     val MotionStiffnessMedium: Float = Spring.StiffnessMedium
 }

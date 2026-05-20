@@ -3,61 +3,139 @@
      Copyright (C) 2025 Paranoid Android
      SPDX-License-Identifier: Apache-2.0
 
-     Expressive spacing tokens derived from:
+     Expressive spacing tokens — single source of truth for all XML-side
+     layout consumers (legacy View inflation, Settings preference hosts).
+
+     All values are kept in sync with PartsTokens.kt.
+     When changing a value here, update the matching constant there too.
+
+     Derived from:
        - Clover/AOSP Settings clover_dimens.xml
        - Clover/AOSP Settings themes_expressive.xml
-       - Material 3 Expressive spec
+       - Material 3 Expressive spec (Android 16 / Pixel 10 baseline)
 -->
 <resources>
 
-    <!-- Horizontal content margin. Expressive Settings uses 0dp for
-         full-bleed cards, but we keep a small 16dp gutter so cards
-         don't clip the rounded corners against the screen edge. -->
+    <!-- ── Screen-level layout ───────────────────────────────────────── -->
+
+    <!-- Horizontal margin for all cards and banners — 16dp system gutter.
+         Full-bleed cards (0dp) are not used here because the 28dp corner
+         radius would be clipped against the screen edge without the gutter. -->
     <dimen name="parts_content_padding_horizontal">16dp</dimen>
 
-    <!-- Vertical padding inside a preference row.
-         Expressive listPreferredItemHeight = 72dp; with bodyLarge +
-         bodySmall text this lands at ~16dp top + 16dp bottom. -->
-    <dimen name="parts_row_padding_vertical">16dp</dimen>
+    <!-- Top padding for the first item below the app bar. -->
+    <dimen name="parts_list_top_padding">8dp</dimen>
 
-    <!-- Gap between icon, text, trailing in a row -->
-    <dimen name="parts_row_element_spacing">16dp</dimen>
-
-    <!-- Vertical gap between card blocks.
-         Clover about_phone_info_cards_card_spacing = 12dp -->
-    <dimen name="parts_card_block_spacing">12dp</dimen>
-
-    <!-- Bottom padding at end of scrollable list -->
+    <!-- Bottom padding so the last card clears the nav bar gesture zone. -->
     <dimen name="parts_list_bottom_padding">32dp</dimen>
 
-    <!-- Top/bottom padding around category label -->
+    <!-- ── Category labels ───────────────────────────────────────────── -->
+
+    <!-- Space above a section-category label ("Display", "Performance" …). -->
     <dimen name="parts_category_top_padding">24dp</dimen>
+
+    <!-- Space between a category label and the card that follows it. -->
     <dimen name="parts_category_bottom_padding">8dp</dimen>
 
-    <!-- Charging banner outer margin -->
-    <dimen name="parts_banner_padding_horizontal">16dp</dimen>
-    <dimen name="parts_banner_padding_vertical">8dp</dimen>
+    <!-- ── Card spacing ─────────────────────────────────────────────── -->
 
-    <!-- Charging banner internal padding -->
-    <dimen name="parts_banner_inner_padding_h">20dp</dimen>
-    <dimen name="parts_banner_inner_padding_v">16dp</dimen>
-    <dimen name="parts_banner_icon_spacing">14dp</dimen>
-
-    <!-- Leading icon container.
-         Expressive = 48dp circle (up from 40dp) -->
-    <dimen name="parts_leading_icon_container_size">48dp</dimen>
-    <dimen name="parts_leading_icon_size">24dp</dimen>
-    <dimen name="parts_trailing_icon_size">20dp</dimen>
-    <dimen name="parts_banner_icon_size">24dp</dimen>
-
-    <!-- App icon in per-app thermal rows -->
-    <dimen name="parts_app_icon_size">40dp</dimen>
+    <!-- Vertical gap between two stacked PartsCards inside one category.
+         M3 Expressive spec: 16dp between list-group cards.
+         SYNC: PartsTokens.cardBlockSpacing = 16.dp -->
+    <dimen name="parts_card_block_spacing">16dp</dimen>
 
     <!-- Card corner radius.
-         Clover about_phone_info_card_corner_radius = 28dp -->
+         Clover about_phone_info_card_corner_radius = 28dp.
+         SYNC: PartsTokens.cardShape = RoundedCornerShape(28.dp) -->
     <dimen name="parts_card_corner_radius">28dp</dimen>
 
-    <!-- Info banner corner radius -->
+    <!-- Info / banner corner radius. -->
     <dimen name="parts_info_banner_corner_radius">28dp</dimen>
+
+    <!-- ── Preference rows (inside a card) ──────────────────────────── -->
+
+    <!-- Vertical padding for a standard preference row.
+         Expressive row height ≈ 72dp = 16dp top + content + 16dp bottom.
+         SYNC: PartsTokens.rowPaddingVertical = 16.dp -->
+    <dimen name="parts_row_padding_vertical">16dp</dimen>
+
+    <!-- Horizontal gap between leading icon container and text column.
+         SYNC: PartsTokens.rowElementSpacing = 16.dp -->
+    <dimen name="parts_row_element_spacing">16dp</dimen>
+
+    <!-- ── App-list rows (denser than preference rows) ──────────────── -->
+
+    <!-- Vertical padding for an app-list row (icon + label + button).
+         Tighter than a preference row: 12dp top/bottom ≈ 64dp total.
+         SYNC: PartsTokens.appRowPaddingVertical = 12.dp -->
+    <dimen name="parts_app_row_padding_vertical">12dp</dimen>
+
+    <!-- Gap between app icon and label in an app-list row.
+         SYNC: PartsTokens.appRowIconSpacing = 12.dp -->
+    <dimen name="parts_app_row_icon_spacing">12dp</dimen>
+
+    <!-- ── Per-app thermal dropdown ──────────────────────────────────── -->
+
+    <!-- Minimum width for the thermal-profile selector button.
+         SYNC: PartsTokens.dropdownButtonMinWidth = 160.dp -->
+    <dimen name="parts_dropdown_button_min_width">160dp</dimen>
+
+    <!-- Vertical padding inside each dropdown menu item.
+         SYNC: PartsTokens.dropdownItemVerticalPadding = 14.dp -->
+    <dimen name="parts_dropdown_item_vertical_padding">14dp</dimen>
+
+    <!-- ── Loading / empty-state helpers ────────────────────────────── -->
+
+    <!-- Top padding for a centred loading spinner or empty-state label.
+         SYNC: PartsTokens.loadingTopPadding = 80.dp -->
+    <dimen name="parts_loading_top_padding">80dp</dimen>
+
+    <!-- Top padding for the "thermal disabled" hint text.
+         SYNC: PartsTokens.disabledHintTopPadding = 48.dp -->
+    <dimen name="parts_disabled_hint_top_padding">48dp</dimen>
+
+    <!-- ── Icon / container sizes ────────────────────────────────────── -->
+
+    <!-- Expressive leading icon circle — 48dp (increased from 40dp in M3).
+         SYNC: PartsTokens.leadingIconContainerSize = 48.dp -->
+    <dimen name="parts_leading_icon_container_size">48dp</dimen>
+
+    <!-- Icon size inside the leading icon circle.
+         SYNC: PartsTokens.leadingIconSize = 24.dp -->
+    <dimen name="parts_leading_icon_size">24dp</dimen>
+
+    <!-- Trailing chevron / secondary icon size.
+         SYNC: PartsTokens.trailingIconSize = 20.dp -->
+    <dimen name="parts_trailing_icon_size">20dp</dimen>
+
+    <!-- App icon size in the per-app thermal list.
+         SYNC: PartsTokens.appIconSize = 40.dp -->
+    <dimen name="parts_app_icon_size">40dp</dimen>
+
+    <!-- ── Banners ───────────────────────────────────────────────────── -->
+
+    <!-- Outer horizontal margin for a full-width banner.
+         SYNC: PartsTokens.bannerPaddingHorizontal = 16.dp -->
+    <dimen name="parts_banner_padding_horizontal">16dp</dimen>
+
+    <!-- Outer vertical margin for a full-width banner.
+         SYNC: PartsTokens.bannerPaddingVertical = 8.dp -->
+    <dimen name="parts_banner_padding_vertical">8dp</dimen>
+
+    <!-- Inner horizontal padding inside a banner.
+         SYNC: PartsTokens.bannerInnerPaddingH = 20.dp -->
+    <dimen name="parts_banner_inner_padding_h">20dp</dimen>
+
+    <!-- Inner vertical padding inside a banner.
+         SYNC: PartsTokens.bannerInnerPaddingV = 16.dp -->
+    <dimen name="parts_banner_inner_padding_v">16dp</dimen>
+
+    <!-- Gap between the banner icon and the text column.
+         SYNC: PartsTokens.bannerIconSpacing = 14.dp -->
+    <dimen name="parts_banner_icon_spacing">14dp</dimen>
+
+    <!-- Banner icon size.
+         SYNC: PartsTokens.bannerIconSize = 24.dp -->
+    <dimen name="parts_banner_icon_size">24dp</dimen>
 
 </resources>

@@ -9,23 +9,42 @@
         Expressive window theme for XiaomiPartsActivity.
 
         Mirrors Theme.Settings.Home.Expressive from Clover/AOSP Settings:
-          - colorBackground -> materialColorSurfaceContainer (warm tonal,
-            not the harsh dark DeviceDefault window background)
-          - Transparent bars for edge-to-edge
-          - windowBackground transparent so Compose owns all painting
+          - windowBackground transparent so Compose's dynamic Material You
+            surface colour owns the window from the very first frame.
+          - Transparent status + nav bars for edge-to-edge Compose layout.
+          - enforceNavigationBarContrast / enforceStatusBarContrast = false
+            prevents the system from overlaying a semi-transparent scrim over
+            the nav bar / status bar on API 29+. Without this the system scrim
+            conflicts with Compose's WindowInsets handling, causing a
+            double-tinted bar on light theme devices.
+          - windowSoftInputMode = adjustResize so the Compose keyboard-
+            avoidance (WindowInsets.ime) works correctly without the legacy
+            resize mode conflicting with imePadding().
 
         Reference: The-Clover-Project/packages_apps_Settings
                    res/values/themes_expressive.xml
                    Theme.Settings.Home.Expressive
     -->
     <style name="XiaomiParts.Theme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+        <!-- Compose owns all painting — transparent window background. -->
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowIsTranslucent">false</item>
+
+        <!-- Edge-to-edge: system draws bars but they are transparent. -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <!-- Prevent system scrim overlay over transparent bars (API 29+). -->
+        <item name="android:enforceNavigationBarContrast">false</item>
+        <item name="android:enforceStatusBarContrast">false</item>
+
+        <!-- Allow content to extend under system bars. -->
         <item name="android:clipToPadding">false</item>
         <item name="android:clipChildren">false</item>
+
+        <!-- Keyboard avoidance: let Compose WindowInsets.ime handle this. -->
+        <item name="android:windowSoftInputMode">adjustResize</item>
     </style>
 
 </resources>
