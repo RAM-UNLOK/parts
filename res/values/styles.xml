@@ -8,49 +8,38 @@
     <!--
         XiaomiParts.Theme — window theme for XiaomiPartsActivity.
 
-        windowBackground = ?android:attr/colorBackground so the window
-        inherits the Monet/dynamic background colour at launch time.
-        Compose's Scaffold then paints over it with the identical
-        MaterialTheme.colorScheme.surfaceContainer token — no black
-        flash, no mismatch on first frame.
+        Parent: @android:style/Theme.DeviceDefault.NoActionBar
+          Guaranteed present in framework-res.apk on all AOSP/platform
+          Soong builds. Do NOT use Theme.MaterialComponents.* or
+          Theme.Material3.* here — those are Gradle/androidx artifacts
+          not compiled into framework-res.apk and will fail aapt2 link.
+
+        Compose draws its own surface so the window background just
+        needs to match colorBackground (Monet-derived on Android 12+)
+        to avoid a black flash on the first frame.
     -->
-    <style name="XiaomiParts.Theme" parent="@android:style/Theme.DeviceDefault.NoActionBar">
+    <style name="XiaomiParts.Theme"
+           parent="@android:style/Theme.DeviceDefault.NoActionBar">
+
+        <!-- Match Monet/dynamic colorBackground so there is no flash
+             before Compose paints its first frame. -->
         <item name="android:windowBackground">?android:attr/colorBackground</item>
+
+        <!-- Edge-to-edge: draw behind both status and navigation bars. -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <!-- Suppress system scrim overlays on transparent bars (API 29+). -->
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:enforceStatusBarContrast">false</item>
+
+        <!-- Let content extend behind system bars. -->
         <item name="android:clipToPadding">false</item>
         <item name="android:clipChildren">false</item>
+
+        <!-- Let Compose WindowInsets.ime handle keyboard avoidance. -->
         <item name="android:windowSoftInputMode">adjustResize</item>
-    </style>
-
-    <!--
-        XiaomiParts.Settings.HeaderTheme — context theme used by AOSP Settings
-        when inflating the Xiaomi Parts preference tile on the homepage.
-
-        Parent: Theme.MaterialComponents.DayNight.NoActionBar
-          This is the correct platform-available MDC base theme that pulls
-          the full Monet/dynamic colour palette on Android 12+. Do NOT use
-          Theme.Material3.DynamicColors.DayNight — that is an androidx alias
-          not present in the platform aapt2 resource namespace and will
-          cause a build failure.
-
-        preferenceTheme: PreferenceThemeOverlay.v2.Material3
-          Platform-available M3 overlay from com.google.android.material.
-          Do NOT use PreferenceThemeOverlay.Material3 (androidx.preference
-          artifact — absent from platform builds).
-
-          PreferenceThemeOverlay.v2.Material3 delivers:
-            • Shape  — M3 ExtraLarge (28dp corner radius)
-            • Colour — M3 colour roles: colorSurface, colorOnSurface,
-                        colorOutline, secondaryContainer, etc.
-            • Type   — M3 typography: bodyLarge title, bodyMedium summary
-    -->
-    <style name="XiaomiParts.Settings.HeaderTheme"
-           parent="@style/Theme.MaterialComponents.DayNight.NoActionBar">
-        <item name="preferenceTheme">@style/PreferenceThemeOverlay.v2.Material3</item>
     </style>
 
 </resources>
