@@ -14,7 +14,6 @@ import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -27,10 +26,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -40,8 +37,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.rounded.Android
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,7 +65,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.ui.PartsTokens
 
-// ── Charging toast debounce ──────────────────────────────────────────────
 private const val TOAST_DEBOUNCE_MS = 2_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -82,13 +76,12 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    // ── Charging state ────────────────────────────────────────────────────
-    var isCharging        by remember { mutableStateOf(false) }
+    var isCharging         by remember { mutableStateOf(false) }
     var showChargingBanner by remember { mutableStateOf(false) }
-    var lastToastTime     by remember { mutableLongStateOf(0L) }
+    var lastToastTime      by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
-        // Seed initial charging state from sticky ACTION_BATTERY_CHANGED
+        // Seed initial state from sticky battery broadcast
         val stickyIntent = context.registerReceiver(
             null,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
@@ -101,28 +94,27 @@ fun XiaomiPartsHomeScreen(
                      initialStatus == BatteryManager.BATTERY_STATUS_FULL
         showChargingBanner = isCharging
 
-        // Only listen for CONNECTED / DISCONNECTED — not ACTION_BATTERY_CHANGED
-        // which fires constantly and causes duplicate toasts.
         var activeToast: Toast? = null
+
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val now = SystemClock.elapsedRealtime()
+                val now    = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
-                isCharging = plugged
+                isCharging         = plugged
                 showChargingBanner = plugged
 
-                // Debounce: ignore if a toast was shown within the last 2 s
                 if (now - lastToastTime < TOAST_DEBOUNCE_MS) return
                 lastToastTime = now
 
-                // Cancel any queued toast before showing a new one
                 activeToast?.cancel()
                 val msgRes = if (plugged) R.string.charging_connected
                              else         R.string.charging_disconnected
-                activeToast = Toast.makeText(ctx, msgRes, Toast.LENGTH_SHORT)
-                    .also { it.show() }
+                val t = Toast.makeText(ctx, msgRes, Toast.LENGTH_SHORT)
+                t.show()
+                activeToast = t
             }
         }
+
         val filter = IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
@@ -134,7 +126,6 @@ fun XiaomiPartsHomeScreen(
         }
     }
 
-    // ── Scroll behaviour ──────────────────────────────────────────────────
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec  = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -169,7 +160,7 @@ fun XiaomiPartsHomeScreen(
                 .padding(innerPadding),
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
-            // ── Charging banner ───────────────────────────────────
+            // ── Charging banner ──────────────────────────────────
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
@@ -206,7 +197,7 @@ fun XiaomiPartsHomeScreen(
                         )
                         IconButton(
                             onClick  = { showChargingBanner = false },
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(32.dp),
                         ) {
                             Icon(
                                 imageVector        = Icons.Filled.Close,
@@ -219,7 +210,7 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Display category ──────────────────────────────────
+            // ── Display category ─────────────────────────────────
             item(key = "display-label") {
                 PartsCategory(stringResource(R.string.display_category))
             }
@@ -234,7 +225,7 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Performance category ──────────────────────────────
+            // ── Performance category ─────────────────────────────
             item(key = "perf-label") {
                 PartsCategory(stringResource(R.string.performance_category))
             }
@@ -247,10 +238,10 @@ fun XiaomiPartsHomeScreen(
                         onClick = onNavigateToThermal,
                     )
                     PartsRow(
-                        icon    = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                        title   = stringResource(R.string.touch_boost_title),
-                        summary = stringResource(R.string.touch_boost_summary),
-                        onClick = onNavigateToTouch,
+                        icon        = ImageVector.vectorResource(R.drawable.ic_touch_boost),
+                        title       = stringResource(R.string.touch_boost_title),
+                        summary     = stringResource(R.string.touch_boost_summary),
+                        onClick     = onNavigateToTouch,
                         showDivider = false,
                     )
                 }
@@ -259,7 +250,7 @@ fun XiaomiPartsHomeScreen(
     }
 }
 
-// ── Shared composables ────────────────────────────────────────────────────
+// ── Shared composables ────────────────────────────────────────────────
 
 @Composable
 fun PartsCategory(
@@ -286,11 +277,11 @@ fun PartsCard(
     content:  @Composable () -> Unit,
 ) {
     Surface(
-        modifier      = modifier
+        modifier       = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        shape         = PartsTokens.cardShape,
-        color         = MaterialTheme.colorScheme.surfaceContainerLow,
+        shape          = PartsTokens.cardShape,
+        color          = MaterialTheme.colorScheme.surfaceContainerLow,
         tonalElevation = 0.dp,
     ) {
         Column {
@@ -305,8 +296,8 @@ fun PartsRow(
     title:       String,
     summary:     String,
     onClick:     () -> Unit,
-    modifier:    Modifier   = Modifier,
-    showDivider: Boolean    = true,
+    modifier:    Modifier = Modifier,
+    showDivider: Boolean  = true,
     trailing:    @Composable () -> Unit = {
         Icon(
             imageVector        = Icons.Filled.ChevronRight,
