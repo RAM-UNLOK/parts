@@ -85,9 +85,16 @@ fun XiaomiPartsHomeScreen(
         val plugged = sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
         mutableStateOf(plugged != 0)
     }
-    // Live updates — dual-path: POWER_CONNECTED/DISCONNECTED for immediate
-    // response + BATTERY_CHANGED for USB connections that may not fire the
-    // POWER_CONNECTED action on some Xiaomi kernels.
+    // Live updates via POWER_CONNECTED / POWER_DISCONNECTED / BATTERY_CHANGED.
+    //
+    // ACTION_POWER_CONNECTED, ACTION_POWER_DISCONNECTED and ACTION_BATTERY_CHANGED
+    // are system-protected broadcasts sent exclusively by the OS framework.
+    // RECEIVER_NOT_EXPORTED must NOT be used for them: it is semantically
+    // incorrect for system broadcasts, causes a SecurityException on Android 13+
+    // for protected actions, and silently drops registration on some Xiaomi
+    // kernels. The @Suppress silences the UnspecifiedRegisterReceiverFlag lint
+    // warning — this is the correct and intentional pattern, matching
+    // ColorService and TouchSamplingService in this project.
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
@@ -106,7 +113,8 @@ fun XiaomiPartsHomeScreen(
             addAction(Intent.ACTION_POWER_DISCONNECTED)
             addAction(Intent.ACTION_BATTERY_CHANGED)
         }
-        context.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+        @Suppress("UnspecifiedRegisterReceiverFlag")
+        context.registerReceiver(receiver, filter)
         onDispose { context.unregisterReceiver(receiver) }
     }
 
@@ -349,11 +357,14 @@ private fun ChargingBanner(modifier: Modifier = Modifier) {
                     style = MaterialTheme.typography.titleSmall,
                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
+                // Use onTertiaryContainer at full opacity. Color.copy(alpha)
+                // composites over transparent black, not over the container
+                // surface, producing muddy grey. The titleSmall/bodySmall
+                // size+weight contrast already provides the M3 visual hierarchy.
                 Text(
                     text  = stringResource(R.string.thermal_charging_active_desc),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onTertiaryContainer
-                        .copy(alpha = PartsTokens.containerSubtitleAlpha),
+                    color = MaterialTheme.colorScheme.onTertiaryContainer,
                 )
             }
         }

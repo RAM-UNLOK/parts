@@ -35,7 +35,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -126,8 +125,10 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 }
             }
 
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-
+            // No explicit Spacer here — PartsCategory already contributes
+            // categoryTopPadding (24dp) above its label. Adding a cardBlockSpacing
+            // (16dp) Spacer on top of that produced a 40dp gap which was visually
+            // too wide and inconsistent with the home screen section rhythm.
             PartsCategory(stringResource(R.string.color_section_expert))
             PartsCard(modifier = Modifier.selectableGroup()) {
                 expertModes.forEachIndexed { index, mode ->

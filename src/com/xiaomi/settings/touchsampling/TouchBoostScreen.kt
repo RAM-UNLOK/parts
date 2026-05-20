@@ -6,6 +6,8 @@
 package com.xiaomi.settings.touchsampling
 
 import android.content.Context
+import android.content.Intent
+import android.os.UserHandle
 import android.widget.Toast
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -67,10 +69,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
+    // DampingRatioNoBouncy + StiffnessMedium gives the standard snappy
+    // collapse feel. LowBouncy caused the bar to overshoot and wobble.
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
         snapAnimationSpec = spring(
-            dampingRatio = Spring.DampingRatioLowBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMedium,
         )
     )
 
@@ -204,7 +208,20 @@ private fun toggleHtsr(
     onResult: (Boolean) -> Unit,
 ) {
     runCatching {
+        // Write pref first — TouchSamplingService listens to this key via
+        // OnSharedPreferenceChangeListener and applies the hardware change
+        // while already running. The explicit start/stop below ensures the
+        // service is actually alive when the user enables HTSR mid-session
+        // (BootCompletedReceiver only starts it on boot when already enabled).
         prefs.edit().putBoolean(TouchSamplingService.HTSR_STATE, target).apply()
+
+        val serviceIntent = Intent(context, TouchSamplingService::class.java)
+        if (target) {
+            context.startServiceAsUser(serviceIntent, UserHandle.CURRENT)
+        } else {
+            context.stopServiceAsUser(serviceIntent, UserHandle.CURRENT)
+        }
+
         onResult(target)
         val msg = if (target) R.string.htsr_enabled_toast else R.string.htsr_disabled_toast
         Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
