@@ -11,22 +11,18 @@
      Settings homepage under the "Device" group (ia.homepage category).
 
      Fields:
-       android:key         — unique stable identifier for this header
-       android:title       — tile primary label (string resource)
-       android:summary     — tile subtitle shown below the label
-       android:icon        — vector drawable shown on the left of the tile
-       settings:keywords   — space-separated search keywords so the tile
-                             appears in Settings search results
+       android:key     — unique stable identifier for this header
+       android:title   — tile primary label (string resource)
+       android:summary — tile subtitle shown below the label
+       android:icon    — vector drawable shown on the left of the tile
 -->
 <PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:settings="http://schemas.android.com/apk/res-auto">
+    xmlns:android="http://schemas.android.com/apk/res/android">
 
     <Preference
         android:key="xiaomi_parts_settings"
         android:title="@string/xiaomi_parts_title"
         android:summary="@string/xiaomi_parts_summary"
-        android:icon="@drawable/ic_xiaomi_parts"
-        settings:keywords="@string/xiaomi_parts_keywords" />
+        android:icon="@drawable/ic_xiaomi_parts" />
 
 </PreferenceScreen>
