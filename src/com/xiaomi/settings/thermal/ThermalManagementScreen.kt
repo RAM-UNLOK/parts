@@ -12,10 +12,10 @@ import android.graphics.Canvas
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -60,6 +60,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenu
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -148,8 +149,7 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
  * is physically connected.
  *
  * Colour role: tertiaryContainer / onTertiaryContainer — battery/charging
- * semantic, matching the ChargingBanner on the HomeScreen. Was previously
- * secondaryContainer which conflicted with the info-tip banner role.
+ * semantic. No colour logic changes — this is the existing token assignment.
  */
 @Composable
 private fun ChargingInfoBanner() {
@@ -192,9 +192,8 @@ private fun ChargingInfoBanner() {
 /**
  * Thermal Management screen.
  *
- * Back navigation: removed the [navigationIcon] back button entirely.
- * Android's predictive-back gesture handles navigation back natively.
- * [onBack] is kept in the signature for NavHost popBackStack compatibility.
+ * Back navigation: no [navigationIcon] back button — predictive-back
+ * gesture handles it natively. [onBack] is kept for NavHost popBackStack.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -251,15 +250,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         )
     }
 
-    // snapAnimationSpec: uses PartsTokens.MotionDampingRatio (= Spring.DampingRatioNoBouncy)
-    // for consistency with all other animated elements in the Parts flow.
-    // Spring.StiffnessHigh is intentionally kept as a raw literal here —
-    // it is a scroll-physics parameter, not a UI motion constant, and
-    // does not belong in PartsTokens.
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
-            stiffness    = Spring.StiffnessHigh,
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
@@ -267,7 +261,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surface: consistent with all other screens in the Parts flow.
         containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
@@ -278,7 +271,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                // No navigationIcon — back handled by predictive-back gesture.
                 actions = {
                     IconButton(onClick = { showResetDialog = true }) {
                         Icon(
@@ -479,20 +471,23 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 /**
  * Per-app thermal profile row.
  *
- * The profile picker uses a [FilledTonalButton] as the dropdown anchor
- * instead of an [ElevatedFilterChip]. Rationale:
+ * Dropdown fix
+ * ──────────────
+ * The previous version had a double-toggle race condition:
+ *   1. ExposedDropdownMenuBox.onExpandedChange receives the new boolean
+ *      and sets expanded = it.
+ *   2. FilledTonalButton.onClick then also ran `expanded = !expanded`,
+ *      flipping it back in the same composition pass.
+ * Result: menu opened for one frame then immediately closed.
  *
- * - Filter chips are for multi-select filtering of a list. A profile
- *   picker is a single-value selection action — it is semantically a
- *   button that opens a menu, not a chip that toggles state.
- * - [FilledTonalButton] with a trailing [ExpandMore] chevron is the
- *   correct M3 pattern for a compact button-anchored dropdown menu,
- *   matching the Pixel Settings "more options" pattern.
- * - The chevron rotates 180° with spring(PartsTokens.MotionStiffnessMediumLow)
- *   on open/close providing the M3 Expressive motion cue.
- * - The [ExposedDropdownMenuBox] is kept as the positioning container;
- *   [menuAnchor] with [ExposedDropdownMenuAnchorType.PrimaryNotEditable]
- *   is applied to the button so the popup anchors beneath it correctly.
+ * Fix:
+ *   - Remove onClick from FilledTonalButton entirely.
+ *     menuAnchor(PrimaryNotEditable) already wires the button tap to
+ *     ExposedDropdownMenuBox, which calls onExpandedChange. One toggle,
+ *     one place.
+ *   - onExpandedChange: when charging-locked, show the toast and leave
+ *     expanded = false. When unlocked, set expanded = newValue directly
+ *     (no manual toggle needed — the Box provides the correct value).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -502,14 +497,16 @@ private fun AppThermalRow(
     onStateChange:  (Int) -> Unit,
 ) {
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
+    val context = LocalContext.current
 
-    // Chevron rotation: 0° closed, 180° open.
-    // Uses PartsTokens.MotionStiffnessMediumLow for consistency with all
-    // other spring animations across the Parts flow.
+    // Chevron rotation: 0° closed → 180° open.
     val chevronRotation by animateFloatAsState(
         targetValue   = if (expanded) 180f else 0f,
-        animationSpec = spring(stiffness = PartsTokens.MotionStiffnessMediumLow),
-        label         = "chevron-rotation-${entry.packageName}",
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
+        ),
+        label = "chevron-${entry.packageName}",
     )
 
     Row(
@@ -522,7 +519,6 @@ private fun AppThermalRow(
         verticalAlignment     = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(PartsTokens.appRowIconSpacing),
     ) {
-        // App icon
         Image(
             bitmap             = entry.icon,
             contentDescription = null,
@@ -539,25 +535,29 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // Profile picker: FilledTonalButton anchors the dropdown menu.
-        // IntrinsicSize.Max on the menu lets every item render at full width.
+        // ExposedDropdownMenuBox owns the open/close state.
+        // onExpandedChange is the single source of truth for `expanded`.
         ExposedDropdownMenuBox(
-            expanded         = expanded && !chargingLocked,
-            onExpandedChange = { if (!chargingLocked) expanded = it },
+            expanded         = expanded,
+            onExpandedChange = { newValue ->
+                if (chargingLocked) {
+                    // Show locked-toast; do not open the menu.
+                    Toast.makeText(
+                        context,
+                        R.string.thermal_charging_locked_hint,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                } else {
+                    expanded = newValue
+                }
+            },
         ) {
+            // No onClick on the button — menuAnchor handles taps.
             FilledTonalButton(
-                onClick = {
-                    if (chargingLocked) {
-                        onStateChange(-1) // routes to charging-locked toast in caller
-                    } else {
-                        expanded = !expanded
-                    }
-                },
-                modifier      = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                onClick        = { /* handled by menuAnchor */ },
+                modifier       = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
             ) {
-                // Leading profile icon — tinted with the profile's dot colour
-                // so the user can identify the current mode at a glance.
                 Icon(
                     imageVector        = entry.state.stateIcon(),
                     contentDescription = null,
@@ -572,7 +572,6 @@ private fun AppThermalRow(
                     overflow = TextOverflow.Ellipsis,
                 )
                 Spacer(Modifier.width(4.dp))
-                // Chevron rotates 180° when menu is open.
                 Icon(
                     imageVector        = Icons.Outlined.ExpandMore,
                     contentDescription = null,
@@ -583,7 +582,7 @@ private fun AppThermalRow(
             }
 
             ExposedDropdownMenu(
-                expanded         = expanded && !chargingLocked,
+                expanded         = expanded,
                 onDismissRequest = { expanded = false },
                 modifier         = Modifier.width(IntrinsicSize.Max),
             ) {
@@ -596,8 +595,11 @@ private fun AppThermalRow(
                                 style = MaterialTheme.typography.bodyLarge,
                             )
                         },
-                        onClick      = { onStateChange(state.id); expanded = false },
-                        leadingIcon  = {
+                        onClick = {
+                            expanded = false
+                            onStateChange(state.id)
+                        },
+                        leadingIcon = {
                             Icon(
                                 imageVector        = state.stateIcon(),
                                 contentDescription = null,
