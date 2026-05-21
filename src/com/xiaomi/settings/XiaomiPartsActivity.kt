@@ -45,13 +45,9 @@ class XiaomiPartsActivity : ComponentActivity() {
                 //   Back     (pop enter) — slide in from -X (left edge → centre)
                 //   Back     (pop exit)  — slide out to  +X (centre → right edge)
                 //
-                // This matches the Android 15 AOSP Settings navigation motion
-                // and the M3 Expressive spec for horizontal container transforms.
-                //
                 // EaseOutCubic: decelerating curve — element moves fast at the
                 // start and slows to rest, matching M3 "Emphasized Decelerate"
-                // easing for entering elements and M3 "Emphasized Accelerate"
-                // (approximated by EaseOutCubic on reverse) for exiting.
+                // easing for entering elements.
                 //
                 // Duration: PartsTokens.MotionDurationRoute (350 ms enter,
                 // 250 ms exit) — asymmetric so the outgoing screen exits fast
@@ -65,7 +61,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationRoute,
                                 easing         = EaseOutCubic,
                             ),
-                            initialOffsetX = { it },           // from right
+                            initialOffsetX = { it },
                         ) + fadeIn(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationEnter,
@@ -79,7 +75,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationExit,
                                 easing         = EaseOutCubic,
                             ),
-                            targetOffsetX = { -it / 3 },       // subtle push left
+                            targetOffsetX = { -it / 3 },
                         ) + fadeOut(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationExit,
@@ -93,7 +89,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationRoute,
                                 easing         = EaseOutCubic,
                             ),
-                            initialOffsetX = { -it / 3 },      // gentle return from left
+                            initialOffsetX = { -it / 3 },
                         ) + fadeIn(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationEnter,
@@ -107,7 +103,7 @@ class XiaomiPartsActivity : ComponentActivity() {
                                 durationMillis = PartsTokens.MotionDurationExit,
                                 easing         = EaseOutCubic,
                             ),
-                            targetOffsetX = { it },            // slide out to right
+                            targetOffsetX = { it },
                         ) + fadeOut(
                             animationSpec = tween(
                                 durationMillis = PartsTokens.MotionDurationExit,
@@ -124,13 +120,13 @@ class XiaomiPartsActivity : ComponentActivity() {
                         )
                     }
                     composable("display") {
-                        DisplayColoursScreen(onBack = { navController.popBackStack() })
+                        DisplayColoursScreen()
                     }
                     composable("thermal") {
-                        ThermalManagementScreen(onBack = { navController.popBackStack() })
+                        ThermalManagementScreen()
                     }
                     composable("touch") {
-                        TouchBoostScreen(onBack = { navController.popBackStack() })
+                        TouchBoostScreen()
                     }
                 }
             }

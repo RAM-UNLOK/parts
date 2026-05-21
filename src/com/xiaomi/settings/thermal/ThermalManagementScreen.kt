@@ -13,7 +13,6 @@ import android.graphics.drawable.Drawable
 import android.os.Process
 import android.widget.Toast
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Image
@@ -22,7 +21,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,11 +28,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -51,19 +52,19 @@ import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material.icons.filled.Stream
 import androidx.compose.material.icons.filled.VideoCall
 import androidx.compose.material.icons.filled.Web
-import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -80,7 +81,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -89,6 +89,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
@@ -181,7 +182,7 @@ private fun ChargingInfoBanner() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ThermalManagementScreen(onBack: () -> Unit) {
+fun ThermalManagementScreen() {
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
@@ -297,50 +298,23 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
             item(key = "toggle-card") {
                 PartsCard {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(role = Role.Switch) {
-                                toggleService(context, thermalUtils, !enabled) { enabled = it }
-                            }
-                            .padding(
-                                horizontal = PartsTokens.contentPaddingHorizontal,
-                                vertical   = PartsTokens.rowPaddingVertical,
-                            ),
-                        verticalAlignment     = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                    ) {
-                        Box(
-                            modifier         = Modifier
-                                .size(PartsTokens.leadingIconContainerSize)
-                                .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.secondaryContainer),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector        = Icons.Rounded.Tune,
-                                contentDescription = null,
-                                tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                                modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                    PartsRow(
+                        icon    = Icons.Rounded.Tune,
+                        title   = stringResource(R.string.thermal_enable),
+                        summary = stringResource(R.string.thermal_enable_summary),
+                        onClick = { toggleService(context, thermalUtils, !enabled) { enabled = it } },
+                        modifier = Modifier.clickable(
+                            role    = Role.Switch,
+                            onClick = { toggleService(context, thermalUtils, !enabled) { enabled = it } },
+                        ),
+                        showDivider = false,
+                        trailing = {
+                            Switch(
+                                checked         = enabled,
+                                onCheckedChange = { toggleService(context, thermalUtils, it) { enabled = it } },
                             )
-                        }
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text  = stringResource(R.string.thermal_enable),
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
-                            )
-                            Text(
-                                text  = stringResource(R.string.thermal_enable_summary),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Switch(
-                            checked         = enabled,
-                            onCheckedChange = { toggleService(context, thermalUtils, it) { enabled = it } },
-                        )
-                    }
+                        },
+                    )
                 }
             }
 
@@ -350,11 +324,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             item(key = "reset-card") {
                 PartsCard {
                     PartsRow(
-                        icon    = Icons.Filled.RestartAlt,
-                        title   = stringResource(R.string.thermal_reset),
-                        summary = stringResource(R.string.thermal_reset_confirm),
-                        onClick = { showResetDialog = true },
-                        trailing = {},
+                        icon        = Icons.Filled.RestartAlt,
+                        title       = stringResource(R.string.thermal_reset),
+                        summary     = stringResource(R.string.thermal_reset_confirm),
+                        onClick     = { showResetDialog = true },
+                        showDivider = false,
+                        trailing    = {},
                     )
                 }
             }
@@ -434,7 +409,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             if (index < appEntries.lastIndex) {
                                 HorizontalDivider(
                                     modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                                    thickness = 0.5.dp,
+                                    thickness = DividerDefaults.Thickness,
                                     color     = MaterialTheme.colorScheme.outlineVariant,
                                 )
                             }
@@ -468,15 +443,6 @@ private fun AppThermalRow(
     var expanded by remember(entry.packageName) { mutableStateOf(false) }
     val context = LocalContext.current
 
-    val chevronRotation by animateFloatAsState(
-        targetValue   = if (expanded) 180f else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
-        label = "chevron-${entry.packageName}",
-    )
-
     Row(
         modifier              = Modifier
             .fillMaxWidth()
@@ -503,10 +469,12 @@ private fun AppThermalRow(
             modifier = Modifier.weight(1f),
         )
 
-        // ── Button-anchored dropdown (no ExposedDropdownMenuBox needed) ───
+        // ── Fixed-size chip anchors the dropdown ─────────────────────────
+        // Surface gives us shape + color without Button semantics that would
+        // make the trigger look like a dropdown control.
         Box {
-            FilledTonalButton(
-                onClick        = {
+            Surface(
+                onClick = {
                     if (chargingLocked) {
                         Toast.makeText(
                             context,
@@ -517,35 +485,41 @@ private fun AppThermalRow(
                         expanded = !expanded
                     }
                 },
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                modifier = Modifier
+                    .requiredSize(
+                        width  = PartsTokens.thermalChipWidth,
+                        height = PartsTokens.thermalChipHeight,
+                    ),
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.secondaryContainer,
+                contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             ) {
-                Icon(
-                    imageVector        = entry.state.stateIcon(),
-                    contentDescription = null,
-                    modifier           = Modifier.size(16.dp),
-                    tint               = entry.state.dotColor(),
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    text     = stringResource(entry.state.label),
-                    style    = MaterialTheme.typography.labelMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.width(4.dp))
-                Icon(
-                    imageVector        = Icons.Outlined.ExpandMore,
-                    contentDescription = null,
-                    modifier           = Modifier
-                        .size(16.dp)
-                        .rotate(chevronRotation),
-                )
+                Row(
+                    modifier              = Modifier.fillMaxSize(),
+                    verticalAlignment     = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        imageVector        = entry.state.stateIcon(),
+                        contentDescription = null,
+                        modifier           = Modifier.size(14.dp),
+                        tint               = entry.state.dotColor(),
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text      = stringResource(entry.state.label),
+                        style     = MaterialTheme.typography.labelSmall,
+                        maxLines  = 1,
+                        overflow  = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                        modifier  = Modifier.wrapContentWidth(),
+                    )
+                }
             }
 
             DropdownMenu(
                 expanded         = expanded,
                 onDismissRequest = { expanded = false },
-                modifier         = Modifier.width(IntrinsicSize.Max),
             ) {
                 ThermalUtils.ThermalState.entries.forEach { state ->
                     val isSelected = state == entry.state
@@ -576,10 +550,7 @@ private fun AppThermalRow(
                                 tint               = MaterialTheme.colorScheme.primary,
                             )
                         }) else null,
-                        contentPadding = PaddingValues(
-                            horizontal = 16.dp,
-                            vertical   = PartsTokens.dropdownItemVerticalPadding,
-                        ),
+                        contentPadding = PaddingValues(horizontal = 16.dp),
                     )
                 }
             }

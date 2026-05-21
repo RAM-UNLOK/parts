@@ -13,9 +13,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -25,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Vibration
@@ -49,11 +46,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
+import com.xiaomi.settings.PartsRow
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 
@@ -62,11 +59,10 @@ import com.xiaomi.settings.ui.PartsTokens
  *
  * Back navigation: the [navigationIcon] back button is intentionally absent.
  * Predictive-back gesture handles back natively on Android 13+.
- * [onBack] is kept in the signature for NavHost compatibility.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TouchBoostScreen(onBack: () -> Unit) {
+fun TouchBoostScreen() {
     val context = LocalContext.current
     val prefs   = remember {
         context.getSharedPreferences(TouchSamplingService.SHAREDHTSR, Context.MODE_PRIVATE)
@@ -77,7 +73,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
+            dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness    = Spring.StiffnessMediumLow,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
@@ -112,58 +108,26 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         ) {
             PartsCategory(stringResource(R.string.htsr_category))
             PartsCard {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(role = Role.Switch) {
-                            toggleHtsr(context, prefs, !enabled) { enabled = it }
-                        }
-                        .padding(
-                            horizontal = PartsTokens.contentPaddingHorizontal,
-                            vertical   = PartsTokens.rowPaddingVertical,
-                        ),
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(PartsTokens.leadingIconContainerSize)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Filled.Vibration,
-                            contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                PartsRow(
+                    icon        = Icons.Filled.Vibration,
+                    title       = stringResource(R.string.htsr_enable_title),
+                    summary     = stringResource(R.string.htsr_enable_summary),
+                    onClick     = { toggleHtsr(context, prefs, !enabled) { enabled = it } },
+                    showDivider = false,
+                    trailing    = {
+                        Switch(
+                            checked         = enabled,
+                            onCheckedChange = { toggleHtsr(context, prefs, it) { enabled = it } },
                         )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text  = stringResource(R.string.htsr_enable_title),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text  = stringResource(R.string.htsr_enable_summary),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Switch(
-                        checked         = enabled,
-                        onCheckedChange = { toggleHtsr(context, prefs, it) { enabled = it } },
-                    )
-                }
+                    },
+                )
             }
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
             // Info banner — secondaryContainer: correct M3 role for informational
             // tip banners. tertiaryContainer is reserved for battery/charging
-            // context. cardShape (28 dp) matches all other cards in the app.
-            // All spacing via PartsTokens — no hardcoded dp values.
+            // context. cardShape (28 dp) matches all other cards in the app.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()

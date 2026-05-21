@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -61,11 +60,10 @@ import com.xiaomi.settings.ui.PartsTokens
  *
  * Back navigation: the [navigationIcon] IconButton is intentionally absent.
  * Android's predictive-back gesture handles back natively on Android 13+.
- * [onBack] is kept in the signature for NavHost popBackStack compatibility.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DisplayColoursScreen(onBack: () -> Unit) {
+fun DisplayColoursScreen() {
     val context = LocalContext.current
 
     var selectedId by remember {
@@ -81,7 +79,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
+            dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness    = Spring.StiffnessMediumLow,
         ),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
@@ -122,9 +120,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 standardModes.forEachIndexed { index, mode ->
                     mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
                     if (index < standardModes.lastIndex) {
-                        // DividerDefaults.Thickness = 1.dp (M3 spec).
-                        // Explicit 0.5.dp was sub-pixel on xxhdpi+ and could
-                        // render as invisible. Colour: outlineVariant per M3 list spec.
                         HorizontalDivider(
                             modifier = Modifier.padding(
                                 horizontal = PartsTokens.contentPaddingHorizontal,
@@ -165,24 +160,25 @@ private fun ColorMode.Row(
     val selected = this.id == selectedId
 
     // Selected rows: secondaryContainer highlight.
-    // Unselected rows: Color.Transparent so they are flush with the
-    // surfaceContainer card background.
+    // Unselected rows: Color.Transparent — flush with the surfaceContainer card.
     val bgColor by animateColorAsState(
         targetValue   = if (selected)
             MaterialTheme.colorScheme.secondaryContainer
         else
             Color.Transparent,
         animationSpec = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
-            stiffness    = PartsTokens.MotionStiffnessMediumLow,
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
         ),
         label = "color-row-bg-${this.name}",
     )
 
-    val contentColor = if (selected)
-        MaterialTheme.colorScheme.onSecondaryContainer
-    else
-        MaterialTheme.colorScheme.onSurface
+    // Single source of truth for content color — used by both title and summary.
+    // Selected: onSecondaryContainer. Unselected: title uses onSurface,
+    // summary uses onSurfaceVariant (one step quieter per M3 list spec).
+    val selectedContentColor   = MaterialTheme.colorScheme.onSecondaryContainer
+    val unselectedTitleColor   = MaterialTheme.colorScheme.onSurface
+    val unselectedSummaryColor = MaterialTheme.colorScheme.onSurfaceVariant
 
     val label   = stringResource(this.labelRes)
     val summary = stringResource(this.summaryRes)
@@ -212,15 +208,12 @@ private fun ColorMode.Row(
                 text       = label,
                 style      = MaterialTheme.typography.bodyLarge,
                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color      = contentColor,
+                color      = if (selected) selectedContentColor else unselectedTitleColor,
             )
             Text(
                 text  = summary,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (selected)
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (selected) selectedContentColor else unselectedSummaryColor,
             )
         }
     }
