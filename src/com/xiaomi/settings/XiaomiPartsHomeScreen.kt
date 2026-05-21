@@ -13,7 +13,9 @@ import android.os.BatteryManager
 import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -62,6 +64,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
@@ -162,7 +165,11 @@ fun XiaomiPartsHomeScreen(
                 AnimatedVisibility(
                     visible = showChargingBanner,
                     enter   = fadeIn() + slideInVertically(
-                        animationSpec  = PartsTokens.MotionSpringEnter,
+                        // spring<IntOffset> so the type matches FiniteAnimationSpec<IntOffset>
+                        animationSpec  = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness    = Spring.StiffnessMediumLow,
+                        ),
                         initialOffsetY = { -it / 2 },
                     ),
                 ) {

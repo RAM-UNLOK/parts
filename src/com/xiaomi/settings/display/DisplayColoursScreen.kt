@@ -98,9 +98,9 @@ private const val ShimmerAlpha  = 0.05f
 private const val BlobRadiusFraction = 0.38f
 
 /**
- * Six radial colour blobs, one per [ColorMode]. The active mode’s blob
+ * Six radial colour blobs, one per [ColorMode]. The active mode's blob
  * glows at full opacity; the others fade to 35 %. A gentle shimmer
- * diagonal glint sweeps continuously for an “alive” feel.
+ * diagonal glint sweeps continuously for an "alive" feel.
  *
  * No drawable resource required — pure Compose Canvas.
  */
@@ -295,10 +295,13 @@ private fun ColorMode.SelectionRow(
     onSelected: (ColorMode) -> Unit,
 ) {
     val isSelected = this.id == selectedId
+    // Capture hue before entering nested lambda scopes so the extension
+    // property is always resolved on ColorMode, not on any inner receiver.
+    val modeHue = this.hue
 
     val containerColor by animateColorAsState(
         targetValue   = if (isSelected)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = PartsTokens.colourModeSelectedAlpha)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = PartsTokens.selectedStateLayerAlpha)
         else
             Color.Transparent,
         animationSpec = spring(
@@ -316,14 +319,14 @@ private fun ColorMode.SelectionRow(
                 modifier         = Modifier
                     .size(PartsTokens.colourModeLeadingSize)
                     .clip(CircleShape)
-                    .background(this.hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
+                    .background(modeHue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
                         .size(PartsTokens.colourModeDotSize)
                         .clip(CircleShape)
-                        .background(this.hue.copy(alpha = PartsTokens.colourModeIconDotAlpha)),
+                        .background(modeHue.copy(alpha = PartsTokens.colourModeIconDotAlpha)),
                 )
             }
         },

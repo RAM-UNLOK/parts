@@ -92,6 +92,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
@@ -249,7 +250,7 @@ private fun ThermalProfileDialog(
                         bitmap             = entry.icon,
                         contentDescription = null,
                         modifier           = Modifier
-                            .size(PartsTokens.dialogHeaderIconSize)
+                            .size(PartsTokens.appIconSize)
                             .clip(CircleShape),
                     )
                     Column(modifier = Modifier.weight(1f)) {
@@ -673,7 +674,7 @@ private fun AppThermalRow(
                 bitmap             = entry.icon,
                 contentDescription = null,
                 modifier           = Modifier
-                    .size(PartsTokens.dialogHeaderIconSize)
+                    .size(PartsTokens.appIconSize)
                     .clip(CircleShape),
             )
         },
