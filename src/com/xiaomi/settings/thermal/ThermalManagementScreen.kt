@@ -107,9 +107,9 @@ import com.xiaomi.settings.utils.ChargingMonitor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 // Data
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 
 @Immutable
 private data class AppEntry(
@@ -119,9 +119,9 @@ private data class AppEntry(
     val state:       ThermalUtils.ThermalState,
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 // State helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 
 @Composable
 private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
@@ -156,9 +156,9 @@ private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.STREAMING       -> Icons.Filled.Stream
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 // Charging banner
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 
 @Composable
 private fun ChargingInfoBanner() {
@@ -198,9 +198,9 @@ private fun ChargingInfoBanner() {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 // Centred M3 profile picker dialog
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,6 +248,8 @@ private fun ThermalProfileDialog(
                 ),
             ),
         ) {
+            // surfaceContainerHigh is correct for dialogs/bottom-sheets
+            // (elevated surface sitting above the page).
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.88f)
@@ -385,9 +387,9 @@ private fun ThermalProfileDialog(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 // Main screen
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -455,7 +457,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        // M3 spec: page background = surface.
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -466,7 +469,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -671,9 +674,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 // App row
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 
 private val CHIP_HEIGHT = 36.dp
 private val CHIP_MIN_W  = 96.dp
@@ -768,9 +771,9 @@ private fun AppThermalRow(
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 // Service helpers
-// ─────────────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────
 
 private fun toggleService(
     context:      Context,

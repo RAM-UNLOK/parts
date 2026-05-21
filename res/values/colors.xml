@@ -2,12 +2,9 @@
 <!--
     Copyright (C) 2025 Paranoid Android
     SPDX-License-Identifier: Apache-2.0
+
+    No hardcoded colors. All colors are derived from the active
+    Material You / Monet theme via ?attr/ theme attributes or
+    MaterialTheme.colorScheme in Compose.
 -->
-<resources>
-    <!--
-        Background colour for the Xiaomi Parts Settings tile icon circle.
-        Teal chosen to signal "hardware tuning" and match the thermal/display
-        icon palette without conflicting with Monet dynamic colours at runtime.
-    -->
-    <color name="ic_xiaomi_parts_bg">#0097A7</color>
-</resources>
+<resources />

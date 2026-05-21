@@ -5,20 +5,26 @@
 
     Settings homepage tile icon for Xiaomi Parts.
 
-    LayerDrawable: teal circle background + white chip icon foreground.
-    Matches the visual style of AOSP/Clover Settings homepage tiles
-    (Battery, Security, System, etc.) which all use a coloured circle
-    with a white icon centred inside.
+    LayerDrawable: dynamic-color circle background + white chip icon.
+    Matches the AOSP/Clover Settings tile style (Battery, Security, etc.)
+    which all use a coloured circle with a white icon centred inside.
 
-    The foreground chip vector is inset ~28% on all sides so the icon
-    sits at the same optical weight as system tile icons.
+    Background uses ?attr/colorPrimary so the circle automatically
+    adapts to the user's Monet/Material You wallpaper palette — identical
+    behaviour to all first-party Pixel Settings tile icons.
+
+    The foreground icon path uses #FFFFFF (white). This is equivalent to
+    ?attr/colorOnPrimary on any Monet palette where Primary is a mid-tone
+    colour — and avoids requiring AppCompat vector inflation (which Settings
+    tile drawables do not go through), so ?attr refs in fillColor would
+    silently fail at runtime.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Layer 0: coloured circle background -->
+    <!-- Layer 0: dynamic primary-color circle background -->
     <item>
         <shape android:shape="oval">
-            <solid android:color="@color/ic_xiaomi_parts_bg" />
+            <solid android:color="?attr/colorPrimary" />
         </shape>
     </item>
 
