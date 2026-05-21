@@ -111,12 +111,23 @@
     <string name="htsr_disabled_toast">✋ Touch boost off</string>
     <string name="htsr_failed_toast">❌ Touch boost failed</string>
 
-    <!-- ── Xiaomi CIT ─────────────────────────────────────────────── -->
-    <!-- CIT is an external diagnostics app shipped on Xiaomi devices.  -->
-    <!-- The row in HomeScreen launches it via explicit intent.          -->
-    <string name="cit_title">Xiaomi CIT</string>
-    <string name="cit_summary">Hardware diagnostics and calibration</string>
-    <string name="cit_not_found">❌ CIT app not installed</string>
-    <string name="cit_launched">🔧 Opening CIT…</string>
+    <!-- ── Diagnostics: Fingerprint Calibration ──────────────────── -->
+    <!--
+        Targets: com.jiiov.fingerprint_factorytest /
+                 .xiaomi.XiaomiAfterSalesCalibrationActivity
+        Launch mode: LAUNCH_SINGLE_TASK (NEW_TASK | SINGLE_TOP)
+    -->
+    <string name="fingerprint_calibration_title">Fingerprint Calibration</string>
+    <string name="fingerprint_calibration_summary">Jiiov after-sales fingerprint calibration</string>
+    <string name="fingerprint_calibration_not_found">❌ Fingerprint calibration app not installed</string>
+
+    <!-- ── Diagnostics: Speaker Calibration ─────────────────────── -->
+    <!--
+        Targets: com.miui.cit / .auxiliary.CitAudioCaliSelfTest
+        Launch mode: LAUNCH_MULTIPLE (NEW_TASK only)
+    -->
+    <string name="speaker_calibration_title">Speaker Calibration</string>
+    <string name="speaker_calibration_summary">CIT audio self-test and speaker tuning</string>
+    <string name="speaker_calibration_not_found">❌ CIT app not installed</string>
 
 </resources>

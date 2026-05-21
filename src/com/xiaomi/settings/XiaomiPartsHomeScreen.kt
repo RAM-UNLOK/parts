@@ -34,9 +34,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -84,7 +85,6 @@ fun XiaomiPartsHomeScreen(
     var lastToastTime      by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
-        // Seed initial state from sticky battery broadcast.
         val stickyIntent = context.registerReceiver(
             null,
             IntentFilter(Intent.ACTION_BATTERY_CHANGED),
@@ -106,7 +106,6 @@ fun XiaomiPartsHomeScreen(
                 isCharging         = plugged
                 showChargingBanner = plugged
 
-                // Debounce: ignore events within TOAST_DEBOUNCE_MS of the last one.
                 if (now - lastToastTime < TOAST_DEBOUNCE_MS) return
                 lastToastTime = now
 
@@ -253,26 +252,40 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            // ── Diagnostics category ────────────────────────────────
+            // ── Diagnostics / Calibration category ──────────────────
             item(key = "diag-label") {
                 PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
             }
             item(key = "diag-card") {
                 PartsCard {
-                    // CitLauncher uses:
-                    //   package  = "com.miui.cit"
-                    //   activity = "com.miui.cit.home.HomeActivity"
-                    // Returns true on success, false if not installed.
+                    // Row 1 — Fingerprint calibration
+                    // Targets: com.jiiov.fingerprint_factorytest /
+                    //          .xiaomi.XiaomiAfterSalesCalibrationActivity
                     PartsRow(
-                        icon    = Icons.Filled.BugReport,
-                        title   = stringResource(R.string.cit_title),
-                        summary = stringResource(R.string.cit_summary),
+                        icon    = Icons.Filled.Fingerprint,
+                        title   = stringResource(R.string.fingerprint_calibration_title),
+                        summary = stringResource(R.string.fingerprint_calibration_summary),
                         onClick = {
-                            val launched = CitLauncher.launch(context)
-                            if (!launched) {
+                            if (!CitLauncher.launchFingerprintCalibration(context)) {
                                 Toast.makeText(
                                     context,
-                                    R.string.cit_not_found,
+                                    R.string.fingerprint_calibration_not_found,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        },
+                    )
+                    // Row 2 — Speaker calibration
+                    // Targets: com.miui.cit / .auxiliary.CitAudioCaliSelfTest
+                    PartsRow(
+                        icon    = Icons.Filled.Speaker,
+                        title   = stringResource(R.string.speaker_calibration_title),
+                        summary = stringResource(R.string.speaker_calibration_summary),
+                        onClick = {
+                            if (!CitLauncher.launchSpeakerCalibration(context)) {
+                                Toast.makeText(
+                                    context,
+                                    R.string.speaker_calibration_not_found,
                                     Toast.LENGTH_SHORT,
                                 ).show()
                             }
@@ -329,7 +342,7 @@ fun PartsCard(
  * and an optional trailing slot (defaults to [ChevronRight]).
  *
  * @param showDivider When true a [HorizontalDivider] is rendered below this
- *   row using [DividerDefaults.Thickness] (1 dp) and
+ *   row using [DividerDefaults.Thickness] and
  *   [MaterialTheme.colorScheme.outlineVariant] — M3 list-divider spec.
  *   Pass false for the last (or only) row in a [PartsCard].
  */

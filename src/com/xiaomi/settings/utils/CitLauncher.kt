@@ -2,16 +2,22 @@
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
  *
- * Utility to launch the Xiaomi CIT (Component/Hardware Integration Test)
- * application. CIT is a factory test tool preinstalled on Xiaomi devices
- * that allows manual hardware validation (vibrator, sensors, display,
- * camera, speaker, etc.).
+ * Targeted launchers for the two CIT calibration screens used in
+ * Xiaomi Parts. These fire explicit intents directly at the individual
+ * Activity rather than opening the full CIT hub.
  *
- * Based on the implementation in:
- *   MyDeviceInfoFragment.java (Settings app patch by Omkar Parte)
+ * Intent sources (from logcat):
  *
- * Returns true if the app was launched, false if it is not installed.
- * The caller is responsible for showing a Toast on false.
+ *   Fingerprint calibration
+ *     cmp=com.jiiov.fingerprint_factorytest/.xiaomi.XiaomiAfterSalesCalibrationActivity
+ *     flags=FLAG_ACTIVITY_NEW_TASK | FLAG_ACTIVITY_SINGLE_TOP  (LAUNCH_SINGLE_TASK)
+ *
+ *   Speaker calibration
+ *     cmp=com.miui.cit/.auxiliary.CitAudioCaliSelfTest
+ *     flags=FLAG_ACTIVITY_NEW_TASK  (LAUNCH_MULTIPLE)
+ *
+ * Each function returns true on success, false if the Activity is not
+ * present on the device. The caller is responsible for showing a Toast.
  */
 
 package com.xiaomi.settings.utils
@@ -19,29 +25,77 @@ package com.xiaomi.settings.utils
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.util.Log
 
 object CitLauncher {
 
-    private const val TAG          = "CitLauncher"
-    private const val CIT_PACKAGE  = "com.miui.cit"
-    private const val CIT_ACTIVITY = "com.miui.cit.home.HomeActivity"
+    private const val TAG = "CitLauncher"
+
+    // ── Fingerprint calibration ──────────────────────────────────────────
+    private const val FP_PACKAGE  = "com.jiiov.fingerprint_factorytest"
+    private const val FP_ACTIVITY = "com.jiiov.fingerprint_factorytest.xiaomi.XiaomiAfterSalesCalibrationActivity"
+
+    // ── Speaker calibration ──────────────────────────────────────────────
+    private const val CIT_PACKAGE        = "com.miui.cit"
+    private const val AUDIO_CALI_ACTIVITY = "com.miui.cit.auxiliary.CitAudioCaliSelfTest"
 
     /**
-     * Attempts to start the Xiaomi CIT HomeActivity.
-     * @return true if the intent resolved and was fired, false otherwise.
+     * Launches the Jiiov fingerprint after-sales calibration screen.
+     * Uses LAUNCH_SINGLE_TASK semantics (NEW_TASK | SINGLE_TOP).
+     * @return true if the Activity was found and started.
      */
-    fun launch(context: Context): Boolean {
+    fun launchFingerprintCalibration(context: Context): Boolean =
+        launchActivity(
+            context  = context,
+            pkg      = FP_PACKAGE,
+            activity = FP_ACTIVITY,
+            flags    = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP,
+            tag      = "FingerprintCalibration",
+        )
+
+    /**
+     * Launches the CIT audio (speaker) self-test calibration screen.
+     * Uses LAUNCH_MULTIPLE semantics (NEW_TASK only).
+     * @return true if the Activity was found and started.
+     */
+    fun launchSpeakerCalibration(context: Context): Boolean =
+        launchActivity(
+            context  = context,
+            pkg      = CIT_PACKAGE,
+            activity = AUDIO_CALI_ACTIVITY,
+            flags    = Intent.FLAG_ACTIVITY_NEW_TASK,
+            tag      = "SpeakerCalibration",
+        )
+
+    // ─────────────────────────────────────────────────────────────────────
+
+    private fun launchActivity(
+        context:  Context,
+        pkg:      String,
+        activity: String,
+        flags:    Int,
+        tag:      String,
+    ): Boolean {
+        val intent = Intent().apply {
+            component = ComponentName(pkg, activity)
+            addFlags(flags)
+        }
+        // Resolve first so we can log a specific error if absent.
+        val resolved = context.packageManager.resolveActivity(
+            intent,
+            PackageManager.MATCH_DEFAULT_ONLY,
+        )
+        if (resolved == null) {
+            Log.w(TAG, "$tag not available: $pkg/$activity")
+            return false
+        }
         return runCatching {
-            val intent = Intent().apply {
-                component = ComponentName(CIT_PACKAGE, CIT_ACTIVITY)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            }
             context.startActivity(intent)
-            Log.d(TAG, "CIT app launched successfully")
+            Log.d(TAG, "$tag launched")
             true
         }.onFailure { e ->
-            Log.e(TAG, "Unable to launch CIT app — is it installed?", e)
+            Log.e(TAG, "$tag launch failed", e)
         }.getOrDefault(false)
     }
 }
