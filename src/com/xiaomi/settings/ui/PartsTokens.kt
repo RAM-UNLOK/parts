@@ -8,11 +8,13 @@ package com.xiaomi.settings.ui
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 
 /**
@@ -53,10 +55,14 @@ object PartsTokens {
     val chargingHintIndent         = 32.dp
 
     // ── Shape ───────────────────────────────────────────────
-    /** M3 Expressive large-component corner radius (all cards). */
+    /** M3 large-component corner radius (all cards). */
     val cardShape = RoundedCornerShape(28.dp)
-    /** Smaller shape for chips and inline surfaces. */
-    val chipShape = RoundedCornerShape(50)
+    /**
+     * Full-pill shape for chips and inline surfaces.
+     * Uses [CircleShape] (= RoundedCornerShape(50%)) to match the M3
+     * "full" shape token and make the intent explicit.
+     */
+    val chipShape: Shape = CircleShape
 
     // ── Icon sizes ──────────────────────────────────────────
     val leadingIconContainerSize = 48.dp
@@ -64,9 +70,15 @@ object PartsTokens {
     val trailingIconSize         = 24.dp
     /** Icon inside the per-app thermal profile chip. */
     val chipIconSize             = 14.dp
+    /** Icon inside charging / info banners. */
+    val bannerIconSize           = 20.dp
+    /** Dismiss "X" icon inside the home-screen charging banner. */
+    val bannerDismissIconSize    = 16.dp
+    /** Size of the dismiss IconButton in the charging banner. */
+    val dismissButtonSize        = 32.dp
 
     // ── Chip (per-app thermal selector) ────────────────────
-    val chipHeight = 36.dp
+    val chipHeight   = 36.dp
     val chipMinWidth = 96.dp
     val chipMaxWidth = 148.dp
 
@@ -74,15 +86,21 @@ object PartsTokens {
     val dropdownItemVerticalPadding = 10.dp
 
     // ── Motion ─────────────────────────────────────────────
-    const val MotionDampingRatio       = Spring.DampingRatioNoBouncy
-    const val MotionStiffnessMediumLow = Spring.StiffnessMediumLow
-
+    /**
+     * Standard enter spring: no bounce, medium-low stiffness.
+     * Use for elements entering the screen (slides, fades, scale-ins).
+     */
     val MotionSpringEnter: SpringSpec<Float> = spring(
-        dampingRatio = MotionDampingRatio,
+        dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness    = Spring.StiffnessMediumLow,
     )
+
+    /**
+     * Standard exit spring: no bounce, medium stiffness (snappier than enter).
+     * Use for elements leaving the screen.
+     */
     val MotionSpringExit: SpringSpec<Float> = spring(
-        dampingRatio = MotionDampingRatio,
+        dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness    = Spring.StiffnessMedium,
     )
 
@@ -102,7 +120,7 @@ object PartsTokens {
      * used inline anywhere in a Compose tree without wrapping in
      * remember {}. The values read directly from MaterialTheme.colorScheme
      * which is already backed by dynamicDark/LightColorScheme — the
-     * single source of truth for Monet colors in this app.
+     * single source of truth for Monet colours in this app.
      *
      * Screens must NOT reference MaterialTheme.colorScheme.* directly.
      * Use PartsTokens.Colors.* everywhere so role→token mapping is one
@@ -110,7 +128,8 @@ object PartsTokens {
      */
     object Colors {
 
-        // Page
+        // ── Page ────────────────────────────────────────────
+
         /** Background of every Scaffold / page. */
         val page: Color
             @Composable @ReadOnlyComposable get() =
@@ -126,13 +145,16 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.surfaceContainer
 
-        // Cards
-        /** Surface color for PartsCard (sits on [page]). */
+        // ── Cards ───────────────────────────────────────────
+
+        /** Surface colour for PartsCard (sits on [page]). */
         val card: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.surfaceContainer
 
-        // Leading icon container (circle behind icon in PartsRow)
+        // ── Leading icon container ───────────────────────────
+
+        /** Background circle behind the leading icon in PartsRow. */
         val iconContainer: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.secondaryContainer
@@ -141,7 +163,8 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.onSecondaryContainer
 
-        // Text
+        // ── Text ────────────────────────────────────────────
+
         val textPrimary: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.onSurface
@@ -154,7 +177,8 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.primary
 
-        // Per-app thermal chip
+        // ── Per-app thermal chip ─────────────────────────────
+
         val chipContainer: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.secondaryContainer
@@ -163,12 +187,14 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.onSecondaryContainer
 
-        // Dividers
+        // ── Dividers ────────────────────────────────────────
+
         val divider: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.outlineVariant
 
-        // Banners (charging / info)
+        // ── Banners (charging / info) ────────────────────────
+
         val bannerContainer: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.tertiaryContainer
@@ -177,30 +203,48 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.onTertiaryContainer
 
-        // Trailing navigation arrow
+        // ── Trailing navigation arrow ────────────────────────
+
         val trailing: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.onSurfaceVariant
 
-        // Dialog surface (elevated above page)
+        // ── Dialog ──────────────────────────────────────────
+
+        /** Elevated surface for the profile-picker dialog. */
         val dialogSurface: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.surfaceContainerHigh
 
-        // Selected row in dialog
+        /**
+         * Tinted background for the selected row inside a dialog.
+         *
+         * Uses M3 pressed/selected state-layer opacity (12 %) over
+         * primaryContainer — consistent with M3 selection highlight spec.
+         * (38 % is the M3 *disabled-content* opacity and is too heavy here.)
+         */
         val dialogSelectedBackground: Color
             @Composable @ReadOnlyComposable get() =
-                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.12f)
 
         val dialogSelectedText: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.primary
 
+        /**
+         * Background for unselected rows inside the dialog list.
+         *
+         * surfaceContainerHighest sits one step above the dialog surface
+         * (surfaceContainerHigh), giving subtle elevation separation
+         * without using a coloured container that would clash with the
+         * selected-row highlight.
+         */
         val dialogRowBackground: Color
             @Composable @ReadOnlyComposable get() =
-                MaterialTheme.colorScheme.secondaryContainer
+                MaterialTheme.colorScheme.surfaceContainerHighest
 
-        // Error / destructive
+        // ── Error / destructive ──────────────────────────────
+
         val destructive: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.error

@@ -71,10 +71,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
+        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
@@ -154,8 +151,8 @@ private fun ColorMode.Row(
     val bgColor by animateColorAsState(
         targetValue   = if (selected) PartsTokens.Colors.chipContainer else Color.Transparent,
         animationSpec = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
-            stiffness    = PartsTokens.MotionStiffnessMediumLow,
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
         ),
         label = "color-row-bg-${this.name}",
     )

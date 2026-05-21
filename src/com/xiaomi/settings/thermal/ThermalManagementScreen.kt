@@ -166,7 +166,7 @@ private fun ChargingInfoBanner() {
             tint               = PartsTokens.Colors.bannerContent,
             modifier           = Modifier
                 .padding(top = 2.dp)
-                .size(18.dp),
+                .size(PartsTokens.bannerIconSize),
         )
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
@@ -312,7 +312,7 @@ private fun ThermalProfileDialog(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             // Icon container — uniform secondaryContainer for all states.
-                            // The icon shape distinguishes profiles; color conflicts are avoided.
+                            // The icon shape distinguishes profiles; colour conflicts are avoided.
                             Box(
                                 modifier         = Modifier
                                     .size(40.dp)
@@ -324,7 +324,7 @@ private fun ThermalProfileDialog(
                                     imageVector        = state.stateIcon(),
                                     contentDescription = null,
                                     // DEFAULT: muted to indicate no active override.
-                                    // All others: full icon-container content color.
+                                    // All others: full icon-container content colour.
                                     tint               = if (state == ThermalUtils.ThermalState.DEFAULT)
                                         PartsTokens.Colors.textSecondary
                                     else
@@ -437,10 +437,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
+        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
     val listState = rememberLazyListState()

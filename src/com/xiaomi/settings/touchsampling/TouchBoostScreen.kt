@@ -69,10 +69,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = spring(
-            dampingRatio = PartsTokens.MotionDampingRatio,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
+        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
@@ -152,7 +149,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // Info banner — uses bannerContainer/bannerContent (tertiaryContainer)
+            // Info banner — uses bannerContainer/bannerContent (tertiaryContainer).
             // Consistent with the charging banners in HomeScreen and ThermalManagementScreen.
             Row(
                 modifier = Modifier

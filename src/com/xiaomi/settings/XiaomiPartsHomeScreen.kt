@@ -13,10 +13,7 @@ import android.os.BatteryManager
 import android.os.SystemClock
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -129,10 +126,7 @@ fun XiaomiPartsHomeScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec  = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
+        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
@@ -166,8 +160,8 @@ fun XiaomiPartsHomeScreen(
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
-                    enter   = fadeIn(tween(220)) + slideInVertically(
-                        animationSpec  = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow),
+                    enter   = fadeIn() + slideInVertically(
+                        animationSpec  = PartsTokens.MotionSpringEnter,
                         initialOffsetY = { -it / 2 },
                     ),
                 ) {
@@ -175,7 +169,7 @@ fun XiaomiPartsHomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                            .padding(top = 8.dp)
+                            .padding(top = PartsTokens.cardBlockSpacing)
                             .clip(PartsTokens.cardShape)
                             .background(PartsTokens.Colors.bannerContainer)
                             .padding(
@@ -189,7 +183,7 @@ fun XiaomiPartsHomeScreen(
                             imageVector        = Icons.Filled.BatteryChargingFull,
                             contentDescription = null,
                             tint               = PartsTokens.Colors.bannerContent,
-                            modifier           = Modifier.size(20.dp),
+                            modifier           = Modifier.size(PartsTokens.bannerIconSize),
                         )
                         Text(
                             text     = stringResource(R.string.charging_connected),
@@ -199,13 +193,13 @@ fun XiaomiPartsHomeScreen(
                         )
                         IconButton(
                             onClick  = { showChargingBanner = false },
-                            modifier = Modifier.size(32.dp),
+                            modifier = Modifier.size(PartsTokens.dismissButtonSize),
                         ) {
                             Icon(
                                 imageVector        = Icons.Filled.Close,
                                 contentDescription = stringResource(R.string.dismiss),
                                 tint               = PartsTokens.Colors.bannerContent,
-                                modifier           = Modifier.size(16.dp),
+                                modifier           = Modifier.size(PartsTokens.bannerDismissIconSize),
                             )
                         }
                     }
