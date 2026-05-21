@@ -9,13 +9,26 @@ import android.content.Context
 import android.os.UserHandle
 import android.provider.Settings
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -23,15 +36,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -42,17 +58,142 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
-import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
+
+// ────────────────────────────────────────────────────────
+// Hue tokens — characteristic colour for each profile.
+// Used both in the hero preview and in leading icon tints.
+// ────────────────────────────────────────────────────────
+
+private val vividHue      = Color(0xFFFF7043)  // deep amber-orange
+private val saturatedHue  = Color(0xFF8BC34A)  // fresh lime
+private val standardHue   = Color(0xFF90A4AE)  // cool slate
+private val originalHue   = Color(0xFFFFCA28)  // warm gold
+private val p3Hue         = Color(0xFF9C27B0)  // wide-gamut violet
+private val srgbHue       = Color(0xFF26C6DA)  // sRGB teal
+
+private typealias ColorMode = ColorService.ColorMode
+
+/** Maps each ColorMode to its representative hue. */
+private val ColorMode.hue: Color
+    get() = when (this) {
+        ColorMode.VIVID     -> vividHue
+        ColorMode.SATURATED -> saturatedHue
+        ColorMode.STANDARD  -> standardHue
+        ColorMode.ORIGINAL  -> originalHue
+        ColorMode.P3        -> p3Hue
+        ColorMode.SRGB      -> srgbHue
+    }
+
+// ────────────────────────────────────────────────────────
+// Hero gradient preview
+// ────────────────────────────────────────────────────────
+
+/**
+ * A 180dp tall Card showing six radial colour blobs — one per
+ * ColorMode. The blob whose profile is currently selected glows
+ * at full opacity; the others fade to 35 %. A gentle shimmer
+ * sweep runs continuously on top for the "alive" feel.
+ *
+ * No drawable resources needed — pure Compose/Canvas.
+ */
+@Composable
+private fun ColourPreviewHero(
+    selectedId: Int,
+    modifier: Modifier = Modifier,
+) {
+    // Per-mode glow opacity
+    val allModes = ColorMode.entries
+    val alphas = allModes.map { mode ->
+        val target = if (mode.id == selectedId) 1f else 0.35f
+        animateFloatAsState(
+            targetValue   = target,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness    = Spring.StiffnessMediumLow,
+            ),
+            label         = "hero-alpha-${mode.name}",
+        ).value
+    }
+
+    // Shimmer sweep
+    val shimmer = rememberInfiniteTransition(label = "hero-shimmer")
+    val shimmerX by shimmer.animateFloat(
+        initialValue   = -600f,
+        targetValue    = 1200f,
+        animationSpec  = infiniteRepeatable(
+            animation  = tween(durationMillis = 3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label          = "hero-shimmer-x",
+    )
+
+    Box(
+        modifier = modifier
+            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(PartsTokens.cardShape)
+            .background(Color(0xFF0D0D0D)),  // near-black base — colours pop more
+    ) {
+        // Six radial blobs, evenly distributed in a 2x3 grid
+        val positions = listOf(
+            Offset(0.17f, 0.3f),   // Vivid     — top-left
+            Offset(0.50f, 0.65f),  // Saturated — mid-centre
+            Offset(0.83f, 0.3f),   // Standard  — top-right
+            Offset(0.17f, 0.75f),  // Original  — bottom-left
+            Offset(0.50f, 0.25f),  // P3        — top-centre
+            Offset(0.83f, 0.75f),  // sRGB      — bottom-right
+        )
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            allModes.forEachIndexed { i, mode ->
+                val centre = Offset(size.width * positions[i].x, size.height * positions[i].y)
+                drawCircle(
+                    brush  = Brush.radialGradient(
+                        colors   = listOf(
+                            mode.hue.copy(alpha = alphas[i]),
+                            Color.Transparent,
+                        ),
+                        center   = centre,
+                        radius   = size.width * 0.38f,
+                    ),
+                    radius = size.width * 0.38f,
+                    center = centre,
+                )
+            }
+
+            // Shimmer sweep — a soft white diagonal glint
+            drawRect(
+                brush = Brush.linearGradient(
+                    colors      = listOf(
+                        Color.Transparent,
+                        Color.White.copy(alpha = 0.05f),
+                        Color.Transparent,
+                    ),
+                    start = Offset(shimmerX, 0f),
+                    end   = Offset(shimmerX + 300f, size.height),
+                ),
+            )
+        }
+    }
+}
+
+// ────────────────────────────────────────────────────────
+// Main screen
+// ────────────────────────────────────────────────────────
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,37 +242,36 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            val standardModes = listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
-            val expertModes   = listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
 
-            PartsCategory(stringResource(R.string.color_section_standard))
-            PartsCard(modifier = Modifier.selectableGroup()) {
-                standardModes.forEachIndexed { index, mode ->
-                    mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                    if (index < standardModes.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(
-                                horizontal = PartsTokens.contentPaddingHorizontal,
-                            ),
-                            color = PartsTokens.Colors.divider,
+            // 1. Hero
+            Spacer(Modifier.height(8.dp))
+            ColourPreviewHero(
+                selectedId = selectedId,
+                modifier   = Modifier,
+            )
+
+            // 2. Standard section
+            SectionHeader(stringResource(R.string.color_section_standard))
+            PartsCard {
+                listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
+                    .forEach { mode ->
+                        mode.SelectionRow(
+                            selectedId = selectedId,
+                            onSelected = { applyMode(context, it) { selectedId = it.id } },
                         )
                     }
-                }
             }
 
-            PartsCategory(stringResource(R.string.color_section_expert))
-            PartsCard(modifier = Modifier.selectableGroup()) {
-                expertModes.forEachIndexed { index, mode ->
-                    mode.Row(selectedId) { applyMode(context, it) { selectedId = it.id } }
-                    if (index < expertModes.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(
-                                horizontal = PartsTokens.contentPaddingHorizontal,
-                            ),
-                            color = PartsTokens.Colors.divider,
+            // 3. Expert section
+            SectionHeader(stringResource(R.string.color_section_expert))
+            PartsCard {
+                listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
+                    .forEach { mode ->
+                        mode.SelectionRow(
+                            selectedId = selectedId,
+                            onSelected = { applyMode(context, it) { selectedId = it.id } },
                         )
                     }
-                }
             }
 
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
@@ -139,64 +279,135 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
     }
 }
 
-private typealias ColorMode = ColorService.ColorMode
+// ────────────────────────────────────────────────────────
+// Section header
+// ────────────────────────────────────────────────────────
 
+/**
+ * Category label styled with [MaterialTheme.colorScheme.secondary]
+ * instead of the default muted text, giving Standard vs Expert
+ * sections a clear tonal identity without needing a chip.
+ */
 @Composable
-private fun ColorMode.Row(
+private fun SectionHeader(title: String) {
+    Text(
+        text     = title,
+        style    = MaterialTheme.typography.labelLarge,
+        color    = MaterialTheme.colorScheme.secondary,
+        modifier = Modifier.padding(
+            start  = 24.dp,
+            top    = 20.dp,
+            bottom = 8.dp,
+        ),
+    )
+}
+
+// ────────────────────────────────────────────────────────
+// Selection row
+// ────────────────────────────────────────────────────────
+
+/**
+ * M3 [ListItem]-based row.
+ *
+ * - Leading: 40dp circle tinted with this mode's characteristic hue.
+ * - Background: animates to primaryContainer @ 30 % when selected.
+ * - Trailing: [AnimatedContent] — CheckCircle fades in/out smoothly;
+ *   nothing is rendered when unselected (no static placeholder).
+ * - No RadioButton, no HorizontalDivider.
+ */
+@Composable
+private fun ColorMode.SelectionRow(
     selectedId: Int,
     onSelected: (ColorMode) -> Unit,
 ) {
-    val selected = this.id == selectedId
+    val isSelected = this.id == selectedId
 
-    val bgColor by animateColorAsState(
-        targetValue   = if (selected) PartsTokens.Colors.chipContainer else Color.Transparent,
+    val containerColor by animateColorAsState(
+        targetValue   = if (isSelected)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f)
+        else
+            Color.Transparent,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
             stiffness    = Spring.StiffnessMediumLow,
         ),
-        label = "color-row-bg-${this.name}",
+        label = "row-bg-${this.name}",
     )
 
-    val contentColor = if (selected) PartsTokens.Colors.chipContent else PartsTokens.Colors.textPrimary
-
-    val label   = stringResource(this.labelRes)
-    val summary = stringResource(this.summaryRes)
-
-    Row(
+    ListItem(
         modifier = Modifier
-            .fillMaxWidth()
-            .background(bgColor)
-            .clickable(role = Role.RadioButton) { onSelected(this@Row) }
-            .padding(
-                horizontal = PartsTokens.contentPaddingHorizontal,
-                vertical   = PartsTokens.rowPaddingVertical,
-            ),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-    ) {
-        RadioButton(
-            selected = selected,
-            onClick  = null,
-            colors   = RadioButtonDefaults.colors(
-                selectedColor   = PartsTokens.Colors.chipContent,
-                unselectedColor = PartsTokens.Colors.textSecondary,
-            ),
-        )
-        Column(modifier = Modifier.weight(1f)) {
+            .clickable(role = Role.RadioButton) { onSelected(this@SelectionRow) },
+        colors = ListItemDefaults.colors(
+            containerColor = containerColor,
+        ),
+        // Leading tinted icon — hue at 20 % fills the circle bg,
+        // hue at 80 % for the icon itself.
+        leadingContent = {
+            Box(
+                modifier         = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(this.hue.copy(alpha = 0.20f)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .clip(CircleShape)
+                        .background(this.hue.copy(alpha = 0.80f)),
+                )
+            }
+        },
+        headlineContent = {
             Text(
-                text       = label,
-                style      = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                color      = contentColor,
+                text  = stringResource(this.labelRes),
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                else
+                    PartsTokens.Colors.textPrimary,
             )
+        },
+        supportingContent = {
             Text(
-                text  = summary,
+                text  = stringResource(this.summaryRes),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (selected) PartsTokens.Colors.chipContent else PartsTokens.Colors.textSecondary,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
+                else
+                    PartsTokens.Colors.textSecondary,
             )
-        }
-    }
+        },
+        trailingContent = {
+            // AnimatedContent so the checkmark fades in/out rather
+            // than snapping — the "motion is colour" M3 principle.
+            AnimatedContent(
+                targetState   = isSelected,
+                transitionSpec = {
+                    fadeIn(tween(180))  togetherWith  fadeOut(tween(120))
+                },
+                label = "check-${this.name}",
+            ) { selected ->
+                if (selected) {
+                    Icon(
+                        imageVector        = Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint               = MaterialTheme.colorScheme.primary,
+                        modifier           = Modifier.size(24.dp),
+                    )
+                } else {
+                    // Empty box preserves layout width so the list
+                    // column doesn't reflow on selection change.
+                    Box(Modifier.size(24.dp))
+                }
+            }
+        },
+    )
 }
+
+// ────────────────────────────────────────────────────────
+// Write helper  (unchanged)
+// ────────────────────────────────────────────────────────
 
 private fun applyMode(
     context:   Context,
