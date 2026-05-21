@@ -29,14 +29,15 @@ class XiaomiPartsActivity : ComponentActivity() {
         setContent {
             XiaomiPartsTheme {
                 val navController = rememberNavController()
+                val navFade = tween<Float>(200)
 
                 NavHost(
-                    navController    = navController,
-                    startDestination = "home",
-                    enterTransition  = { fadeIn(animationSpec = tween(200)) },
-                    exitTransition   = { fadeOut(animationSpec = tween(200)) },
-                    popEnterTransition  = { fadeIn(animationSpec = tween(200)) },
-                    popExitTransition   = { fadeOut(animationSpec = tween(200)) },
+                    navController       = navController,
+                    startDestination    = "home",
+                    enterTransition     = { fadeIn(animationSpec  = navFade) },
+                    exitTransition      = { fadeOut(animationSpec = navFade) },
+                    popEnterTransition  = { fadeIn(animationSpec  = navFade) },
+                    popExitTransition   = { fadeOut(animationSpec = navFade) },
                 ) {
                     composable("home") {
                         XiaomiPartsHomeScreen(

@@ -82,9 +82,6 @@ object PartsTokens {
     val chipMinWidth = 96.dp
     val chipMaxWidth = 148.dp
 
-    // ── Dropdown ───────────────────────────────────────────
-    val dropdownItemVerticalPadding = 10.dp
-
     // ── Motion ─────────────────────────────────────────────
     /**
      * Standard enter spring: no bounce, medium-low stiffness.
@@ -94,23 +91,6 @@ object PartsTokens {
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness    = Spring.StiffnessMediumLow,
     )
-
-    /**
-     * Standard exit spring: no bounce, medium stiffness (snappier than enter).
-     * Use for elements leaving the screen.
-     */
-    val MotionSpringExit: SpringSpec<Float> = spring(
-        dampingRatio = Spring.DampingRatioNoBouncy,
-        stiffness    = Spring.StiffnessMedium,
-    )
-
-    // ── Motion durations (ms) ──────────────────────────────
-    const val MotionDurationEnter  = 280
-    const val MotionDurationSlide  = 320
-    const val MotionDurationRoute  = 350
-    const val MotionDurationExit   = 250
-    const val MotionStaggerStep    = 60
-    const val MotionSlideDistance  = 8
 
     // ── Colour roles ────────────────────────────────────────
     /**
@@ -230,18 +210,6 @@ object PartsTokens {
         val dialogSelectedText: Color
             @Composable @ReadOnlyComposable get() =
                 MaterialTheme.colorScheme.primary
-
-        /**
-         * Background for unselected rows inside the dialog list.
-         *
-         * surfaceContainerHighest sits one step above the dialog surface
-         * (surfaceContainerHigh), giving subtle elevation separation
-         * without using a coloured container that would clash with the
-         * selected-row highlight.
-         */
-        val dialogRowBackground: Color
-            @Composable @ReadOnlyComposable get() =
-                MaterialTheme.colorScheme.surfaceContainerHighest
 
         // ── Error / destructive ──────────────────────────────
 
