@@ -138,9 +138,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // M3 spec: page background = surface (not a container tier).
-        // Cards use surfaceContainer, guaranteed visible on all Monet palettes.
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = PartsTokens.Colors.page,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -151,8 +149,8 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = PartsTokens.Colors.topBarResting,
+                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -179,7 +177,7 @@ fun XiaomiPartsHomeScreen(
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                             .padding(top = 8.dp)
                             .clip(PartsTokens.cardShape)
-                            .background(MaterialTheme.colorScheme.tertiaryContainer)
+                            .background(PartsTokens.Colors.bannerContainer)
                             .padding(
                                 horizontal = PartsTokens.contentPaddingHorizontal,
                                 vertical   = PartsTokens.rowPaddingVertical,
@@ -190,13 +188,13 @@ fun XiaomiPartsHomeScreen(
                         Icon(
                             imageVector        = Icons.Filled.BatteryChargingFull,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
+                            tint               = PartsTokens.Colors.bannerContent,
                             modifier           = Modifier.size(20.dp),
                         )
                         Text(
                             text     = stringResource(R.string.charging_connected),
                             style    = MaterialTheme.typography.labelLarge,
-                            color    = MaterialTheme.colorScheme.onTertiaryContainer,
+                            color    = PartsTokens.Colors.bannerContent,
                             modifier = Modifier.weight(1f),
                         )
                         IconButton(
@@ -206,7 +204,7 @@ fun XiaomiPartsHomeScreen(
                             Icon(
                                 imageVector        = Icons.Filled.Close,
                                 contentDescription = stringResource(R.string.dismiss),
-                                tint               = MaterialTheme.colorScheme.onTertiaryContainer,
+                                tint               = PartsTokens.Colors.bannerContent,
                                 modifier           = Modifier.size(16.dp),
                             )
                         }
@@ -289,7 +287,7 @@ fun PartsCategory(
     Text(
         text     = title,
         style    = MaterialTheme.typography.labelMedium,
-        color    = MaterialTheme.colorScheme.primary,
+        color    = PartsTokens.Colors.textCategory,
         modifier = modifier.padding(
             start  = PartsTokens.contentPaddingHorizontal,
             end    = PartsTokens.contentPaddingHorizontal,
@@ -299,13 +297,6 @@ fun PartsCategory(
     )
 }
 
-/**
- * Standard card container for preference rows.
- *
- * M3 spec: cards that sit on a [surface] background use [surfaceContainer].
- * This pairing is guaranteed to be visually distinct on every Monet
- * tonal palette — light, dark, and all wallpaper colours.
- */
 @Composable
 fun PartsCard(
     modifier: Modifier = Modifier,
@@ -316,17 +307,13 @@ fun PartsCard(
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
         shape          = PartsTokens.cardShape,
-        color          = MaterialTheme.colorScheme.surfaceContainer,
+        color          = PartsTokens.Colors.card,
         tonalElevation = 0.dp,
     ) {
         Column { content() }
     }
 }
 
-/**
- * Standard preference row with leading icon container, title, summary,
- * and an optional trailing slot (defaults to [ChevronRight]).
- */
 @Composable
 fun PartsRow(
     icon:        ImageVector,
@@ -339,7 +326,7 @@ fun PartsRow(
         Icon(
             imageVector        = Icons.Filled.ChevronRight,
             contentDescription = null,
-            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint               = PartsTokens.Colors.trailing,
             modifier           = Modifier.size(PartsTokens.trailingIconSize),
         )
     },
@@ -360,13 +347,13 @@ fun PartsRow(
                 modifier         = Modifier
                     .size(PartsTokens.leadingIconContainerSize)
                     .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                    .background(PartsTokens.Colors.iconContainer),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector        = icon,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                    tint               = PartsTokens.Colors.iconContent,
                     modifier           = Modifier.size(PartsTokens.leadingIconSize),
                 )
             }
@@ -374,12 +361,12 @@ fun PartsRow(
                 Text(
                     text  = title,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    color = PartsTokens.Colors.textPrimary,
                 )
                 Text(
                     text  = summary,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = PartsTokens.Colors.textSecondary,
                 )
             }
             trailing()
@@ -388,7 +375,7 @@ fun PartsRow(
             HorizontalDivider(
                 modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
                 thickness = DividerDefaults.Thickness,
-                color     = MaterialTheme.colorScheme.outlineVariant,
+                color     = PartsTokens.Colors.divider,
             )
         }
     }

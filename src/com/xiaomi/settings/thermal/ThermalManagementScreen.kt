@@ -41,7 +41,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -123,23 +122,9 @@ private data class AppEntry(
 // State helpers
 // ────────────────────────────────────────────────────────
 
-@Composable
-private fun ThermalUtils.ThermalState.dotColor(): Color = when (this) {
-    ThermalUtils.ThermalState.DEFAULT         -> MaterialTheme.colorScheme.outline
-    ThermalUtils.ThermalState.BENCHMARK       -> MaterialTheme.colorScheme.error
-    ThermalUtils.ThermalState.BROWSER         -> MaterialTheme.colorScheme.primary
-    ThermalUtils.ThermalState.CAMERA          -> MaterialTheme.colorScheme.tertiary
-    ThermalUtils.ThermalState.DIALER          -> MaterialTheme.colorScheme.secondary
-    ThermalUtils.ThermalState.GAMING          -> MaterialTheme.colorScheme.error
-    ThermalUtils.ThermalState.NAVIGATION      -> MaterialTheme.colorScheme.primary
-    ThermalUtils.ThermalState.VIDEO_CALL      -> MaterialTheme.colorScheme.secondary
-    ThermalUtils.ThermalState.VIDEO_STREAMING -> MaterialTheme.colorScheme.tertiary
-    ThermalUtils.ThermalState.VIDEO           -> MaterialTheme.colorScheme.tertiary
-    ThermalUtils.ThermalState.SOCIAL          -> MaterialTheme.colorScheme.primary
-    ThermalUtils.ThermalState.MUSIC           -> MaterialTheme.colorScheme.secondary
-    ThermalUtils.ThermalState.STREAMING       -> MaterialTheme.colorScheme.tertiary
-}
-
+/**
+ * Icon to use for a given ThermalState in any chip or dialog row.
+ */
 private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.DEFAULT         -> Icons.Rounded.Tune
     ThermalUtils.ThermalState.BENCHMARK       -> Icons.Filled.BugReport
@@ -167,7 +152,7 @@ private fun ChargingInfoBanner() {
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .clip(PartsTokens.cardShape)
-            .background(MaterialTheme.colorScheme.tertiaryContainer)
+            .background(PartsTokens.Colors.bannerContainer)
             .padding(
                 horizontal = PartsTokens.contentPaddingHorizontal,
                 vertical   = PartsTokens.rowPaddingVertical,
@@ -178,7 +163,7 @@ private fun ChargingInfoBanner() {
         Icon(
             imageVector        = Icons.Filled.BatteryChargingFull,
             contentDescription = null,
-            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
+            tint               = PartsTokens.Colors.bannerContent,
             modifier           = Modifier
                 .padding(top = 2.dp)
                 .size(18.dp),
@@ -187,12 +172,12 @@ private fun ChargingInfoBanner() {
             Text(
                 text  = stringResource(R.string.thermal_charging_active),
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = PartsTokens.Colors.bannerContent,
             )
             Text(
                 text  = stringResource(R.string.thermal_charging_info_body),
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onTertiaryContainer,
+                color = PartsTokens.Colors.bannerContent,
             )
         }
     }
@@ -209,8 +194,6 @@ private fun ThermalProfileDialog(
     onDismiss:     () -> Unit,
     onStateChange: (Int) -> Unit,
 ) {
-    val dialogShape = RoundedCornerShape(28.dp)
-
     BasicAlertDialog(
         onDismissRequest = onDismiss,
         properties       = DialogProperties(
@@ -248,15 +231,14 @@ private fun ThermalProfileDialog(
                 ),
             ),
         ) {
-            // surfaceContainerHigh is correct for dialogs/bottom-sheets
-            // (elevated surface sitting above the page).
             Column(
                 modifier = Modifier
                     .fillMaxWidth(0.88f)
-                    .clip(dialogShape)
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+                    .clip(PartsTokens.cardShape)
+                    .background(PartsTokens.Colors.dialogSurface)
                     .padding(vertical = 8.dp),
             ) {
+                // Header
                 Row(
                     modifier              = Modifier
                         .fillMaxWidth()
@@ -280,24 +262,25 @@ private fun ThermalProfileDialog(
                         Text(
                             text     = entry.label,
                             style    = MaterialTheme.typography.titleMedium,
-                            color    = MaterialTheme.colorScheme.onSurface,
+                            color    = PartsTokens.Colors.textPrimary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                         Text(
                             text  = stringResource(R.string.thermal_profile_picker_subtitle),
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = PartsTokens.Colors.textSecondary,
                         )
                     }
                 }
 
                 HorizontalDivider(
-                    color    = MaterialTheme.colorScheme.outlineVariant,
+                    color    = PartsTokens.Colors.divider,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
 
-                androidx.compose.foundation.lazy.LazyColumn(
+                // Profile list
+                LazyColumn(
                     modifier       = Modifier
                         .fillMaxWidth()
                         .height(
@@ -312,7 +295,7 @@ private fun ThermalProfileDialog(
                     ) { state ->
                         val isSelected    = state == entry.state
                         val rowBackground = if (isSelected)
-                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+                            PartsTokens.Colors.dialogSelectedBackground
                         else
                             Color.Transparent
 
@@ -328,17 +311,24 @@ private fun ThermalProfileDialog(
                             verticalAlignment     = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
+                            // Icon container — uniform secondaryContainer for all states.
+                            // The icon shape distinguishes profiles; color conflicts are avoided.
                             Box(
                                 modifier         = Modifier
                                     .size(40.dp)
                                     .clip(CircleShape)
-                                    .background(MaterialTheme.colorScheme.secondaryContainer),
+                                    .background(PartsTokens.Colors.iconContainer),
                                 contentAlignment = Alignment.Center,
                             ) {
                                 Icon(
                                     imageVector        = state.stateIcon(),
                                     contentDescription = null,
-                                    tint               = state.dotColor(),
+                                    // DEFAULT: muted to indicate no active override.
+                                    // All others: full icon-container content color.
+                                    tint               = if (state == ThermalUtils.ThermalState.DEFAULT)
+                                        PartsTokens.Colors.textSecondary
+                                    else
+                                        PartsTokens.Colors.iconContent,
                                     modifier           = Modifier.size(22.dp),
                                 )
                             }
@@ -347,9 +337,9 @@ private fun ThermalProfileDialog(
                                 text     = stringResource(state.label),
                                 style    = MaterialTheme.typography.bodyLarge,
                                 color    = if (isSelected)
-                                    MaterialTheme.colorScheme.primary
+                                    PartsTokens.Colors.dialogSelectedText
                                 else
-                                    MaterialTheme.colorScheme.onSurface,
+                                    PartsTokens.Colors.textPrimary,
                                 modifier = Modifier.weight(1f),
                             )
 
@@ -357,7 +347,7 @@ private fun ThermalProfileDialog(
                                 Icon(
                                     imageVector        = Icons.Filled.Check,
                                     contentDescription = null,
-                                    tint               = MaterialTheme.colorScheme.primary,
+                                    tint               = PartsTokens.Colors.dialogSelectedText,
                                     modifier           = Modifier.size(22.dp),
                                 )
                             }
@@ -366,7 +356,7 @@ private fun ThermalProfileDialog(
                 }
 
                 HorizontalDivider(
-                    color    = MaterialTheme.colorScheme.outlineVariant,
+                    color    = PartsTokens.Colors.divider,
                     modifier = Modifier.padding(horizontal = 8.dp),
                 )
                 Box(
@@ -420,7 +410,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
-            icon    = { Icon(Icons.Filled.RestartAlt, null, tint = MaterialTheme.colorScheme.primary) },
+            icon    = { Icon(Icons.Filled.RestartAlt, null, tint = PartsTokens.Colors.textCategory) },
             title   = { Text(stringResource(R.string.thermal_reset), style = MaterialTheme.typography.headlineSmall) },
             text    = { Text(stringResource(R.string.thermal_reset_confirm), style = MaterialTheme.typography.bodyMedium) },
             shape   = PartsTokens.cardShape,
@@ -457,8 +447,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // M3 spec: page background = surface.
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = PartsTokens.Colors.page,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -469,8 +458,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = PartsTokens.Colors.topBarResting,
+                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -497,7 +486,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(
                                 text  = stringResource(R.string.thermal_loading),
                                 style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = PartsTokens.Colors.textSecondary,
                             )
                         }
                     }
@@ -527,13 +516,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             modifier         = Modifier
                                 .size(PartsTokens.leadingIconContainerSize)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.secondaryContainer),
+                                .background(PartsTokens.Colors.iconContainer),
                             contentAlignment = Alignment.Center,
                         ) {
                             Icon(
                                 imageVector        = Icons.Rounded.Tune,
                                 contentDescription = null,
-                                tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                                tint               = PartsTokens.Colors.iconContent,
                                 modifier           = Modifier.size(PartsTokens.leadingIconSize),
                             )
                         }
@@ -541,12 +530,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(
                                 text  = stringResource(R.string.thermal_enable),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = PartsTokens.Colors.textPrimary,
                             )
                             Text(
                                 text  = stringResource(R.string.thermal_enable_summary),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = PartsTokens.Colors.textSecondary,
                             )
                         }
                         Switch(
@@ -585,7 +574,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Text(
                             text  = stringResource(R.string.thermal_disabled_hint),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = PartsTokens.Colors.textSecondary,
                         )
                     }
                 }
@@ -650,7 +639,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                     modifier = Modifier.padding(
                                         horizontal = PartsTokens.contentPaddingHorizontal,
                                     ),
-                                    color = MaterialTheme.colorScheme.outlineVariant,
+                                    color = PartsTokens.Colors.divider,
                                 )
                             }
                         }
@@ -659,7 +648,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Text(
                             text     = stringResource(R.string.thermal_charging_override_hint),
                             style    = MaterialTheme.typography.bodySmall,
-                            color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color    = PartsTokens.Colors.textSecondary,
                             modifier = Modifier
                                 .padding(
                                     horizontal = PartsTokens.chargingHintIndent,
@@ -677,10 +666,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 // ────────────────────────────────────────────────────────
 // App row
 // ────────────────────────────────────────────────────────
-
-private val CHIP_HEIGHT = 36.dp
-private val CHIP_MIN_W  = 96.dp
-private val CHIP_MAX_W  = 148.dp
 
 @Composable
 private fun AppThermalRow(
@@ -712,7 +697,7 @@ private fun AppThermalRow(
         Text(
             text     = entry.label,
             style    = MaterialTheme.typography.bodyMedium,
-            color    = MaterialTheme.colorScheme.onSurface,
+            color    = PartsTokens.Colors.textPrimary,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
@@ -731,12 +716,12 @@ private fun AppThermalRow(
                 }
             },
             modifier       = Modifier
-                .height(CHIP_HEIGHT)
-                .widthIn(min = CHIP_MIN_W, max = CHIP_MAX_W)
+                .height(PartsTokens.chipHeight)
+                .widthIn(min = PartsTokens.chipMinWidth, max = PartsTokens.chipMaxWidth)
                 .wrapContentWidth(),
-            shape          = RoundedCornerShape(50),
-            color          = MaterialTheme.colorScheme.secondaryContainer,
-            contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
+            shape          = PartsTokens.chipShape,
+            color          = PartsTokens.Colors.chipContainer,
+            contentColor   = PartsTokens.Colors.chipContent,
         ) {
             Row(
                 modifier              = Modifier
@@ -748,8 +733,13 @@ private fun AppThermalRow(
                 Icon(
                     imageVector        = entry.state.stateIcon(),
                     contentDescription = null,
-                    modifier           = Modifier.size(14.dp),
-                    tint               = entry.state.dotColor(),
+                    modifier           = Modifier.size(PartsTokens.chipIconSize),
+                    // DEFAULT icon is muted to signal "no override set".
+                    // All active profiles use the full chip content colour.
+                    tint               = if (entry.state == ThermalUtils.ThermalState.DEFAULT)
+                        PartsTokens.Colors.textSecondary
+                    else
+                        PartsTokens.Colors.chipContent,
                 )
                 Spacer(Modifier.width(5.dp))
                 Text(

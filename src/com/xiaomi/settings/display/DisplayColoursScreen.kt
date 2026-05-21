@@ -49,7 +49,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
@@ -81,7 +80,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = PartsTokens.Colors.page,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -92,8 +91,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = PartsTokens.Colors.topBarResting,
+                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -117,7 +116,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                             modifier = Modifier.padding(
                                 horizontal = PartsTokens.contentPaddingHorizontal,
                             ),
-                            color = MaterialTheme.colorScheme.outlineVariant,
+                            color = PartsTokens.Colors.divider,
                         )
                     }
                 }
@@ -132,7 +131,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                             modifier = Modifier.padding(
                                 horizontal = PartsTokens.contentPaddingHorizontal,
                             ),
-                            color = MaterialTheme.colorScheme.outlineVariant,
+                            color = PartsTokens.Colors.divider,
                         )
                     }
                 }
@@ -153,10 +152,7 @@ private fun ColorMode.Row(
     val selected = this.id == selectedId
 
     val bgColor by animateColorAsState(
-        targetValue   = if (selected)
-            MaterialTheme.colorScheme.secondaryContainer
-        else
-            Color.Transparent,
+        targetValue   = if (selected) PartsTokens.Colors.chipContainer else Color.Transparent,
         animationSpec = spring(
             dampingRatio = PartsTokens.MotionDampingRatio,
             stiffness    = PartsTokens.MotionStiffnessMediumLow,
@@ -164,10 +160,7 @@ private fun ColorMode.Row(
         label = "color-row-bg-${this.name}",
     )
 
-    val contentColor = if (selected)
-        MaterialTheme.colorScheme.onSecondaryContainer
-    else
-        MaterialTheme.colorScheme.onSurface
+    val contentColor = if (selected) PartsTokens.Colors.chipContent else PartsTokens.Colors.textPrimary
 
     val label   = stringResource(this.labelRes)
     val summary = stringResource(this.summaryRes)
@@ -188,8 +181,8 @@ private fun ColorMode.Row(
             selected = selected,
             onClick  = null,
             colors   = RadioButtonDefaults.colors(
-                selectedColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                unselectedColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                selectedColor   = PartsTokens.Colors.chipContent,
+                unselectedColor = PartsTokens.Colors.textSecondary,
             ),
         )
         Column(modifier = Modifier.weight(1f)) {
@@ -202,10 +195,7 @@ private fun ColorMode.Row(
             Text(
                 text  = summary,
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (selected)
-                    MaterialTheme.colorScheme.onSecondaryContainer
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant,
+                color = if (selected) PartsTokens.Colors.chipContent else PartsTokens.Colors.textSecondary,
             )
         }
     }

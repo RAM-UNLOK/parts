@@ -78,7 +78,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = PartsTokens.Colors.page,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -89,8 +89,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = PartsTokens.Colors.topBarResting,
+                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -121,13 +121,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         modifier = Modifier
                             .size(PartsTokens.leadingIconContainerSize)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.secondaryContainer),
+                            .background(PartsTokens.Colors.iconContainer),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector        = Icons.Filled.Vibration,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                            tint               = PartsTokens.Colors.iconContent,
                             modifier           = Modifier.size(PartsTokens.leadingIconSize),
                         )
                     }
@@ -135,12 +135,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         Text(
                             text  = stringResource(R.string.htsr_enable_title),
                             style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = PartsTokens.Colors.textPrimary,
                         )
                         Text(
                             text  = stringResource(R.string.htsr_enable_summary),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color = PartsTokens.Colors.textSecondary,
                         )
                     }
                     Switch(
@@ -152,12 +152,14 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
+            // Info banner — uses bannerContainer/bannerContent (tertiaryContainer)
+            // Consistent with the charging banners in HomeScreen and ThermalManagementScreen.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                     .clip(PartsTokens.cardShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .background(PartsTokens.Colors.bannerContainer)
                     .padding(
                         horizontal = PartsTokens.contentPaddingHorizontal,
                         vertical   = PartsTokens.appRowPaddingVertical,
@@ -168,7 +170,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 Icon(
                     imageVector        = Icons.Outlined.Lightbulb,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                    tint               = PartsTokens.Colors.bannerContent,
                     modifier           = Modifier
                         .padding(top = 2.dp)
                         .size(PartsTokens.leadingIconSize),
@@ -176,7 +178,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 Text(
                     text  = stringResource(R.string.htsr_info_body),
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    color = PartsTokens.Colors.bannerContent,
                 )
             }
 
