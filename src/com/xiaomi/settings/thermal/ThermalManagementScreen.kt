@@ -39,7 +39,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -93,7 +92,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
@@ -120,9 +118,6 @@ private data class AppEntry(
 // State helpers
 // ────────────────────────────────────────────────────────
 
-/**
- * Icon to use for a given ThermalState in the dialog picker rows.
- */
 private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.DEFAULT         -> Icons.Rounded.Tune
     ThermalUtils.ThermalState.BENCHMARK       -> Icons.Filled.BugReport
@@ -185,9 +180,6 @@ private fun ChargingInfoBanner() {
 // M3 profile picker dialog
 // ────────────────────────────────────────────────────────
 
-/** Corner radius for the selected-row pill inside the dialog. */
-private val DialogSelectionShape = RoundedCornerShape(12.dp)
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ThermalProfileDialog(
@@ -237,29 +229,27 @@ private fun ThermalProfileDialog(
                     .fillMaxWidth(0.88f)
                     .clip(PartsTokens.cardShape)
                     .background(PartsTokens.Colors.dialogSurface)
-                    .padding(vertical = 12.dp),
+                    .padding(vertical = PartsTokens.dialogOuterPaddingVertical),
             ) {
 
                 // ── Header ───────────────────────────────────────────
-                // Top padding 24→ gives the icon the same breathing room
-                // M3 dialog spec gives its centred icon moment.
                 Row(
                     modifier              = Modifier
                         .fillMaxWidth()
                         .padding(
-                            start  = 24.dp,
-                            end    = 24.dp,
-                            top    = 24.dp,  // was 16.dp
-                            bottom = 12.dp,
+                            start  = PartsTokens.sectionHeaderStartPadding,
+                            end    = PartsTokens.sectionHeaderStartPadding,
+                            top    = PartsTokens.dialogHeaderTopPadding,
+                            bottom = PartsTokens.dialogHeaderBottomPadding,
                         ),
                     verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.dialogHeaderIconSpacing),
                 ) {
                     Image(
                         bitmap             = entry.icon,
                         contentDescription = null,
                         modifier           = Modifier
-                            .size(40.dp)
+                            .size(PartsTokens.dialogHeaderIconSize)
                             .clip(CircleShape),
                     )
                     Column(modifier = Modifier.weight(1f)) {
@@ -283,8 +273,8 @@ private fun ThermalProfileDialog(
                 LazyColumn(
                     modifier       = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 400.dp),  // flex height; was fixed arithmetic
-                    contentPadding = PaddingValues(vertical = 4.dp),
+                        .heightIn(max = PartsTokens.dialogListMaxHeight),
+                    contentPadding = PaddingValues(vertical = PartsTokens.dialogListContentPadding),
                 ) {
                     items(
                         items = ThermalUtils.ThermalState.entries,
@@ -295,9 +285,8 @@ private fun ThermalProfileDialog(
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                // 8ℙ horizontal margin so the pill never bleeds to dialog edge
-                                .padding(horizontal = 8.dp)
-                                .clip(DialogSelectionShape)  // rounded pill highlight
+                                .padding(horizontal = PartsTokens.dialogRowHorizontalInset)
+                                .clip(PartsTokens.dialogSelectionShape)
                                 .background(
                                     if (isSelected) PartsTokens.Colors.dialogSelectedBackground
                                     else            Color.Transparent,
@@ -306,14 +295,16 @@ private fun ThermalProfileDialog(
                                     onStateChange(state.id)
                                     onDismiss()
                                 }
-                                // inner padding — 12ℙ vertical → ~64ℙ row height (M3 target)
-                                .padding(horizontal = 16.dp, vertical = 12.dp),
+                                .padding(
+                                    horizontal = PartsTokens.contentPaddingHorizontal,
+                                    vertical   = PartsTokens.dialogRowPaddingVertical,
+                                ),
                             verticalAlignment     = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(PartsTokens.dialogHeaderIconSpacing),
                         ) {
                             Box(
                                 modifier         = Modifier
-                                    .size(40.dp)
+                                    .size(PartsTokens.dialogRowIconSize)
                                     .clip(CircleShape)
                                     .background(PartsTokens.Colors.iconContainer),
                                 contentAlignment = Alignment.Center,
@@ -325,7 +316,7 @@ private fun ThermalProfileDialog(
                                         PartsTokens.Colors.textSecondary
                                     else
                                         PartsTokens.Colors.iconContent,
-                                    modifier           = Modifier.size(22.dp),
+                                    modifier           = Modifier.size(PartsTokens.dialogRowIconInnerSize),
                                 )
                             }
 
@@ -344,7 +335,7 @@ private fun ThermalProfileDialog(
                                     imageVector        = Icons.Filled.Check,
                                     contentDescription = null,
                                     tint               = PartsTokens.Colors.dialogSelectedText,
-                                    modifier           = Modifier.size(22.dp),
+                                    modifier           = Modifier.size(PartsTokens.trailingIconSize),
                                 )
                             }
                         }
@@ -356,7 +347,10 @@ private fun ThermalProfileDialog(
                 Row(
                     modifier              = Modifier
                         .fillMaxWidth()
-                        .padding(end = 16.dp, top = 4.dp),
+                        .padding(
+                            end = PartsTokens.contentPaddingHorizontal,
+                            top = PartsTokens.dialogActionsTopPadding,
+                        ),
                     horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) {
@@ -659,12 +653,6 @@ private fun AppThermalRow(
     var showDialog by remember(entry.packageName) { mutableStateOf(false) }
     val context = LocalContext.current
 
-    /*
-     * M3 ListItem handles all padding and baseline alignment automatically.
-     * containerColor = Transparent lets the PartsCard surface colour show through.
-     * The current thermal profile is shown as supportingContent (subtitle),
-     * the "Pixel way" — no chip/button background, just plain coloured text.
-     */
     ListItem(
         modifier = Modifier.clickable {
             if (chargingLocked) {
@@ -685,7 +673,7 @@ private fun AppThermalRow(
                 bitmap             = entry.icon,
                 contentDescription = null,
                 modifier           = Modifier
-                    .size(40.dp)
+                    .size(PartsTokens.dialogHeaderIconSize)
                     .clip(CircleShape),
             )
         },
@@ -698,8 +686,6 @@ private fun AppThermalRow(
                 overflow = TextOverflow.Ellipsis,
             )
         },
-        // Profile name as subtitle — plain text, no background,
-        // muted for Default (= no override set), primary colour for all others.
         supportingContent = {
             Text(
                 text  = stringResource(entry.state.label),

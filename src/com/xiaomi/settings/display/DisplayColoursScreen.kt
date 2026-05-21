@@ -10,7 +10,6 @@ import android.os.UserHandle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -25,12 +24,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -72,119 +72,111 @@ import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 
-// ────────────────────────────────────────────────────────
-// Hue tokens — characteristic colour for each profile.
-// Used both in the hero preview and in leading icon tints.
-// ────────────────────────────────────────────────────────
-
-private val vividHue      = Color(0xFFFF7043)  // deep amber-orange
-private val saturatedHue  = Color(0xFF8BC34A)  // fresh lime
-private val standardHue   = Color(0xFF90A4AE)  // cool slate
-private val originalHue   = Color(0xFFFFCA28)  // warm gold
-private val p3Hue         = Color(0xFF9C27B0)  // wide-gamut violet
-private val srgbHue       = Color(0xFF26C6DA)  // sRGB teal
-
 private typealias ColorMode = ColorService.ColorMode
 
-/** Maps each ColorMode to its representative hue. */
+/** Maps each ColorMode to its representative hue from [PartsTokens.Colors.Hues]. */
 private val ColorMode.hue: Color
     get() = when (this) {
-        ColorMode.VIVID     -> vividHue
-        ColorMode.SATURATED -> saturatedHue
-        ColorMode.STANDARD  -> standardHue
-        ColorMode.ORIGINAL  -> originalHue
-        ColorMode.P3        -> p3Hue
-        ColorMode.SRGB      -> srgbHue
+        ColorMode.VIVID     -> PartsTokens.Colors.Hues.vivid
+        ColorMode.SATURATED -> PartsTokens.Colors.Hues.saturated
+        ColorMode.STANDARD  -> PartsTokens.Colors.Hues.standard
+        ColorMode.ORIGINAL  -> PartsTokens.Colors.Hues.original
+        ColorMode.P3        -> PartsTokens.Colors.Hues.p3
+        ColorMode.SRGB      -> PartsTokens.Colors.Hues.srgb
     }
 
 // ────────────────────────────────────────────────────────
 // Hero gradient preview
 // ────────────────────────────────────────────────────────
 
+// Internal shimmer geometry — not user-visible tokens.
+private const val ShimmerStart  = -600f
+private const val ShimmerEnd    = 1200f
+private const val ShimmerWidth  = 300f
+private const val ShimmerAlpha  = 0.05f
+// Blob radius as a fraction of the card width.
+private const val BlobRadiusFraction = 0.38f
+
 /**
- * A 180dp tall Card showing six radial colour blobs — one per
- * ColorMode. The blob whose profile is currently selected glows
- * at full opacity; the others fade to 35 %. A gentle shimmer
- * sweep runs continuously on top for the "alive" feel.
+ * Six radial colour blobs, one per [ColorMode]. The active mode’s blob
+ * glows at full opacity; the others fade to 35 %. A gentle shimmer
+ * diagonal glint sweeps continuously for an “alive” feel.
  *
- * No drawable resources needed — pure Compose/Canvas.
+ * No drawable resource required — pure Compose Canvas.
  */
 @Composable
 private fun ColourPreviewHero(
     selectedId: Int,
-    modifier: Modifier = Modifier,
+    modifier:   Modifier = Modifier,
 ) {
-    // Per-mode glow opacity
     val allModes = ColorMode.entries
+
+    // Per-mode opacity — 1.0 for selected, 0.35 for others
     val alphas = allModes.map { mode ->
-        val target = if (mode.id == selectedId) 1f else 0.35f
         animateFloatAsState(
-            targetValue   = target,
+            targetValue   = if (mode.id == selectedId) 1f else 0.35f,
             animationSpec = spring(
                 dampingRatio = Spring.DampingRatioNoBouncy,
                 stiffness    = Spring.StiffnessMediumLow,
             ),
-            label         = "hero-alpha-${mode.name}",
+            label = "hero-alpha-${mode.name}",
         ).value
     }
 
     // Shimmer sweep
     val shimmer = rememberInfiniteTransition(label = "hero-shimmer")
     val shimmerX by shimmer.animateFloat(
-        initialValue   = -600f,
-        targetValue    = 1200f,
-        animationSpec  = infiniteRepeatable(
+        initialValue  = ShimmerStart,
+        targetValue   = ShimmerEnd,
+        animationSpec = infiniteRepeatable(
             animation  = tween(durationMillis = 3000, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
-        label          = "hero-shimmer-x",
+        label = "hero-shimmer-x",
     )
 
     Box(
         modifier = modifier
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .fillMaxWidth()
-            .height(180.dp)
+            .height(PartsTokens.heroPreviewHeight)
             .clip(PartsTokens.cardShape)
-            .background(Color(0xFF0D0D0D)),  // near-black base — colours pop more
+            .background(PartsTokens.Colors.heroBase),
     ) {
-        // Six radial blobs, evenly distributed in a 2x3 grid
+        // Blob positions: staggered 2x3 grid (fractional x/y)
         val positions = listOf(
-            Offset(0.17f, 0.3f),   // Vivid     — top-left
-            Offset(0.50f, 0.65f),  // Saturated — mid-centre
-            Offset(0.83f, 0.3f),   // Standard  — top-right
-            Offset(0.17f, 0.75f),  // Original  — bottom-left
+            Offset(0.17f, 0.30f),  // VIVID     — top-left
+            Offset(0.50f, 0.65f),  // SATURATED — mid-centre
+            Offset(0.83f, 0.30f),  // STANDARD  — top-right
+            Offset(0.17f, 0.75f),  // ORIGINAL  — bottom-left
             Offset(0.50f, 0.25f),  // P3        — top-centre
-            Offset(0.83f, 0.75f),  // sRGB      — bottom-right
+            Offset(0.83f, 0.75f),  // SRGB      — bottom-right
         )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             allModes.forEachIndexed { i, mode ->
                 val centre = Offset(size.width * positions[i].x, size.height * positions[i].y)
+                val radius = size.width * BlobRadiusFraction
                 drawCircle(
                     brush  = Brush.radialGradient(
-                        colors   = listOf(
-                            mode.hue.copy(alpha = alphas[i]),
-                            Color.Transparent,
-                        ),
-                        center   = centre,
-                        radius   = size.width * 0.38f,
+                        colors = listOf(mode.hue.copy(alpha = alphas[i]), Color.Transparent),
+                        center = centre,
+                        radius = radius,
                     ),
-                    radius = size.width * 0.38f,
+                    radius = radius,
                     center = centre,
                 )
             }
-
-            // Shimmer sweep — a soft white diagonal glint
+            // Soft white diagonal shimmer glint
             drawRect(
                 brush = Brush.linearGradient(
-                    colors      = listOf(
+                    colors = listOf(
                         Color.Transparent,
-                        Color.White.copy(alpha = 0.05f),
+                        Color.White.copy(alpha = ShimmerAlpha),
                         Color.Transparent,
                     ),
                     start = Offset(shimmerX, 0f),
-                    end   = Offset(shimmerX + 300f, size.height),
+                    end   = Offset(shimmerX + ShimmerWidth, size.height),
                 ),
             )
         }
@@ -242,13 +234,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-
-            // 1. Hero
-            Spacer(Modifier.height(8.dp))
-            ColourPreviewHero(
-                selectedId = selectedId,
-                modifier   = Modifier,
-            )
+            // 1. Hero preview
+            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
+            ColourPreviewHero(selectedId = selectedId)
 
             // 2. Standard section
             SectionHeader(stringResource(R.string.color_section_standard))
@@ -283,11 +271,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 // Section header
 // ────────────────────────────────────────────────────────
 
-/**
- * Category label styled with [MaterialTheme.colorScheme.secondary]
- * instead of the default muted text, giving Standard vs Expert
- * sections a clear tonal identity without needing a chip.
- */
 @Composable
 private fun SectionHeader(title: String) {
     Text(
@@ -295,9 +278,9 @@ private fun SectionHeader(title: String) {
         style    = MaterialTheme.typography.labelLarge,
         color    = MaterialTheme.colorScheme.secondary,
         modifier = Modifier.padding(
-            start  = 24.dp,
-            top    = 20.dp,
-            bottom = 8.dp,
+            start  = PartsTokens.sectionHeaderStartPadding,
+            top    = PartsTokens.sectionHeaderTopPadding,
+            bottom = PartsTokens.categoryBottomPadding,
         ),
     )
 }
@@ -306,15 +289,6 @@ private fun SectionHeader(title: String) {
 // Selection row
 // ────────────────────────────────────────────────────────
 
-/**
- * M3 [ListItem]-based row.
- *
- * - Leading: 40dp circle tinted with this mode's characteristic hue.
- * - Background: animates to primaryContainer @ 30 % when selected.
- * - Trailing: [AnimatedContent] — CheckCircle fades in/out smoothly;
- *   nothing is rendered when unselected (no static placeholder).
- * - No RadioButton, no HorizontalDivider.
- */
 @Composable
 private fun ColorMode.SelectionRow(
     selectedId: Int,
@@ -324,7 +298,7 @@ private fun ColorMode.SelectionRow(
 
     val containerColor by animateColorAsState(
         targetValue   = if (isSelected)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.30f)
+            MaterialTheme.colorScheme.primaryContainer.copy(alpha = PartsTokens.colourModeSelectedAlpha)
         else
             Color.Transparent,
         animationSpec = spring(
@@ -335,26 +309,21 @@ private fun ColorMode.SelectionRow(
     )
 
     ListItem(
-        modifier = Modifier
-            .clickable(role = Role.RadioButton) { onSelected(this@SelectionRow) },
-        colors = ListItemDefaults.colors(
-            containerColor = containerColor,
-        ),
-        // Leading tinted icon — hue at 20 % fills the circle bg,
-        // hue at 80 % for the icon itself.
+        modifier = Modifier.clickable(role = Role.RadioButton) { onSelected(this@SelectionRow) },
+        colors   = ListItemDefaults.colors(containerColor = containerColor),
         leadingContent = {
             Box(
                 modifier         = Modifier
-                    .size(40.dp)
+                    .size(PartsTokens.colourModeLeadingSize)
                     .clip(CircleShape)
-                    .background(this.hue.copy(alpha = 0.20f)),
+                    .background(this.hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
-                        .size(16.dp)
+                        .size(PartsTokens.colourModeDotSize)
                         .clip(CircleShape)
-                        .background(this.hue.copy(alpha = 0.80f)),
+                        .background(this.hue.copy(alpha = PartsTokens.colourModeIconDotAlpha)),
                 )
             }
         },
@@ -379,12 +348,11 @@ private fun ColorMode.SelectionRow(
             )
         },
         trailingContent = {
-            // AnimatedContent so the checkmark fades in/out rather
-            // than snapping — the "motion is colour" M3 principle.
             AnimatedContent(
-                targetState   = isSelected,
+                targetState    = isSelected,
                 transitionSpec = {
-                    fadeIn(tween(180))  togetherWith  fadeOut(tween(120))
+                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
+                    fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
                 },
                 label = "check-${this.name}",
             ) { selected ->
@@ -393,12 +361,11 @@ private fun ColorMode.SelectionRow(
                         imageVector        = Icons.Filled.CheckCircle,
                         contentDescription = null,
                         tint               = MaterialTheme.colorScheme.primary,
-                        modifier           = Modifier.size(24.dp),
+                        modifier           = Modifier.size(PartsTokens.trailingIconSize),
                     )
                 } else {
-                    // Empty box preserves layout width so the list
-                    // column doesn't reflow on selection change.
-                    Box(Modifier.size(24.dp))
+                    // Placeholder preserves trailing column width on deselection.
+                    Box(Modifier.size(PartsTokens.trailingIconSize))
                 }
             }
         },
@@ -406,7 +373,7 @@ private fun ColorMode.SelectionRow(
 }
 
 // ────────────────────────────────────────────────────────
-// Write helper  (unchanged)
+// Write helper (unchanged)
 // ────────────────────────────────────────────────────────
 
 private fun applyMode(
