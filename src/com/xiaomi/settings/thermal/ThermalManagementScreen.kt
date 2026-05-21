@@ -32,12 +32,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.BatteryChargingFull
@@ -59,7 +61,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -181,8 +182,11 @@ private fun ChargingInfoBanner() {
 }
 
 // ────────────────────────────────────────────────────────
-// Centred M3 profile picker dialog
+// M3 profile picker dialog
 // ────────────────────────────────────────────────────────
+
+/** Corner radius for the selected-row pill inside the dialog. */
+private val DialogSelectionShape = RoundedCornerShape(12.dp)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -194,9 +198,9 @@ private fun ThermalProfileDialog(
     BasicAlertDialog(
         onDismissRequest = onDismiss,
         properties       = DialogProperties(
-            dismissOnBackPress       = true,
-            dismissOnClickOutside    = true,
-            usePlatformDefaultWidth  = false,
+            dismissOnBackPress      = true,
+            dismissOnClickOutside   = true,
+            usePlatformDefaultWidth = false,
         ),
     ) {
         AnimatedVisibility(
@@ -233,16 +237,19 @@ private fun ThermalProfileDialog(
                     .fillMaxWidth(0.88f)
                     .clip(PartsTokens.cardShape)
                     .background(PartsTokens.Colors.dialogSurface)
-                    .padding(vertical = 8.dp),
+                    .padding(vertical = 12.dp),
             ) {
-                // Header
+
+                // ── Header ───────────────────────────────────────────
+                // Top padding 24→ gives the icon the same breathing room
+                // M3 dialog spec gives its centred icon moment.
                 Row(
                     modifier              = Modifier
                         .fillMaxWidth()
                         .padding(
                             start  = 24.dp,
                             end    = 24.dp,
-                            top    = 16.dp,
+                            top    = 24.dp,  // was 16.dp
                             bottom = 12.dp,
                         ),
                     verticalAlignment     = Alignment.CenterVertically,
@@ -270,41 +277,37 @@ private fun ThermalProfileDialog(
                         )
                     }
                 }
+                // No HorizontalDivider — M3 uses spatial grouping, not rules.
 
-                HorizontalDivider(
-                    color    = PartsTokens.Colors.divider,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                )
-
-                // Profile list
+                // ── Profile list ─────────────────────────────────────
                 LazyColumn(
                     modifier       = Modifier
                         .fillMaxWidth()
-                        .height(
-                            (ThermalUtils.ThermalState.entries.size * 56).dp
-                                .coerceAtMost(320.dp)
-                        ),
-                    contentPadding = PaddingValues(vertical = 8.dp),
+                        .heightIn(max = 400.dp),  // flex height; was fixed arithmetic
+                    contentPadding = PaddingValues(vertical = 4.dp),
                 ) {
                     items(
                         items = ThermalUtils.ThermalState.entries,
                         key   = { it.id },
                     ) { state ->
-                        val isSelected    = state == entry.state
-                        val rowBackground = if (isSelected)
-                            PartsTokens.Colors.dialogSelectedBackground
-                        else
-                            Color.Transparent
+                        val isSelected = state == entry.state
 
                         Row(
-                            modifier              = Modifier
+                            modifier = Modifier
                                 .fillMaxWidth()
-                                .background(rowBackground)
+                                // 8ℙ horizontal margin so the pill never bleeds to dialog edge
+                                .padding(horizontal = 8.dp)
+                                .clip(DialogSelectionShape)  // rounded pill highlight
+                                .background(
+                                    if (isSelected) PartsTokens.Colors.dialogSelectedBackground
+                                    else            Color.Transparent,
+                                )
                                 .clickable(role = Role.RadioButton) {
                                     onStateChange(state.id)
                                     onDismiss()
                                 }
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                                // inner padding — 12ℙ vertical → ~64ℙ row height (M3 target)
+                                .padding(horizontal = 16.dp, vertical = 12.dp),
                             verticalAlignment     = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
@@ -347,16 +350,14 @@ private fun ThermalProfileDialog(
                         }
                     }
                 }
+                // No HorizontalDivider above actions.
 
-                HorizontalDivider(
-                    color    = PartsTokens.Colors.divider,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                )
-                Box(
-                    modifier         = Modifier
+                // ── Actions ───────────────────────────────────────────
+                Row(
+                    modifier              = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    contentAlignment = Alignment.CenterEnd,
+                        .padding(end = 16.dp, top = 4.dp),
+                    horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) {
                         Text(
