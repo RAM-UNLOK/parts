@@ -51,7 +51,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
@@ -169,7 +168,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     contentDescription = null,
                     tint               = PartsTokens.Colors.bannerContent,
                     modifier           = Modifier
-                        .padding(top = 2.dp)
+                        .padding(top = PartsTokens.bannerIconTopOffset)
                         .size(PartsTokens.leadingIconSize),
                 )
                 Text(

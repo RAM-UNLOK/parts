@@ -99,6 +99,20 @@ object PartsTokens {
     /** Leading indent for the "per-app thermal" charging-hint text below the switch. */
     val chargingHintIndent          = 32.dp
 
+    /**
+     * Top offset applied to the leading icon inside banner rows so it
+     * visually aligns with the first line of multi-line body text.
+     * 2 dp nudge — intentional micro-alignment, not in the M3 spec.
+     */
+    val bannerIconTopOffset         = 2.dp
+
+    /**
+     * Vertical spacing between stacked text lines inside a banner
+     * (e.g. label + body in ChargingInfoBanner).
+     * 2 dp keeps the two lines compact without merging into a single block.
+     */
+    val bannerTextSpacing           = 2.dp
+
     // ── Section headers (DisplayColoursScreen and similar) ─────────────────
 
     /**
@@ -260,6 +274,15 @@ object PartsTokens {
      * the 40 dp container with 9 dp padding on each side.
      */
     val dialogRowIconInnerSize      = 22.dp
+
+    // ── Progress indicator ──────────────────────────────────────────────────
+
+    /**
+     * Stroke width for CircularProgressIndicator in the loading state.
+     * 3 dp — slightly thinner than the M3 default (4 dp) to match the
+     * compact visual weight of the loading screen.
+     */
+    val progressIndicatorStrokeWidth = 3.dp
 
     // Display Colours screen
 

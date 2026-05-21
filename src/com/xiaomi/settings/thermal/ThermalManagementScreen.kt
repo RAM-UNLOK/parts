@@ -92,7 +92,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
@@ -159,10 +158,10 @@ private fun ChargingInfoBanner() {
             contentDescription = null,
             tint               = PartsTokens.Colors.bannerContent,
             modifier           = Modifier
-                .padding(top = 2.dp)
+                .padding(top = PartsTokens.bannerIconTopOffset)
                 .size(PartsTokens.bannerIconSize),
         )
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(PartsTokens.bannerTextSpacing)) {
             Text(
                 text  = stringResource(R.string.thermal_charging_active),
                 style = MaterialTheme.typography.labelLarge,
@@ -467,7 +466,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            CircularProgressIndicator(strokeWidth = 3.dp)
+                            CircularProgressIndicator(
+                                strokeWidth = PartsTokens.progressIndicatorStrokeWidth,
+                            )
                             Spacer(Modifier.height(PartsTokens.loadingSpinnerLabelSpacing))
                             Text(
                                 text  = stringResource(R.string.thermal_loading),

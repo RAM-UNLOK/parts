@@ -36,7 +36,7 @@ import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.VolumeUp
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -271,7 +271,7 @@ fun XiaomiPartsHomeScreen(
                         },
                     )
                     PartsRow(
-                        icon        = Icons.Filled.VolumeUp,
+                        icon        = Icons.AutoMirrored.Filled.VolumeUp,
                         title       = stringResource(R.string.speaker_calibration_title),
                         summary     = stringResource(R.string.speaker_calibration_summary),
                         onClick     = {
