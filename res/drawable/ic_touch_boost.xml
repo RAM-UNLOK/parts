@@ -1,35 +1,27 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Copyright (C) 2025 Paranoid Android
-
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
-
-         http://www.apache.org/licenses/LICENSE-2.0
-
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    SPDX-License-Identifier: Apache-2.0
+-->
+<!--
+    Touch / pointer icon with ripple arcs for the touch sampling row.
+    fillColor is white — Compose Icon tint is the sole color source.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24.0"
-    android:viewportHeight="24.0"
-    android:tint="?android:attr/colorControlNormal">
+    android:viewportHeight="24.0">
     <!-- Finger / touch cursor body -->
     <path
-        android:fillColor="?android:attr/colorControlNormal"
+        android:fillColor="@android:color/white"
         android:pathData="M9,11.24L9,5.5C9,4.12 10.12,3 11.5,3C12.88,3 14,4.12 14,5.5L14,11.24C15.23,11.84 16,13.09 16,14.5C16,16.71 14.21,18.5 12,18.5C9.79,18.5 8,16.71 8,14.5C8,13.09 8.77,11.84 9,11.24ZM11.5,1C9.02,1 7,3.02 7,5.5L7,11.77C5.77,12.81 5,14.36 5,16.09C5,19.4 7.7,22 11.01,22C14.32,22 17,19.4 17,16.09C17,14.36 16.25,12.81 15,11.77L15,5.5C15,3.02 12.98,1 10.5,1L11.5,1Z" />
     <!-- Ripple arc left -->
     <path
-        android:fillColor="?android:attr/colorControlNormal"
+        android:fillColor="@android:color/white"
         android:pathData="M5.85,3.5C4.08,4.72 2.85,6.65 2.6,8.9L4.11,9.07C4.31,7.3 5.25,5.75 6.62,4.74L5.85,3.5Z" />
     <!-- Ripple arc right -->
     <path
-        android:fillColor="?android:attr/colorControlNormal"
+        android:fillColor="@android:color/white"
         android:pathData="M18.15,3.5L17.38,4.74C18.75,5.75 19.69,7.3 19.89,9.07L21.4,8.9C21.15,6.65 19.92,4.72 18.15,3.5Z" />
 </vector>
