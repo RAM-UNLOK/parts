@@ -1,61 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
     Copyright (C) 2025 Paranoid Android
+    SPDX-License-Identifier: Apache-2.0
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+    Settings homepage tile icon for Xiaomi Parts.
 
-         http://www.apache.org/licenses/LICENSE-2.0
+    LayerDrawable: teal circle background + white chip icon foreground.
+    Matches the visual style of AOSP/Clover Settings homepage tiles
+    (Battery, Security, System, etc.) which all use a coloured circle
+    with a white icon centred inside.
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+    The foreground chip vector is inset ~28% on all sides so the icon
+    sits at the same optical weight as system tile icons.
 -->
-<!--
-    Settings launcher entry icon for Xiaomi Parts.
-    Shown in the AOSP/Clover Settings preference list — rendered by the
-    View-based Settings host at 24dp, so ?android:attr/colorControlNormal
-    tint is appropriate (matches all other Clover Settings icons).
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    Shape: CPU / processor chip with a square die, connection pads on all
-    four sides, and a small highlight square in the centre of the die.
-    Visually signals "device hardware tuning" — immediately distinct from
-    the generic settings gear that was used previously.
--->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24.0"
-    android:viewportHeight="24.0"
-    android:tint="?android:attr/colorControlNormal">
+    <!-- Layer 0: coloured circle background -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="@color/ic_xiaomi_parts_bg" />
+        </shape>
+    </item>
 
-    <!--
-        Chip body — rounded square die, drawn as a filled path.
-        Pins on all four sides (3 per side), 1dp wide, 1.5dp long.
-        Centre highlight square.
-        All coordinates on the 24×24 grid, 2dp minimum stroke equivalent.
-    -->
-    <path
-        android:fillColor="?android:attr/colorControlNormal"
-        android:pathData="
-            M9,3 L9,1 L11,1 L11,3
-            M13,3 L13,1 L15,1 L15,3
+    <!-- Layer 1: chip icon, white, inset so it fills ~44% of the circle -->
+    <item
+        android:top="28%"
+        android:bottom="28%"
+        android:left="28%"
+        android:right="28%">
+        <vector
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24.0"
+            android:viewportHeight="24.0">
+            <path
+                android:fillColor="#FFFFFF"
+                android:pathData="
+                    M9,3 L9,1 L11,1 L11,3
+                    M13,3 L13,1 L15,1 L15,3
 
-            M9,21 L9,23 L11,23 L11,21
-            M13,21 L13,23 L15,23 L15,21
+                    M9,21 L9,23 L11,23 L11,21
+                    M13,21 L13,23 L15,23 L15,21
 
-            M3,9 L1,9 L1,11 L3,11
-            M3,13 L1,13 L1,15 L3,15
+                    M3,9 L1,9 L1,11 L3,11
+                    M3,13 L1,13 L1,15 L3,15
 
-            M21,9 L23,9 L23,11 L21,11
-            M21,13 L23,13 L23,15 L21,15
+                    M21,9 L23,9 L23,11 L21,11
+                    M21,13 L23,13 L23,15 L21,15
 
-            M7,3 L7,7 L3,7 L3,17 L7,17 L7,21
-            L17,21 L17,17 L21,17 L21,7 L17,7 L17,3 Z
+                    M7,3 L7,7 L3,7 L3,17 L7,17 L7,21
+                    L17,21 L17,17 L21,17 L21,7 L17,7 L17,3 Z
 
-            M10,9 L10,15 L14,15 L14,9 Z
-        "/>
-</vector>
+                    M10,9 L10,15 L14,15 L14,9 Z
+                "/>
+        </vector>
+    </item>
+
+</layer-list>
