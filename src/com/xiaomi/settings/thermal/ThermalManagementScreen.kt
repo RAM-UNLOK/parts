@@ -34,9 +34,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -64,10 +61,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -93,7 +91,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -123,7 +120,7 @@ private data class AppEntry(
 // ────────────────────────────────────────────────────────
 
 /**
- * Icon to use for a given ThermalState in any chip or dialog row.
+ * Icon to use for a given ThermalState in the dialog picker rows.
  */
 private fun ThermalUtils.ThermalState.stateIcon(): ImageVector = when (this) {
     ThermalUtils.ThermalState.DEFAULT         -> Icons.Rounded.Tune
@@ -311,8 +308,6 @@ private fun ThermalProfileDialog(
                             verticalAlignment     = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
-                            // Icon container — uniform secondaryContainer for all states.
-                            // The icon shape distinguishes profiles; colour conflicts are avoided.
                             Box(
                                 modifier         = Modifier
                                     .size(40.dp)
@@ -323,8 +318,6 @@ private fun ThermalProfileDialog(
                                 Icon(
                                     imageVector        = state.stateIcon(),
                                     contentDescription = null,
-                                    // DEFAULT: muted to indicate no active override.
-                                    // All others: full icon-container content colour.
                                     tint               = if (state == ThermalUtils.ThermalState.DEFAULT)
                                         PartsTokens.Colors.textSecondary
                                     else
@@ -591,7 +584,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     PartsCard(
                         modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
                     ) {
-                        appEntries.forEachIndexed { index, entry ->
+                        appEntries.forEach { entry ->
                             AppThermalRow(
                                 entry          = entry,
                                 chargingLocked = isCharging,
@@ -631,14 +624,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                     }
                                 },
                             )
-                            if (index < appEntries.lastIndex) {
-                                HorizontalDivider(
-                                    modifier = Modifier.padding(
-                                        horizontal = PartsTokens.contentPaddingHorizontal,
-                                    ),
-                                    color = PartsTokens.Colors.divider,
-                                )
-                            }
                         }
                     }
                     if (isCharging) {
@@ -673,81 +658,58 @@ private fun AppThermalRow(
     var showDialog by remember(entry.packageName) { mutableStateOf(false) }
     val context = LocalContext.current
 
-    Row(
-        modifier              = Modifier
-            .fillMaxWidth()
-            .padding(
-                horizontal = PartsTokens.contentPaddingHorizontal,
-                vertical   = PartsTokens.appRowPaddingVertical,
-            ),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(PartsTokens.appRowIconSpacing),
-    ) {
-        Image(
-            bitmap             = entry.icon,
-            contentDescription = null,
-            modifier           = Modifier
-                .size(PartsTokens.leadingIconContainerSize)
-                .clip(CircleShape),
-        )
-
-        Text(
-            text     = entry.label,
-            style    = MaterialTheme.typography.bodyMedium,
-            color    = PartsTokens.Colors.textPrimary,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-
-        Surface(
-            onClick        = {
-                if (chargingLocked) {
-                    Toast.makeText(
-                        context,
-                        R.string.thermal_charging_locked_hint,
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                } else {
-                    showDialog = true
-                }
-            },
-            modifier       = Modifier
-                .height(PartsTokens.chipHeight)
-                .widthIn(min = PartsTokens.chipMinWidth, max = PartsTokens.chipMaxWidth)
-                .wrapContentWidth(),
-            shape          = PartsTokens.chipShape,
-            color          = PartsTokens.Colors.chipContainer,
-            contentColor   = PartsTokens.Colors.chipContent,
-        ) {
-            Row(
-                modifier              = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 12.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment     = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector        = entry.state.stateIcon(),
-                    contentDescription = null,
-                    modifier           = Modifier.size(PartsTokens.chipIconSize),
-                    // DEFAULT icon is muted to signal "no override set".
-                    // All active profiles use the full chip content colour.
-                    tint               = if (entry.state == ThermalUtils.ThermalState.DEFAULT)
-                        PartsTokens.Colors.textSecondary
-                    else
-                        PartsTokens.Colors.chipContent,
-                )
-                Spacer(Modifier.width(5.dp))
-                Text(
-                    text      = stringResource(entry.state.label),
-                    style     = MaterialTheme.typography.labelSmall,
-                    maxLines  = 1,
-                    textAlign = TextAlign.Center,
-                )
+    /*
+     * M3 ListItem handles all padding and baseline alignment automatically.
+     * containerColor = Transparent lets the PartsCard surface colour show through.
+     * The current thermal profile is shown as supportingContent (subtitle),
+     * the "Pixel way" — no chip/button background, just plain coloured text.
+     */
+    ListItem(
+        modifier = Modifier.clickable {
+            if (chargingLocked) {
+                Toast.makeText(
+                    context,
+                    R.string.thermal_charging_locked_hint,
+                    Toast.LENGTH_SHORT,
+                ).show()
+            } else {
+                showDialog = true
             }
-        }
-    }
+        },
+        colors = ListItemDefaults.colors(
+            containerColor = Color.Transparent,
+        ),
+        leadingContent = {
+            Image(
+                bitmap             = entry.icon,
+                contentDescription = null,
+                modifier           = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
+            )
+        },
+        headlineContent = {
+            Text(
+                text     = entry.label,
+                style    = MaterialTheme.typography.bodyLarge,
+                color    = PartsTokens.Colors.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        },
+        // Profile name as subtitle — plain text, no background,
+        // muted for Default (= no override set), primary colour for all others.
+        supportingContent = {
+            Text(
+                text  = stringResource(entry.state.label),
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (entry.state == ThermalUtils.ThermalState.DEFAULT)
+                    PartsTokens.Colors.textSecondary
+                else
+                    MaterialTheme.colorScheme.primary,
+            )
+        },
+    )
 
     if (showDialog) {
         ThermalProfileDialog(
