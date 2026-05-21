@@ -138,11 +138,9 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // surfaceContainerLowest = darkest tonal surface step.
-        // Cards use surfaceContainerHigh, giving ~15-20% luminance gap
-        // on all Monet palettes — cards are clearly visible in both
-        // light and dark themes regardless of wallpaper colour.
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
+        // M3 spec: page background = surface (not a container tier).
+        // Cards use surfaceContainer, guaranteed visible on all Monet palettes.
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -153,7 +151,7 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLowest,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -304,9 +302,9 @@ fun PartsCategory(
 /**
  * Standard card container for preference rows.
  *
- * Background: surfaceContainerHigh — clearly above the page bg
- * (surfaceContainerLowest), giving consistent visual lift on all
- * Monet palettes in both light and dark themes.
+ * M3 spec: cards that sit on a [surface] background use [surfaceContainer].
+ * This pairing is guaranteed to be visually distinct on every Monet
+ * tonal palette — light, dark, and all wallpaper colours.
  */
 @Composable
 fun PartsCard(
@@ -318,7 +316,7 @@ fun PartsCard(
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
         shape          = PartsTokens.cardShape,
-        color          = MaterialTheme.colorScheme.surfaceContainerHigh,
+        color          = MaterialTheme.colorScheme.surfaceContainer,
         tonalElevation = 0.dp,
     ) {
         Column { content() }
