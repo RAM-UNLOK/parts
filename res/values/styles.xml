@@ -9,37 +9,87 @@
         XiaomiParts.Theme — window theme for XiaomiPartsActivity.
 
         Parent: @android:style/Theme.DeviceDefault.NoActionBar
-          Guaranteed present in framework-res.apk on all AOSP/platform
-          Soong builds. Do NOT use Theme.MaterialComponents.* or
-          Theme.Material3.* here — those are Gradle/androidx artifacts
-          not compiled into framework-res.apk and will fail aapt2 link.
+          ● Guaranteed present in framework-res.apk on all AOSP/platform
+            Soong builds.
+          ● Do NOT use Theme.Material3.* or Theme.MaterialComponents.*
+            here — those are Gradle/androidx artifacts not compiled into
+            framework-res.apk and will fail aapt2 link at build time.
 
-        Compose draws its own surface so the window background just
-        needs to match colorBackground (Monet-derived on Android 12+)
-        to avoid a black flash on the first frame.
+        Dynamic colour (Monet / Material You):
+          ● On Android 12+ the system automatically resolves
+            ?android:attr/colorPrimary, ?colorPrimaryContainer, etc.
+            from the wallpaper-derived tonal palette — no extra
+            DynamicColors.applyToActivitiesIfAvailable() call needed.
+          ● We re-declare those attrs below using the MaterialComponent
+            attr namespace (?attr/colorPrimary without android: prefix)
+            so View-system widgets (TextViews, Drawables, color state
+            lists in res/color/) can reference them too.
+          ● The Compose side already reads MaterialTheme.colorScheme.*
+            which is sourced from dynamicDark/LightColorScheme() in
+            Theme.kt — fully consistent.
+
+        DO NOT declare hardcoded primary/secondary/tertiary hex colors.
+        The whole point is Monet: every user gets their wallpaper color.
     -->
     <style name="XiaomiParts.Theme"
            parent="@android:style/Theme.DeviceDefault.NoActionBar">
 
-        <!-- Match Monet/dynamic colorBackground so there is no flash
-             before Compose paints its first frame. -->
+        <!-- ── Window chrome ──────────────────────────────── -->
+        <!-- Match Monet colorBackground: no flash before Compose frame 1 -->
         <item name="android:windowBackground">?android:attr/colorBackground</item>
 
-        <!-- Edge-to-edge: draw behind both status and navigation bars. -->
+        <!-- Edge-to-edge: draw behind status + navigation bars -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
 
-        <!-- Suppress system scrim overlays on transparent bars (API 29+). -->
+        <!-- No system scrim overlays on transparent bars (API 29+) -->
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:enforceStatusBarContrast">false</item>
 
-        <!-- Let content extend behind system bars. -->
+        <!-- Allow content to extend behind system bars -->
         <item name="android:clipToPadding">false</item>
         <item name="android:clipChildren">false</item>
 
-        <!-- Let Compose WindowInsets.ime handle keyboard avoidance. -->
+        <!-- Compose WindowInsets.ime handles keyboard avoidance -->
         <item name="android:windowSoftInputMode">adjustResize</item>
+
+        <!-- ── M3 colour attrs (View-system bridge) ──────── -->
+        <!--
+            Map the MaterialComponents attr namespace onto the system
+            Monet dynamic attrs so every View, Drawable, and color state
+            list that references ?colorPrimary (no android: prefix) gets
+            the correct Monet-derived token.
+
+            Android 12+ DeviceDefault exposes these as
+            ?android:attr/colorPrimary etc. We alias them into the
+            unprefixed namespace here.
+        -->
+        <item name="colorPrimary">?android:attr/colorPrimary</item>
+        <item name="colorOnPrimary">?android:attr/colorOnPrimary</item>
+        <item name="colorPrimaryContainer">?android:attr/colorPrimaryContainer</item>
+        <item name="colorOnPrimaryContainer">?android:attr/colorOnPrimaryContainer</item>
+
+        <item name="colorSecondary">?android:attr/colorSecondary</item>
+        <item name="colorOnSecondary">?android:attr/colorOnSecondary</item>
+        <item name="colorSecondaryContainer">?android:attr/colorSecondaryContainer</item>
+        <item name="colorOnSecondaryContainer">?android:attr/colorOnSecondaryContainer</item>
+
+        <item name="colorTertiary">?android:attr/colorTertiary</item>
+        <item name="colorOnTertiary">?android:attr/colorOnTertiary</item>
+        <item name="colorTertiaryContainer">?android:attr/colorTertiaryContainer</item>
+        <item name="colorOnTertiaryContainer">?android:attr/colorOnTertiaryContainer</item>
+
+        <item name="colorSurface">?android:attr/colorSurface</item>
+        <item name="colorOnSurface">?android:attr/colorOnSurface</item>
+        <item name="colorSurfaceVariant">?android:attr/colorSurfaceVariant</item>
+        <item name="colorOnSurfaceVariant">?android:attr/colorOnSurfaceVariant</item>
+
+        <item name="colorError">?android:attr/colorError</item>
+        <item name="colorOnError">?android:attr/colorOnError</item>
+
+        <item name="colorOutline">?android:attr/colorOutline</item>
+
     </style>
 
 </resources>

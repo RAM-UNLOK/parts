@@ -9,6 +9,10 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.SpringSpec
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 
 /**
@@ -16,7 +20,20 @@ import androidx.compose.ui.unit.dp
  *
  * All spacing, shape, icon-size, motion, and colour-role constants
  * live here so every screen stays visually consistent without
- * hardcoded dp/ms values scattered across composables.
+ * hardcoded dp / ms / colorScheme values scattered across composables.
+ *
+ * ## Usage
+ * ```kotlin
+ * // Spacing / shape / icon size
+ * Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal)
+ * Surface(shape = PartsTokens.cardShape)
+ * Icon(modifier = Modifier.size(PartsTokens.leadingIconSize))
+ *
+ * // Color roles (require Compose context)
+ * Box(Modifier.background(PartsTokens.Colors.iconContainer))
+ * Icon(tint = PartsTokens.Colors.iconContent)
+ * Surface(color = PartsTokens.Colors.card)
+ * ```
  */
 object PartsTokens {
 
@@ -31,29 +48,27 @@ object PartsTokens {
     val listBottomPadding          = 32.dp
     val loadingTopPadding          = 48.dp
     val disabledHintTopPadding     = 24.dp
-    /** Vertical gap between category blocks on the HomeScreen. */
     val cardBlockSpacing           = 8.dp
-    /**
-     * Vertical space between the [CircularProgressIndicator] and its
-     * label text in the loading state. Replaces hardcoded 12 dp.
-     */
     val loadingSpinnerLabelSpacing = 12.dp
-    /**
-     * Horizontal indent for the charging-override hint caption that
-     * appears below the app thermal list while charging is active.
-     * Larger than [contentPaddingHorizontal] to visually align the
-     * caption with the text portion of each app row (past the icon).
-     */
     val chargingHintIndent         = 32.dp
 
-    // ── Shape ──────────────────────────────────────────────
-    /** M3 Expressive large-component corner radius. */
+    // ── Shape ───────────────────────────────────────────────
+    /** M3 Expressive large-component corner radius (all cards). */
     val cardShape = RoundedCornerShape(28.dp)
+    /** Smaller shape for chips and inline surfaces. */
+    val chipShape = RoundedCornerShape(50)
 
     // ── Icon sizes ──────────────────────────────────────────
     val leadingIconContainerSize = 48.dp
     val leadingIconSize          = 24.dp
     val trailingIconSize         = 24.dp
+    /** Icon inside the per-app thermal profile chip. */
+    val chipIconSize             = 14.dp
+
+    // ── Chip (per-app thermal selector) ────────────────────
+    val chipHeight = 36.dp
+    val chipMinWidth = 96.dp
+    val chipMaxWidth = 148.dp
 
     // ── Dropdown ───────────────────────────────────────────
     val dropdownItemVerticalPadding = 10.dp
@@ -72,15 +87,122 @@ object PartsTokens {
     )
 
     // ── Motion durations (ms) ──────────────────────────────
-    /** Enter duration: fade-in portion of enter transitions. */
     const val MotionDurationEnter  = 280
-    /** Slide duration for list stagger animations. */
     const val MotionDurationSlide  = 320
-    /** Full route enter transition duration (slide + fade). */
     const val MotionDurationRoute  = 350
-    /** Exit / pop-exit transition duration — faster than enter. */
     const val MotionDurationExit   = 250
-    /** Stagger delay step between animated list items. */
     const val MotionStaggerStep    = 60
     const val MotionSlideDistance  = 8
+
+    // ── Colour roles ────────────────────────────────────────
+    /**
+     * Semantic colour roles for all Parts screens.
+     *
+     * Every property is @Composable + @ReadOnlyComposable so it can be
+     * used inline anywhere in a Compose tree without wrapping in
+     * remember {}. The values read directly from MaterialTheme.colorScheme
+     * which is already backed by dynamicDark/LightColorScheme — the
+     * single source of truth for Monet colors in this app.
+     *
+     * Screens must NOT reference MaterialTheme.colorScheme.* directly.
+     * Use PartsTokens.Colors.* everywhere so role→token mapping is one
+     * central decision.
+     */
+    object Colors {
+
+        // Page
+        /** Background of every Scaffold / page. */
+        val page: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.surface
+
+        /** TopAppBar background when not scrolled. */
+        val topBarResting: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.surface
+
+        /** TopAppBar background when scrolled (elevated). */
+        val topBarScrolled: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.surfaceContainer
+
+        // Cards
+        /** Surface color for PartsCard (sits on [page]). */
+        val card: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.surfaceContainer
+
+        // Leading icon container (circle behind icon in PartsRow)
+        val iconContainer: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.secondaryContainer
+
+        val iconContent: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.onSecondaryContainer
+
+        // Text
+        val textPrimary: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.onSurface
+
+        val textSecondary: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.onSurfaceVariant
+
+        val textCategory: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.primary
+
+        // Per-app thermal chip
+        val chipContainer: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.secondaryContainer
+
+        val chipContent: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.onSecondaryContainer
+
+        // Dividers
+        val divider: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.outlineVariant
+
+        // Banners (charging / info)
+        val bannerContainer: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.tertiaryContainer
+
+        val bannerContent: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.onTertiaryContainer
+
+        // Trailing navigation arrow
+        val trailing: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.onSurfaceVariant
+
+        // Dialog surface (elevated above page)
+        val dialogSurface: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.surfaceContainerHigh
+
+        // Selected row in dialog
+        val dialogSelectedBackground: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.38f)
+
+        val dialogSelectedText: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.primary
+
+        val dialogRowBackground: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.secondaryContainer
+
+        // Error / destructive
+        val destructive: Color
+            @Composable @ReadOnlyComposable get() =
+                MaterialTheme.colorScheme.error
+    }
 }
