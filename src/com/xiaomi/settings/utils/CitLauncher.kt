@@ -2,15 +2,20 @@
  * SPDX-FileCopyrightText: 2025 Paranoid Android
  * SPDX-License-Identifier: Apache-2.0
  *
- * Utility to launch the Xiaomi CIT (Component/Hardware Integration Test)
- * application. CIT is a factory test tool preinstalled on Xiaomi devices
- * that allows manual hardware validation (vibrator, sensors, display,
- * camera, speaker, etc.).
+ * Launchers for individual Xiaomi / CIT calibration screens.
  *
- * Based on the implementation in:
- *   MyDeviceInfoFragment.java (Settings app patch by Omkar Parte)
+ * Component targets are derived from logcat ActivityTaskManager output:
  *
- * Returns true if the app was launched, false if it is not installed.
+ *   Fingerprint Calibration:
+ *     cmp=com.jiiov.fingerprint_factorytest/.xiaomi.XiaomiAfterSalesCalibrationActivity
+ *     (LAUNCH_SINGLE_TASK → FLAG_ACTIVITY_SINGLE_TOP)
+ *
+ *   Speaker Calibration:
+ *     cmp=com.miui.cit/.auxiliary.CitAudioCaliSelfTest
+ *     (LAUNCH_MULTIPLE → FLAG_ACTIVITY_MULTIPLE_TASK)
+ *
+ * Each function returns true if the activity resolved and was started,
+ * false if the target package / activity is not present on the device.
  * The caller is responsible for showing a Toast on false.
  */
 
@@ -23,25 +28,53 @@ import android.util.Log
 
 object CitLauncher {
 
-    private const val TAG          = "CitLauncher"
-    private const val CIT_PACKAGE  = "com.miui.cit"
-    private const val CIT_ACTIVITY = "com.miui.cit.home.HomeActivity"
+    private const val TAG = "CitLauncher"
+
+    // ── Fingerprint Calibration ─────────────────────────────────────────
+    private const val FP_PACKAGE  = "com.jiiov.fingerprint_factorytest"
+    private const val FP_ACTIVITY = "com.jiiov.fingerprint_factorytest.xiaomi.XiaomiAfterSalesCalibrationActivity"
+
+    // ── Speaker Calibration ─────────────────────────────────────────────
+    private const val SPEAKER_PACKAGE  = "com.miui.cit"
+    private const val SPEAKER_ACTIVITY = "com.miui.cit.auxiliary.CitAudioCaliSelfTest"
 
     /**
-     * Attempts to start the Xiaomi CIT HomeActivity.
+     * Launches the Jiiov/Xiaomi after-sales fingerprint calibration screen.
+     * Matches LAUNCH_SINGLE_TASK behaviour seen in logcat.
+     *
      * @return true if the intent resolved and was fired, false otherwise.
      */
-    fun launch(context: Context): Boolean {
+    fun launchFingerprintCalibration(context: Context): Boolean {
         return runCatching {
             val intent = Intent().apply {
-                component = ComponentName(CIT_PACKAGE, CIT_ACTIVITY)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                component = ComponentName(FP_PACKAGE, FP_ACTIVITY)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP)
             }
             context.startActivity(intent)
-            Log.d(TAG, "CIT app launched successfully")
+            Log.d(TAG, "Fingerprint calibration launched")
             true
         }.onFailure { e ->
-            Log.e(TAG, "Unable to launch CIT app — is it installed?", e)
+            Log.e(TAG, "Unable to launch fingerprint calibration", e)
+        }.getOrDefault(false)
+    }
+
+    /**
+     * Launches the CIT speaker / audio calibration self-test screen.
+     * Matches LAUNCH_MULTIPLE behaviour seen in logcat.
+     *
+     * @return true if the intent resolved and was fired, false otherwise.
+     */
+    fun launchSpeakerCalibration(context: Context): Boolean {
+        return runCatching {
+            val intent = Intent().apply {
+                component = ComponentName(SPEAKER_PACKAGE, SPEAKER_ACTIVITY)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            }
+            context.startActivity(intent)
+            Log.d(TAG, "Speaker calibration launched")
+            true
+        }.onFailure { e ->
+            Log.e(TAG, "Unable to launch speaker calibration", e)
         }.getOrDefault(false)
     }
 }
