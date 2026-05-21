@@ -10,14 +10,17 @@
     which all use a coloured circle with a white icon centred inside.
 
     Background uses ?attr/colorPrimary so the circle automatically
-    adapts to the user's Monet/Material You wallpaper palette — identical
-    behaviour to all first-party Pixel Settings tile icons.
+    adapts to the user's Monet/Material You wallpaper palette.
 
-    The foreground icon path uses #FFFFFF (white). This is equivalent to
-    ?attr/colorOnPrimary on any Monet palette where Primary is a mid-tone
-    colour — and avoids requiring AppCompat vector inflation (which Settings
-    tile drawables do not go through), so ?attr refs in fillColor would
-    silently fail at runtime.
+    The foreground icon uses #FFFFFF (white) for fillColor to avoid
+    requiring AppCompat vector inflation (?attr refs in fillColor
+    silently fail in Settings tile drawables that skip AppCompat).
+
+    Insets are expressed in dp (not %) because the AOSP platform
+    aapt2 linker only accepts concrete dimension types for
+    android:top/bottom/left/right on <layer-list> <item> elements.
+    Percentage strings ('28%') are a Gradle/AppCompat extension and
+    are rejected at platform build time.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
@@ -28,14 +31,15 @@
         </shape>
     </item>
 
-    <!-- Layer 1: chip icon, white, inset so it fills ~44% of the circle -->
+    <!-- Layer 1: chip icon, white, inset so it fills ~44% of the circle.
+         12dp inset on each side ≈ 25% of the 48dp tile icon grid,
+         matching the Pixel Settings first-party icon visual weight. -->
     <item
-        android:top="28%"
-        android:bottom="28%"
-        android:left="28%"
-        android:right="28%">
+        android:top="12dp"
+        android:bottom="12dp"
+        android:left="12dp"
+        android:right="12dp">
         <vector
-            xmlns:android="http://schemas.android.com/apk/res/android"
             android:width="24dp"
             android:height="24dp"
             android:viewportWidth="24.0"
