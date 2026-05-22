@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 object PartsTokens {
 
+    // Spacing scale — 4 px base unit
+    val space1:  Dp = 1.dp
     val space4:  Dp = 4.dp
     val space8:  Dp = 8.dp
     val space12: Dp = 12.dp
@@ -31,6 +33,7 @@ object PartsTokens {
     val space48: Dp = 48.dp
     val space56: Dp = 56.dp
 
+    // Layout tokens
     val contentPaddingHorizontal: Dp get() = space16
     val rowPaddingVertical:       Dp get() = space16
     val rowElementSpacing:        Dp get() = space16
@@ -44,6 +47,7 @@ object PartsTokens {
     val bannerVerticalPadding:    Dp get() = space16
     val sheetContentTopPadding:   Dp get() = space8
 
+    // Component size tokens
     val leadingIconContainerSize: Dp = space40
     val leadingIconSize:          Dp = space24
     val trailingIconSize:         Dp = space24
@@ -51,11 +55,12 @@ object PartsTokens {
     val appIconSize:              Dp = space40
     val colourModeLeadingSize:    Dp = space40
     val colourModeDotSize:        Dp = space16
-    val heroPreviewHeight:        Dp = space56 * 3 + space32
+    val heroPreviewHeight:        Dp = 200.dp
     val premiumCardElevation:     Dp = space4
-    val dividerThickness:         Dp = space4 / 4
+    val dividerThickness:         Dp = space1
     val dismissButtonSize:        Dp = space32
 
+    // Shape tokens
     val cardShape: Shape
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge
     val bannerShape: Shape
@@ -69,11 +74,13 @@ object PartsTokens {
     val bottomSheetTopShape: Shape
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLargeTop
 
-    const val colourModeIconContainerAlpha:  Float = 0.18f
-    const val colourModeIconDotAlpha:        Float = 0.85f
-    const val selectedStateLayerAlpha:       Float = 0.12f
-    const val selectedDotContainerAlpha:     Float = 0.32f
+    // Alpha constants
+    const val colourModeIconContainerAlpha: Float = 0.18f
+    const val colourModeIconDotAlpha:       Float = 0.85f
+    const val selectedStateLayerAlpha:      Float = 0.12f
+    const val selectedDotContainerAlpha:    Float = 0.32f
 
+    // Shimmer / blob constants
     const val shimmerStartPx:     Float = -600f
     const val shimmerEndPx:       Float = 1200f
     const val shimmerWidthPx:     Float = 300f
@@ -82,6 +89,7 @@ object PartsTokens {
     const val frictionMultiplier: Float = 2f
     const val toastDebounceMs:    Long  = 2_000L
 
+    // Motion duration constants
     const val motionNavFadeEnterMs: Int = 220
     const val motionNavFadeExitMs:  Int = 200
     const val motionNavSlideMs:     Int = 220
@@ -90,6 +98,7 @@ object PartsTokens {
     const val motionCheckFadeInMs:  Int = 150
     const val motionCheckFadeOutMs: Int = 100
 
+    // Motion specs — M3 MotionScheme
     val <T> MotionDefaultSpatial: FiniteAnimationSpec<T>
         @Composable @ReadOnlyComposable get() = MaterialTheme.motionScheme.defaultSpatialSpec()
     val <T> MotionFastSpatial: FiniteAnimationSpec<T>
@@ -104,24 +113,35 @@ object PartsTokens {
         @Composable @ReadOnlyComposable get() = MaterialTheme.motionScheme.slowEffectsSpec()
 
     object Colors {
+        // Page / scaffold
         val page: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.background
         val topBarResting: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.background
         val topBarScrolled: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainer
+
+        // Card surface — semantically distinct from topBarScrolled
+        val cardSurface: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainer
+
+        // Text
         val textPrimary: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSurface
         val textSecondary: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSurfaceVariant
+
+        // Divider
         val outlineVariant: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.outlineVariant
-        val transparent: Color
-            get() = Color.Transparent
+
+        // Row icon containers
         val iconContainer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
         val iconContent: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSecondaryContainer
+
+        // Banners
         val chargingBannerContainer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.tertiaryContainer
         val chargingBannerContent: Color
@@ -130,12 +150,14 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
         val infoBannerContent: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSecondaryContainer
+
+        // Selection state
         val dialogSelectedText: Color
-            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primary
-        val dialogSelectedLayer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primary
         val selectionLayer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primary
+
+        // Per-app premium card
         val premiumCardSurface: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primaryContainer
         val premiumCardContent: Color
@@ -144,8 +166,12 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primary
         val premiumCardButtonContent: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onPrimary
+
+        // Settings homepage entry card
         val settingsEntryCard: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
+
+        // Module-specific icon containers
         val displayIconContainer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.tertiaryContainer
         val displayIconContent: Color
@@ -162,13 +188,20 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainerHigh
         val touchIconContentOff: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSurfaceVariant
+
+        // Hero preview background
         val heroBg: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainerHigh
+
+        // App icon placeholder
         val appIconFallback: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainerHighest
+
+        // Category label
         val categoryLabelColor: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primary
 
+        // Colour mode hues (Display Colours screen blob palette)
         object Hues {
             val vivid: Color
                 @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.error

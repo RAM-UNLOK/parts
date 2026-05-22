@@ -31,8 +31,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Fingerprint
-import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -59,7 +57,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.xiaomi.settings.ui.PartsTokens
-import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -71,7 +68,6 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    val bannerShape = PartsTokens.bannerShape
     val spatialSpec = PartsTokens.MotionDefaultSpatial
     val effectsSpec = PartsTokens.MotionDefaultEffects
 
@@ -147,7 +143,7 @@ fun XiaomiPartsHomeScreen(
                             .fillMaxWidth()
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                             .padding(top = PartsTokens.bannerTopSpacing)
-                            .clip(bannerShape)
+                            .clip(PartsTokens.bannerShape)
                             .background(PartsTokens.Colors.chargingBannerContainer)
                             .padding(
                                 horizontal = PartsTokens.contentPaddingHorizontal,
@@ -246,8 +242,8 @@ fun PartsCard(
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .padding(top = PartsTokens.cardBlockSpacing),
-        shape     = PartsTokens.cardShape,
-        color     = PartsTokens.Colors.topBarScrolled,
+        shape          = PartsTokens.cardShape,
+        color          = PartsTokens.Colors.cardSurface,
         tonalElevation = PartsTokens.premiumCardElevation,
     ) {
         Column { content() }

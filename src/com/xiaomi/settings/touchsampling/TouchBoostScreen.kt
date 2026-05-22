@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -48,10 +49,9 @@ import com.xiaomi.settings.utils.PartsToast
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
-    val context      = LocalContext.current
-    val leadingShape = PartsTokens.leadingIconShape
-    val effectsSpec  = PartsTokens.MotionDefaultEffects
-    val spatialSpec  = PartsTokens.MotionDefaultSpatial
+    val context     = LocalContext.current
+    val effectsSpec = PartsTokens.MotionDefaultEffects
+    val spatialSpec = PartsTokens.MotionDefaultSpatial
 
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
@@ -113,7 +113,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         Box(
                             modifier         = Modifier
                                 .size(PartsTokens.leadingIconContainerSize)
-                                .clip(leadingShape)
+                                .clip(PartsTokens.leadingIconShape)
                                 .background(iconContainer),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -124,7 +124,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                                 modifier           = Modifier.size(PartsTokens.leadingIconSize),
                             )
                         }
-                        Spacer(Modifier.size(PartsTokens.rowElementSpacing))
+                        Spacer(Modifier.width(PartsTokens.rowElementSpacing))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text  = stringResource(R.string.touch_boost_title),
