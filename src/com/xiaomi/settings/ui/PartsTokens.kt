@@ -22,8 +22,8 @@ object PartsTokens {
     val rowPaddingVertical: Dp       = 14.dp
     val rowElementSpacing: Dp        = 16.dp
     val cardBlockSpacing: Dp         = 16.dp
-    val appRowSpacing: Dp            = 2.dp
     val heroToCardSpacing: Dp        = 16.dp
+    val premiumCardSpacing: Dp       = 12.dp
     val categoryTopPadding: Dp       = 20.dp
     val categoryBottomPadding: Dp    = 6.dp
     val listBottomPadding: Dp        = 32.dp
@@ -34,6 +34,7 @@ object PartsTokens {
     val leadingIconContainerSize: Dp = 40.dp
     val leadingIconSize: Dp          = 22.dp
     val trailingIconSize: Dp         = 20.dp
+    val appIconSize: Dp              = 40.dp
     val colourModeLeadingSize: Dp    = 36.dp
     val colourModeDotSize: Dp        = 14.dp
 
@@ -90,10 +91,10 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSecondaryContainer
 
         val bannerContainer: Color
-            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainerHigh
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
 
         val bannerContent: Color
-            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSurfaceVariant
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSecondaryContainer
 
         val dialogSelectedText: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primary
@@ -106,6 +107,24 @@ object PartsTokens {
 
         val settingsEntryCard: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
+
+        val displayIconContainer: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.tertiaryContainer
+
+        val displayIconContent: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onTertiaryContainer
+
+        val thermalIconContainer: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.errorContainer
+
+        val thermalIconContent: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onErrorContainer
+
+        val touchIconContainer: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primaryContainer
+
+        val touchIconContent: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onPrimaryContainer
 
         object Hues {
             val vivid: Color

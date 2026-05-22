@@ -5,6 +5,8 @@
 
 package com.xiaomi.settings.thermal
 
+import android.content.pm.PackageManager
+import android.graphics.drawable.Drawable
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateFloatAsState
@@ -15,8 +17,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,9 +30,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
@@ -58,11 +60,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.core.graphics.drawable.toBitmap
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
@@ -75,21 +79,36 @@ data class AppThermalEntry(
     val profileId:   Int,
 )
 
+@Composable
+private fun appIcon(packageName: String): Drawable? {
+    val pm = LocalContext.current.packageManager
+    return remember(packageName) {
+        runCatching { pm.getApplicationIcon(packageName) }.getOrNull()
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
+    val context   = LocalContext.current
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope      = rememberCoroutineScope()
+
+    var pendingApp by remember { mutableStateOf<AppThermalEntry?>(null) }
+    var showSheet  by remember { mutableStateOf(false) }
+
+    val appList = remember {
+        runCatching { ThermalService.getAppList(context) }.getOrElse {
+            emptyList<AppThermalEntry>().also {
+                Toast.makeText(context, R.string.thermal_failed_toast, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
-
-    var selectedApp by remember { mutableStateOf<AppThermalEntry?>(null) }
-    var showSheet   by remember { mutableStateOf(false) }
-    val sheetState  = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope       = rememberCoroutineScope()
-    val appList     = remember { ThermalService.getAppList(context) }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -122,67 +141,31 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 PartsCategory(stringResource(R.string.thermal_per_app_category))
             }
 
-            selectedApp?.let { app ->
-                item(key = "premium-card") {
-                    ElevatedCard(
-                        modifier  = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = PartsTokens.contentPaddingHorizontal,
-                                vertical   = PartsTokens.appRowSpacing,
-                            ),
-                        shape     = PartsTokens.cardShape,
-                        elevation = CardDefaults.elevatedCardElevation(
-                            defaultElevation = PartsTokens.premiumCardElevation,
+            if (appList.isEmpty()) {
+                item(key = "empty") {
+                    Text(
+                        text     = stringResource(R.string.thermal_no_apps),
+                        style    = MaterialTheme.typography.bodyMedium,
+                        color    = PartsTokens.Colors.textSecondary,
+                        modifier = Modifier.padding(
+                            horizontal = PartsTokens.contentPaddingHorizontal,
+                            vertical   = PartsTokens.rowPaddingVertical,
                         ),
-                        colors    = CardDefaults.elevatedCardColors(
-                            containerColor = PartsTokens.Colors.premiumCardSurface,
-                        ),
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(PartsTokens.contentPaddingHorizontal),
-                            verticalArrangement = Arrangement.spacedBy(PartsTokens.rowPaddingVertical),
-                        ) {
-                            Text(
-                                text  = app.label,
-                                style = MaterialTheme.typography.titleMedium,
-                                color = PartsTokens.Colors.premiumCardContent,
-                            )
-                            Text(
-                                text  = ThermalService.profileLabel(app.profileId),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = PartsTokens.Colors.premiumCardContent,
-                            )
-                            Button(
-                                onClick = { showSheet = true },
-                                shape   = PartsTokens.buttonShape,
-                                colors  = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary,
-                                    contentColor   = MaterialTheme.colorScheme.onPrimary,
-                                ),
-                            ) {
-                                Text(stringResource(R.string.thermal_select_profile))
-                            }
-                        }
-                    }
+                    )
                 }
-            }
-
-            item(key = "app-list-card") {
-                PartsCard {
-                    appList.forEachIndexed { index, entry ->
-                        AppThermalRow(
-                            entry       = entry,
-                            isSelected  = entry.packageName == selectedApp?.packageName,
-                            showDivider = index < appList.lastIndex,
-                            onClick     = {
-                                selectedApp = if (selectedApp?.packageName == entry.packageName) null
-                                              else entry
-                            },
-                        )
-                    }
+            } else {
+                itemsIndexed(
+                    items = appList,
+                    key   = { _, entry -> entry.packageName },
+                ) { index, entry ->
+                    AppThermalPremiumCard(
+                        entry       = entry,
+                        showDivider = index < appList.lastIndex,
+                        onSelectProfile = {
+                            pendingApp = entry
+                            showSheet  = true
+                        },
+                    )
                 }
             }
 
@@ -190,7 +173,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         }
     }
 
-    if (showSheet && selectedApp != null) {
+    if (showSheet && pendingApp != null) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState       = sheetState,
@@ -212,7 +195,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     ),
                 )
                 ThermalService.profiles().forEach { profile ->
-                    val isSelected = profile.id == selectedApp?.profileId
+                    val isSelected = profile.id == pendingApp?.profileId
                     val bgAlpha by animateFloatAsState(
                         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
                         animationSpec = spring(
@@ -229,14 +212,18 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             .clickable(role = Role.RadioButton) {
                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                                     showSheet = false
-                                    selectedApp?.let { app ->
+                                    pendingApp?.let { app ->
                                         runCatching {
                                             ThermalService.setAppProfile(context, app.packageName, profile.id)
-                                            selectedApp = null
                                         }.onFailure {
-                                            Toast.makeText(context, R.string.thermal_failed_toast, Toast.LENGTH_SHORT).show()
+                                            Toast.makeText(
+                                                context,
+                                                R.string.thermal_failed_toast,
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
                                         }
                                     }
+                                    pendingApp = null
                                 }
                             },
                         headlineContent = {
@@ -277,57 +264,80 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun AppThermalRow(
-    entry:       AppThermalEntry,
-    isSelected:  Boolean,
-    showDivider: Boolean,
-    onClick:     () -> Unit,
+private fun AppThermalPremiumCard(
+    entry:           AppThermalEntry,
+    showDivider:     Boolean,
+    onSelectProfile: () -> Unit,
 ) {
+    val icon = appIcon(entry.packageName)
+
     Column {
-        Row(
-            modifier = Modifier
+        ElevatedCard(
+            modifier  = Modifier
                 .fillMaxWidth()
-                .clickable(role = Role.Button, onClick = onClick)
                 .padding(
                     horizontal = PartsTokens.contentPaddingHorizontal,
-                    vertical   = PartsTokens.rowPaddingVertical,
+                    vertical   = PartsTokens.premiumCardSpacing,
                 ),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
+            shape     = PartsTokens.cardShape,
+            elevation = CardDefaults.elevatedCardElevation(
+                defaultElevation = PartsTokens.premiumCardElevation,
+            ),
+            colors = CardDefaults.elevatedCardColors(
+                containerColor = PartsTokens.Colors.premiumCardSurface,
+            ),
         ) {
-            Box(
+            Row(
                 modifier = Modifier
-                    .size(PartsTokens.leadingIconContainerSize)
-                    .clip(PartsTokens.iconContainerShape)
-                    .background(
-                        if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                        else            PartsTokens.Colors.iconContainer,
-                    ),
-                contentAlignment = Alignment.Center,
+                    .fillMaxWidth()
+                    .padding(PartsTokens.contentPaddingHorizontal),
+                verticalAlignment     = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
             ) {
-                Icon(
-                    imageVector        = Icons.Filled.Thermostat,
-                    contentDescription = null,
-                    tint               = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
-                                         else            PartsTokens.Colors.iconContent,
-                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                )
-            }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text     = entry.label,
-                    style    = MaterialTheme.typography.bodyLarge,
-                    color    = PartsTokens.Colors.textPrimary,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text  = ThermalService.profileLabel(entry.profileId),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = PartsTokens.Colors.textSecondary,
-                )
+                if (icon != null) {
+                    Image(
+                        bitmap             = icon.toBitmap().asImageBitmap(),
+                        contentDescription = null,
+                        modifier           = Modifier
+                            .size(PartsTokens.appIconSize)
+                            .clip(PartsTokens.iconContainerShape),
+                    )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .size(PartsTokens.appIconSize)
+                            .clip(PartsTokens.iconContainerShape)
+                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                    )
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text     = entry.label,
+                        style    = MaterialTheme.typography.titleSmall,
+                        color    = PartsTokens.Colors.premiumCardContent,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+
+                Button(
+                    onClick = onSelectProfile,
+                    shape   = PartsTokens.buttonShape,
+                    colors  = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        contentColor   = MaterialTheme.colorScheme.onPrimary,
+                    ),
+                ) {
+                    Text(
+                        text     = ThermalService.profileLabel(entry.profileId),
+                        style    = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                    )
+                }
             }
         }
+
         if (showDivider) {
             HorizontalDivider(
                 modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),

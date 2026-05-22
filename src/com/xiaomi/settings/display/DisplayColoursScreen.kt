@@ -7,11 +7,12 @@ package com.xiaomi.settings.display
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -173,6 +174,25 @@ private fun SelectionRow(
     )
     val hue = mode.hue
 
+    val dotContainerColor by animateColorAsState(
+        targetValue   = if (isSelected) hue.copy(alpha = 0.32f)
+                        else            hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
+        ),
+        label = "dotContainer",
+    )
+    val dotColor by animateColorAsState(
+        targetValue   = if (isSelected) hue
+                        else            hue.copy(alpha = PartsTokens.colourModeIconDotAlpha),
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMediumLow,
+        ),
+        label = "dotColor",
+    )
+
     ListItem(
         modifier = Modifier
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
@@ -199,14 +219,14 @@ private fun SelectionRow(
                 modifier = Modifier
                     .size(PartsTokens.colourModeLeadingSize)
                     .clip(CircleShape)
-                    .background(hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
+                    .background(dotContainerColor),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
                         .size(PartsTokens.colourModeDotSize)
                         .clip(CircleShape)
-                        .background(hue.copy(alpha = PartsTokens.colourModeIconDotAlpha)),
+                        .background(dotColor),
                 )
             }
         },
@@ -291,7 +311,11 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                                 ColorService.setColorMode(context, mode.id)
                                 selectedId = mode.id
                             }.onFailure {
-                                Toast.makeText(context, R.string.display_colour_failed, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(
+                                    context,
+                                    R.string.display_colour_failed,
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                             }
                         },
                     )

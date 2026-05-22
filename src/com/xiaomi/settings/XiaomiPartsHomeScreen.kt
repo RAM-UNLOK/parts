@@ -58,6 +58,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -211,11 +212,13 @@ fun XiaomiPartsHomeScreen(
             item(key = "display-card") {
                 PartsCard {
                     PartsRow(
-                        icon        = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        title       = stringResource(R.string.display_colours_title),
-                        summary     = stringResource(R.string.display_colours_summary),
-                        onClick     = onNavigateToDisplay,
-                        showDivider = false,
+                        icon             = ImageVector.vectorResource(R.drawable.ic_display_colours),
+                        iconContainerColor = PartsTokens.Colors.displayIconContainer,
+                        iconContentColor   = PartsTokens.Colors.displayIconContent,
+                        title            = stringResource(R.string.display_colours_title),
+                        summary          = stringResource(R.string.display_colours_summary),
+                        onClick          = onNavigateToDisplay,
+                        showDivider      = false,
                     )
                 }
             }
@@ -226,17 +229,21 @@ fun XiaomiPartsHomeScreen(
             item(key = "perf-card") {
                 PartsCard {
                     PartsRow(
-                        icon    = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
-                        title   = stringResource(R.string.thermal_title),
-                        summary = stringResource(R.string.thermal_summary),
-                        onClick = onNavigateToThermal,
+                        icon             = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
+                        iconContainerColor = PartsTokens.Colors.thermalIconContainer,
+                        iconContentColor   = PartsTokens.Colors.thermalIconContent,
+                        title            = stringResource(R.string.thermal_title),
+                        summary          = stringResource(R.string.thermal_summary),
+                        onClick          = onNavigateToThermal,
                     )
                     PartsRow(
-                        icon        = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                        title       = stringResource(R.string.touch_boost_title),
-                        summary     = stringResource(R.string.touch_boost_summary),
-                        onClick     = onNavigateToTouch,
-                        showDivider = false,
+                        icon             = ImageVector.vectorResource(R.drawable.ic_touch_boost),
+                        iconContainerColor = PartsTokens.Colors.touchIconContainer,
+                        iconContentColor   = PartsTokens.Colors.touchIconContent,
+                        title            = stringResource(R.string.touch_boost_title),
+                        summary          = stringResource(R.string.touch_boost_summary),
+                        onClick          = onNavigateToTouch,
+                        showDivider      = false,
                     )
                 }
             }
@@ -318,13 +325,15 @@ fun PartsCard(
 
 @Composable
 fun PartsRow(
-    icon:        ImageVector,
-    title:       String,
-    summary:     String,
-    onClick:     () -> Unit,
-    modifier:    Modifier  = Modifier,
-    showDivider: Boolean   = true,
-    trailing:    @Composable () -> Unit = {
+    icon:               ImageVector,
+    title:              String,
+    summary:            String,
+    onClick:            () -> Unit,
+    modifier:           Modifier  = Modifier,
+    showDivider:        Boolean   = true,
+    iconContainerColor: Color     = PartsTokens.Colors.iconContainer,
+    iconContentColor:   Color     = PartsTokens.Colors.iconContent,
+    trailing:           @Composable () -> Unit = {
         Icon(
             imageVector        = Icons.Filled.ChevronRight,
             contentDescription = null,
@@ -349,13 +358,13 @@ fun PartsRow(
                 modifier         = Modifier
                     .size(PartsTokens.leadingIconContainerSize)
                     .clip(PartsTokens.iconContainerShape)
-                    .background(PartsTokens.Colors.iconContainer),
+                    .background(iconContainerColor),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
                     imageVector        = icon,
                     contentDescription = null,
-                    tint               = PartsTokens.Colors.iconContent,
+                    tint               = iconContentColor,
                     modifier           = Modifier.size(PartsTokens.leadingIconSize),
                 )
             }

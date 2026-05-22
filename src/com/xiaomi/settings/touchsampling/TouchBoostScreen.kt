@@ -8,6 +8,7 @@ package com.xiaomi.settings.touchsampling
 import android.content.Context
 import android.os.UserHandle
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
@@ -50,7 +51,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
@@ -79,7 +79,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     var enabled by remember { mutableStateOf(readHtsr(context)) }
 
     val iconContainerColor by animateColorAsState(
-        targetValue   = if (enabled) MaterialTheme.colorScheme.primaryContainer
+        targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
                         else         PartsTokens.Colors.iconContainer,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -88,7 +88,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         label = "iconContainer",
     )
     val iconColor by animateColorAsState(
-        targetValue   = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer
+        targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
                         else         PartsTokens.Colors.iconContent,
         animationSpec = spring(
             dampingRatio = Spring.DampingRatioNoBouncy,
@@ -135,7 +135,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                     .clip(PartsTokens.bannerShape)
-                    .background(PartsTokens.Colors.bannerContainer)
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
                     .padding(
                         horizontal = PartsTokens.contentPaddingHorizontal,
                         vertical   = PartsTokens.rowPaddingVertical,
@@ -146,13 +146,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 Icon(
                     imageVector        = Icons.Filled.Info,
                     contentDescription = null,
-                    tint               = PartsTokens.Colors.bannerContent,
+                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                     modifier           = Modifier.size(PartsTokens.leadingIconSize),
                 )
                 Text(
                     text  = stringResource(R.string.touch_boost_info),
                     style = MaterialTheme.typography.bodySmall,
-                    color = PartsTokens.Colors.bannerContent,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
                 )
             }
 
@@ -166,8 +166,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                             role    = Role.Switch,
                             onClick = {
                                 val next = !enabled
-                                enabled = next
-                                writeHtsr(context, next)
+                                runCatching {
+                                    writeHtsr(context, next)
+                                    enabled = next
+                                }.onFailure {
+                                    Toast.makeText(
+                                        context,
+                                        R.string.touch_boost_write_failed,
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
                             },
                         )
                         .padding(
