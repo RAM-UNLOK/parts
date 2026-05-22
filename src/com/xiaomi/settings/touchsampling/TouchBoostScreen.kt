@@ -9,7 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.UserHandle
 import android.widget.Toast
-import androidx.compose.animation.core.Spring
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -60,32 +60,45 @@ import com.xiaomi.settings.ui.PartsTokens
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    val prefs   = remember {
+    val prefs = remember {
         context.getSharedPreferences(TouchSamplingService.SHAREDHTSR, Context.MODE_PRIVATE)
     }
     var enabled by remember {
         mutableStateOf(prefs.getBoolean(TouchSamplingService.HTSR_STATE, false))
     }
 
+    val iconContainerColor by animateColorAsState(
+        targetValue = if (enabled) MaterialTheme.colorScheme.primaryContainer
+                      else PartsTokens.Colors.iconContainer,
+        animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow),
+        label = "iconContainerColor",
+    )
+    val iconColor by animateColorAsState(
+        targetValue = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer
+                      else PartsTokens.Colors.iconContent,
+        animationSpec = spring(stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow),
+        label = "iconColor",
+    )
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
+        snapAnimationSpec = PartsTokens.MotionSpringEnter,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
     )
 
     Scaffold(
-        modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = PartsTokens.Colors.page,
         topBar = {
             MediumTopAppBar(
                 title = {
                     Text(
-                        text     = stringResource(R.string.htsr_title),
+                        text = stringResource(R.string.htsr_title),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = PartsTokens.Colors.topBarResting,
+                    containerColor = PartsTokens.Colors.topBarResting,
                     scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -99,6 +112,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
         ) {
             PartsCategory(stringResource(R.string.htsr_category))
+
             PartsCard {
                 Row(
                     modifier = Modifier
@@ -108,39 +122,39 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         }
                         .padding(
                             horizontal = PartsTokens.contentPaddingHorizontal,
-                            vertical   = PartsTokens.rowPaddingVertical,
+                            vertical = PartsTokens.rowPaddingVertical,
                         ),
-                    verticalAlignment     = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                 ) {
                     Box(
                         modifier = Modifier
                             .size(PartsTokens.leadingIconContainerSize)
                             .clip(CircleShape)
-                            .background(PartsTokens.Colors.iconContainer),
+                            .background(iconContainerColor),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector        = Icons.Filled.Vibration,
+                            imageVector = Icons.Filled.Vibration,
                             contentDescription = null,
-                            tint               = PartsTokens.Colors.iconContent,
-                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                            tint = iconColor,
+                            modifier = Modifier.size(PartsTokens.leadingIconSize),
                         )
                     }
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text  = stringResource(R.string.htsr_enable_title),
+                            text = stringResource(R.string.htsr_enable_title),
                             style = MaterialTheme.typography.bodyLarge,
                             color = PartsTokens.Colors.textPrimary,
                         )
                         Text(
-                            text  = stringResource(R.string.htsr_enable_summary),
+                            text = stringResource(R.string.htsr_enable_summary),
                             style = MaterialTheme.typography.bodyMedium,
                             color = PartsTokens.Colors.textSecondary,
                         )
                     }
                     Switch(
-                        checked         = enabled,
+                        checked = enabled,
                         onCheckedChange = { toggleHtsr(context, prefs, it) { enabled = it } },
                     )
                 }
@@ -148,31 +162,29 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // Info banner — uses bannerContainer/bannerContent (tertiaryContainer).
-            // Consistent with the charging banners in HomeScreen and ThermalManagementScreen.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                    .clip(PartsTokens.cardShape)
+                    .clip(PartsTokens.bannerShape)
                     .background(PartsTokens.Colors.bannerContainer)
                     .padding(
                         horizontal = PartsTokens.contentPaddingHorizontal,
-                        vertical   = PartsTokens.appRowPaddingVertical,
+                        vertical = PartsTokens.appRowPaddingVertical,
                     ),
                 horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                verticalAlignment     = Alignment.Top,
+                verticalAlignment = Alignment.Top,
             ) {
                 Icon(
-                    imageVector        = Icons.Outlined.Lightbulb,
+                    imageVector = Icons.Outlined.Lightbulb,
                     contentDescription = null,
-                    tint               = PartsTokens.Colors.bannerContent,
-                    modifier           = Modifier
+                    tint = PartsTokens.Colors.bannerContent,
+                    modifier = Modifier
                         .padding(top = PartsTokens.bannerIconTopOffset)
                         .size(PartsTokens.leadingIconSize),
                 )
                 Text(
-                    text  = stringResource(R.string.htsr_info_body),
+                    text = stringResource(R.string.htsr_info_body),
                     style = MaterialTheme.typography.bodySmall,
                     color = PartsTokens.Colors.bannerContent,
                 )
@@ -184,22 +196,22 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 }
 
 private fun toggleHtsr(
-    context:  Context,
-    prefs:    android.content.SharedPreferences,
-    target:   Boolean,
+    context: Context,
+    prefs: android.content.SharedPreferences,
+    target: Boolean,
     onResult: (Boolean) -> Unit,
 ) {
     runCatching {
         prefs.edit().putBoolean(TouchSamplingService.HTSR_STATE, target).apply()
         val serviceIntent = Intent(context, TouchSamplingService::class.java)
-        if (target) {
-            context.startServiceAsUser(serviceIntent, UserHandle.CURRENT)
-        } else {
-            context.stopServiceAsUser(serviceIntent, UserHandle.CURRENT)
-        }
+        if (target) context.startServiceAsUser(serviceIntent, UserHandle.CURRENT)
+        else context.stopServiceAsUser(serviceIntent, UserHandle.CURRENT)
         onResult(target)
-        val msg = if (target) R.string.htsr_enabled_toast else R.string.htsr_disabled_toast
-        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+        Toast.makeText(
+            context,
+            if (target) R.string.htsr_enabled_toast else R.string.htsr_disabled_toast,
+            Toast.LENGTH_SHORT,
+        ).show()
     }.onFailure {
         Toast.makeText(context, R.string.htsr_failed_toast, Toast.LENGTH_SHORT).show()
     }
