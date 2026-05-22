@@ -31,42 +31,49 @@ class XiaomiPartsActivity : ComponentActivity() {
         setContent {
             XiaomiPartsTheme {
                 val nav = rememberNavController()
+
+                val pushEnter = slideInHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness    = Spring.StiffnessMediumLow,
+                    ),
+                    initialOffsetX = { it },
+                ) + fadeIn(tween(220))
+
+                val pushExit = slideOutHorizontally(
+                    animationSpec = tween(220),
+                    targetOffsetX = { -it / 4 },
+                ) + fadeOut(tween(200))
+
+                val popEnter = slideInHorizontally(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness    = Spring.StiffnessMediumLow,
+                    ),
+                    initialOffsetX = { -it / 4 },
+                ) + fadeIn(tween(220))
+
+                val popExit = slideOutHorizontally(
+                    animationSpec = tween(220),
+                    targetOffsetX = { it },
+                ) + fadeOut(tween(200))
+
                 NavHost(
-                    navController   = nav,
+                    navController    = nav,
                     startDestination = "home",
-                    enterTransition  = {
-                        slideInHorizontally(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetX = { it / 4 },
-                        ) + fadeIn(tween(220))
-                    },
-                    exitTransition  = {
-                        slideOutHorizontally(
-                            animationSpec = tween(200),
-                            targetOffsetX = { -it / 6 },
-                        ) + fadeOut(tween(200))
-                    },
-                    popEnterTransition = {
-                        slideInHorizontally(
-                            animationSpec = spring(
-                                dampingRatio = Spring.DampingRatioNoBouncy,
-                                stiffness    = Spring.StiffnessMediumLow,
-                            ),
-                            initialOffsetX = { -it / 4 },
-                        ) + fadeIn(tween(220))
-                    },
-                    popExitTransition = {
-                        slideOutHorizontally(
-                            animationSpec = tween(200),
-                            targetOffsetX = { it / 6 },
-                        ) + fadeOut(tween(200))
-                    },
+                    enterTransition  = { pushEnter },
+                    exitTransition   = { pushExit },
+                    popEnterTransition = { popEnter },
+                    popExitTransition  = { popExit },
                 ) {
-                    composable("home")            { XiaomiPartsHomeScreen(nav) }
-                    composable("displayColours")  { DisplayColoursScreen { nav.popBackStack() } }
+                    composable("home") {
+                        XiaomiPartsHomeScreen(
+                            onNavigateToDisplay = { nav.navigate("displayColours") },
+                            onNavigateToThermal = { nav.navigate("thermal") },
+                            onNavigateToTouch   = { nav.navigate("touchBoost") },
+                        )
+                    }
+                    composable("displayColours") { DisplayColoursScreen { nav.popBackStack() } }
                     composable("thermal")         { ThermalManagementScreen { nav.popBackStack() } }
                     composable("touchBoost")      { TouchBoostScreen { nav.popBackStack() } }
                 }
