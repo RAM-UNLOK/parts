@@ -7,7 +7,6 @@ package com.xiaomi.settings.display
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
@@ -90,19 +89,25 @@ private fun ColourPreviewHero(
     modifier:   Modifier = Modifier,
 ) {
     val allModes = ColorMode.entries
-    val alphas   = allModes.map { mode ->
+
+    val alphas = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
-            label         = "alpha_${mode.name}",
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness    = Spring.StiffnessMediumLow,
+            ),
+            label = "alpha_${mode.name}",
         )
     }
+
+    // D-02: hues resolved at composable scope (ReadOnlyComposable calls valid here)
     val hues = allModes.map { it.hue }
 
     val shimmerOffset by rememberInfiniteTransition(label = "shimmer").animateFloat(
-        initialValue  = ShimmerStart,
-        targetValue   = ShimmerEnd,
-        animationSpec = infiniteRepeatable(
+        initialValue   = ShimmerStart,
+        targetValue    = ShimmerEnd,
+        animationSpec  = infiniteRepeatable(
             animation  = tween(2800, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
@@ -119,6 +124,7 @@ private fun ColourPreviewHero(
         val cx = size.width / 2
         val cy = size.height / 2
         val r  = size.width * BlobRadiusFraction
+
         val positions = listOf(
             Offset(cx * 0.3f, cy * 0.5f),
             Offset(cx * 0.9f, cy * 0.4f),
@@ -127,6 +133,7 @@ private fun ColourPreviewHero(
             Offset(cx * 1.1f, cy * 1.6f),
             Offset(cx * 1.7f, cy * 1.5f),
         )
+
         allModes.forEachIndexed { i, _ ->
             drawCircle(
                 brush  = Brush.radialGradient(
@@ -138,11 +145,16 @@ private fun ColourPreviewHero(
                 center = positions.getOrElse(i) { Offset(cx, cy) },
             )
         }
+
         drawRect(
             brush = Brush.linearGradient(
-                colors = listOf(Color.White.copy(0f), Color.White.copy(ShimmerAlpha), Color.White.copy(0f)),
-                start  = Offset(shimmerOffset, 0f),
-                end    = Offset(shimmerOffset + ShimmerWidth, size.height),
+                colors     = listOf(
+                    Color.White.copy(alpha = 0f),
+                    Color.White.copy(alpha = ShimmerAlpha),
+                    Color.White.copy(alpha = 0f),
+                ),
+                start = Offset(shimmerOffset, 0f),
+                end   = Offset(shimmerOffset + ShimmerWidth, size.height),
             ),
         )
     }
@@ -156,8 +168,11 @@ private fun SelectionRow(
 ) {
     val bgAlpha by animateFloatAsState(
         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
-        label         = "selectionBg",
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness    = Spring.StiffnessMedium,
+        ),
+        label = "selectionBg",
     )
     val hue = mode.hue
 
@@ -171,7 +186,8 @@ private fun SelectionRow(
             Text(
                 text  = stringResource(mode.label),
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) PartsTokens.Colors.dialogSelectedText else PartsTokens.Colors.textPrimary,
+                color = if (isSelected) PartsTokens.Colors.dialogSelectedText
+                        else PartsTokens.Colors.textPrimary,
             )
         },
         supportingContent = {
@@ -183,7 +199,7 @@ private fun SelectionRow(
         },
         leadingContent = {
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .size(PartsTokens.colourModeLeadingSize)
                     .clip(CircleShape)
                     .background(hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
@@ -201,7 +217,8 @@ private fun SelectionRow(
             AnimatedContent(
                 targetState   = isSelected,
                 transitionSpec = {
-                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
+                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
+                    fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
                 },
                 label = "checkIcon",
             ) { selected ->
@@ -224,8 +241,10 @@ private fun SelectionRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
-    val context    = LocalContext.current
-    var selectedId by remember { mutableIntStateOf(ColorService.getColorMode(context)) }
+    val context = LocalContext.current
+    var selectedId by remember {
+        mutableIntStateOf(ColorService.getColorMode(context))
+    }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
@@ -265,7 +284,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 modifier   = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
             )
 
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
+            // D-03: heroToCardSpacing (16dp) instead of cardBlockSpacing (was 12dp)
+            Spacer(Modifier.height(PartsTokens.heroToCardSpacing))
 
             PartsCard {
                 ColorMode.entries.forEach { mode ->
