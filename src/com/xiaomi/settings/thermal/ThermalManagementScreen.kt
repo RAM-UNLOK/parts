@@ -7,7 +7,6 @@ package com.xiaomi.settings.thermal
 
 import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
@@ -68,6 +67,7 @@ import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.utils.PartsToast
 import kotlinx.coroutines.launch
 
 data class AppThermalEntry(
@@ -97,7 +97,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     val appList = remember {
         runCatching { ThermalService.getAppList(context) }.getOrElse {
             emptyList<AppThermalEntry>().also {
-                Toast.makeText(context, R.string.thermal_failed_toast, Toast.LENGTH_SHORT).show()
+                PartsToast.show(context, R.string.thermal_failed_toast)
             }
         }
     }
@@ -128,13 +128,68 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
         ) {
-            item(key = "spacer-top") { Spacer(Modifier.height(PartsTokens.cardBlockSpacing)) }
-
-            item(key = "per-app-label") {
-                PartsCategory(stringResource(R.string.thermal_per_app_category))
+            item(key = "global-label") { PartsCategory(stringResource(R.string.thermal_global_label)) }
+            item(key = "global-card") {
+                PartsCard {
+                    ThermalService.profiles().forEach { profile ->
+                        val isActive = profile.id == ThermalService.getGlobalProfile(context)
+                        val bgAlpha by animateFloatAsState(
+                            targetValue   = if (isActive) PartsTokens.selectedStateLayerAlpha else 0f,
+                            animationSpec = PartsTokens.MotionSpringNoBouncy,
+                            label         = "globalBg_${profile.id}",
+                        )
+                        ListItem(
+                            modifier = Modifier
+                                .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+                                .clip(PartsTokens.dialogSelectionShape)
+                                .background(PartsTokens.Colors.dialogSelectedLayer.copy(alpha = bgAlpha))
+                                .clickable(role = Role.RadioButton) {
+                                    runCatching {
+                                        ThermalService.setGlobalProfile(context, profile.id)
+                                    }.onFailure {
+                                        PartsToast.show(context, R.string.thermal_failed_toast)
+                                    }
+                                },
+                            headlineContent = {
+                                Text(
+                                    text  = profile.label,
+                                    style = PartsTokens.Type.rowHeadline,
+                                    color = if (isActive) PartsTokens.Colors.dialogSelectedText
+                                            else         PartsTokens.Colors.textPrimary,
+                                )
+                            },
+                            trailingContent = {
+                                AnimatedContent(
+                                    targetState    = isActive,
+                                    transitionSpec = {
+                                        fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
+                                        fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
+                                    },
+                                    label = "check_${profile.id}",
+                                ) { active ->
+                                    if (active) {
+                                        Icon(
+                                            imageVector        = Icons.Filled.CheckCircle,
+                                            contentDescription = null,
+                                            tint               = PartsTokens.Colors.dialogSelectedText,
+                                            modifier           = Modifier.size(PartsTokens.trailingIconSize),
+                                        )
+                                    } else {
+                                        Box(Modifier.size(PartsTokens.trailingIconSize))
+                                    }
+                                }
+                            },
+                            colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
+                        )
+                    }
+                }
             }
+
+            item(key = "per-app-label") { PartsCategory(stringResource(R.string.thermal_per_app_label)) }
 
             if (appList.isEmpty()) {
                 item(key = "empty") {
@@ -208,7 +263,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                         runCatching {
                                             ThermalService.setAppProfile(context, app.packageName, profile.id)
                                         }.onFailure {
-                                            Toast.makeText(context, R.string.thermal_failed_toast, Toast.LENGTH_SHORT).show()
+                                            PartsToast.show(context, R.string.thermal_failed_toast)
                                         }
                                     }
                                     pendingApp = null
@@ -298,7 +353,6 @@ private fun AppThermalPremiumCard(
                             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                     )
                 }
-
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text     = entry.label,
@@ -308,7 +362,6 @@ private fun AppThermalPremiumCard(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-
                 Button(
                     onClick = onSelectProfile,
                     shape   = PartsTokens.buttonShape,
@@ -325,7 +378,6 @@ private fun AppThermalPremiumCard(
                 }
             }
         }
-
         if (showDivider) {
             HorizontalDivider(
                 modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),

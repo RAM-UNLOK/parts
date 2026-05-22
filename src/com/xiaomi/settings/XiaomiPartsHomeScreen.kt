@@ -11,9 +11,9 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -35,7 +34,6 @@ import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Speaker
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -63,9 +61,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.animation.core.tween
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
+import com.xiaomi.settings.utils.PartsToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,36 +88,23 @@ fun XiaomiPartsHomeScreen(
                              initialStatus == BatteryManager.BATTERY_STATUS_FULL
         showChargingBanner = isCharging
 
-        var activeToast: Toast? = null
-
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
                 val now    = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
-
                 if (now - lastToastTime < PartsTokens.toastDebounceMs) return
                 lastToastTime = now
-
-                activeToast?.cancel()
                 val msgRes = if (plugged) R.string.charging_connected else R.string.charging_disconnected
-                Toast.makeText(ctx, msgRes, Toast.LENGTH_SHORT).also {
-                    it.show()
-                    activeToast = it
-                }
+                PartsToast.show(ctx, msgRes)
             }
         }
-
-        val filter = IntentFilter().apply {
+        context.registerReceiver(receiver, IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
-        }
-        context.registerReceiver(receiver, filter)
-        onDispose {
-            context.unregisterReceiver(receiver)
-            activeToast?.cancel()
-        }
+        })
+        onDispose { context.unregisterReceiver(receiver) }
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
@@ -198,9 +183,7 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            item(key = "display-label") {
-                PartsCategory(stringResource(R.string.display_category))
-            }
+            item(key = "display-label") { PartsCategory(stringResource(R.string.display_category)) }
             item(key = "display-card") {
                 PartsCard {
                     PartsRow(
@@ -215,9 +198,7 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            item(key = "perf-label") {
-                PartsCategory(stringResource(R.string.performance_category))
-            }
+            item(key = "perf-label") { PartsCategory(stringResource(R.string.performance_category)) }
             item(key = "perf-card") {
                 PartsCard {
                     PartsRow(
@@ -240,9 +221,7 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            item(key = "diag-label") {
-                PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
-            }
+            item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
             item(key = "diag-card") {
                 PartsCard {
                     PartsRow(
@@ -250,9 +229,8 @@ fun XiaomiPartsHomeScreen(
                         title   = stringResource(R.string.fingerprint_calibration_title),
                         summary = stringResource(R.string.fingerprint_calibration_summary),
                         onClick = {
-                            if (!CitLauncher.launchFingerprintCalibration(context)) {
-                                Toast.makeText(context, R.string.fingerprint_calibration_not_found, Toast.LENGTH_SHORT).show()
-                            }
+                            if (!CitLauncher.launchFingerprintCalibration(context))
+                                PartsToast.show(context, R.string.fingerprint_calibration_not_found)
                         },
                     )
                     PartsRow(
@@ -260,9 +238,8 @@ fun XiaomiPartsHomeScreen(
                         title       = stringResource(R.string.speaker_calibration_title),
                         summary     = stringResource(R.string.speaker_calibration_summary),
                         onClick     = {
-                            if (!CitLauncher.launchSpeakerCalibration(context)) {
-                                Toast.makeText(context, R.string.speaker_calibration_not_found, Toast.LENGTH_SHORT).show()
-                            }
+                            if (!CitLauncher.launchSpeakerCalibration(context))
+                                PartsToast.show(context, R.string.speaker_calibration_not_found)
                         },
                         showDivider = false,
                     )
@@ -301,7 +278,7 @@ fun PartsCard(
             .padding(horizontal = PartsTokens.contentPaddingHorizontal),
         shape          = PartsTokens.cardShape,
         color          = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = PartsTokens.sp4 - PartsTokens.sp4,
+        tonalElevation = PartsTokens.space4,
     ) {
         Column { content() }
     }

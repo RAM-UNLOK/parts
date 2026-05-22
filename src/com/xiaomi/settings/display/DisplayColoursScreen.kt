@@ -5,9 +5,7 @@
 
 package com.xiaomi.settings.display
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -63,6 +61,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.utils.PartsToast
 
 private typealias ColorMode = ColorService.ColorMode
 
@@ -160,37 +159,24 @@ private fun SelectionRow(
     )
     val hue = mode.hue
 
-    val dotContainerColor by animateColorAsState(
-        targetValue   = if (isSelected) hue.copy(alpha = PartsTokens.selectedDotContainerAlpha)
-                        else            hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha),
-        animationSpec = PartsTokens.MotionSpringColor,
-        label         = "dotContainer",
-    )
-    val dotColor by animateColorAsState(
-        targetValue   = if (isSelected) hue
-                        else            hue.copy(alpha = PartsTokens.colourModeIconDotAlpha),
-        animationSpec = PartsTokens.MotionSpringColor,
-        label         = "dotColor",
-    )
-
     ListItem(
         modifier = Modifier
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .clip(PartsTokens.dialogSelectionShape)
-            .background(PartsTokens.Colors.dialogSelectedLayer.copy(alpha = bgAlpha))
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
             .clickable(role = Role.RadioButton, onClick = onClick),
         headlineContent = {
             Text(
                 text  = stringResource(mode.label),
-                style = PartsTokens.Type.rowHeadline,
+                style = MaterialTheme.typography.bodyLarge,
                 color = if (isSelected) PartsTokens.Colors.dialogSelectedText
-                        else            PartsTokens.Colors.textPrimary,
+                        else PartsTokens.Colors.textPrimary,
             )
         },
         supportingContent = {
             Text(
                 text  = stringResource(mode.description),
-                style = PartsTokens.Type.rowCaption,
+                style = MaterialTheme.typography.bodySmall,
                 color = PartsTokens.Colors.textSecondary,
             )
         },
@@ -199,14 +185,14 @@ private fun SelectionRow(
                 modifier = Modifier
                     .size(PartsTokens.colourModeLeadingSize)
                     .clip(CircleShape)
-                    .background(dotContainerColor),
+                    .background(hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
                 contentAlignment = Alignment.Center,
             ) {
                 Box(
                     modifier = Modifier
                         .size(PartsTokens.colourModeDotSize)
                         .clip(CircleShape)
-                        .background(dotColor),
+                        .background(hue.copy(alpha = PartsTokens.colourModeIconDotAlpha)),
                 )
             }
         },
@@ -231,7 +217,7 @@ private fun SelectionRow(
                 }
             }
         },
-        colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
 }
 
@@ -273,14 +259,11 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
         ) {
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-
             ColourPreviewHero(
                 selectedId = selectedId,
                 modifier   = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
             )
-
-            Spacer(Modifier.height(PartsTokens.heroToCardSpacing))
-
+            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
             PartsCard {
                 ColorMode.entries.forEach { mode ->
                     SelectionRow(
@@ -290,19 +273,13 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                             runCatching {
                                 ColorService.setColorMode(context, mode.id)
                                 selectedId = mode.id
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.color_mode_applied, stringResource(mode.label)),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
                             }.onFailure {
-                                Toast.makeText(context, R.string.display_colour_failed, Toast.LENGTH_SHORT).show()
+                                PartsToast.show(context, R.string.display_colour_failed)
                             }
                         },
                     )
                 }
             }
-
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
         }
     }

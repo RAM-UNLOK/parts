@@ -3,45 +3,10 @@
      Copyright (C) 2025 Paranoid Android
      SPDX-License-Identifier: Apache-2.0
 -->
-<resources>
-    <dimen name="parts_space_4">4dp</dimen>
-    <dimen name="parts_space_8">8dp</dimen>
-    <dimen name="parts_space_12">12dp</dimen>
-    <dimen name="parts_space_16">16dp</dimen>
-    <dimen name="parts_space_20">20dp</dimen>
-    <dimen name="parts_space_24">24dp</dimen>
-    <dimen name="parts_space_28">28dp</dimen>
-    <dimen name="parts_space_32">32dp</dimen>
-    <dimen name="parts_space_40">40dp</dimen>
-    <dimen name="parts_space_48">48dp</dimen>
-    <dimen name="parts_space_56">56dp</dimen>
-
-    <dimen name="parts_content_padding_horizontal">16dp</dimen>
-    <dimen name="parts_row_padding_vertical">16dp</dimen>
-    <dimen name="parts_row_element_spacing">16dp</dimen>
-    <dimen name="parts_card_block_spacing">16dp</dimen>
-    <dimen name="parts_category_top_padding">24dp</dimen>
-    <dimen name="parts_category_bottom_padding">8dp</dimen>
-    <dimen name="parts_list_bottom_padding">32dp</dimen>
-    <dimen name="parts_banner_top_spacing">20dp</dimen>
-    <dimen name="parts_banner_vertical_padding">16dp</dimen>
-    <dimen name="parts_sheet_content_top_padding">8dp</dimen>
-
-    <dimen name="parts_leading_icon_container_size">40dp</dimen>
-    <dimen name="parts_leading_icon_size">24dp</dimen>
-    <dimen name="parts_trailing_icon_size">24dp</dimen>
-    <dimen name="parts_close_icon_size">20dp</dimen>
-    <dimen name="parts_app_icon_size">40dp</dimen>
-    <dimen name="parts_colour_mode_leading_size">40dp</dimen>
-    <dimen name="parts_colour_mode_dot_size">16dp</dimen>
-    <dimen name="parts_hero_preview_height">200dp</dimen>
-    <dimen name="parts_premium_card_elevation">4dp</dimen>
-    <dimen name="parts_divider_thickness">1dp</dimen>
-    <dimen name="parts_dismiss_button_size">32dp</dimen>
-
-    <dimen name="parts_card_corner_radius">28dp</dimen>
-    <dimen name="parts_banner_corner_radius">24dp</dimen>
-    <dimen name="parts_leading_icon_corner_radius">16dp</dimen>
-    <dimen name="parts_dialog_selection_corner_radius">20dp</dimen>
-    <dimen name="parts_bottom_sheet_corner_radius">28dp</dimen>
-</resources>
+<!--
+     No Compose dimension tokens here.
+     All spacing, sizing, and radius values live exclusively in
+     src/com/xiaomi/settings/ui/PartsTokens.kt.
+     This file intentionally contains no <dimen> entries.
+-->
+<resources />

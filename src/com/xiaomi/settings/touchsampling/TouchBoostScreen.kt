@@ -5,17 +5,12 @@
 
 package com.xiaomi.settings.touchsampling
 
-import android.content.Context
-import android.os.UserHandle
-import android.provider.Settings
-import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,11 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.TouchApp
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -44,54 +35,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
-
-private fun readHtsr(context: Context): Boolean =
-    Settings.System.getIntForUser(
-        context.contentResolver,
-        "touch_boost_enabled",
-        0,
-        UserHandle.USER_CURRENT,
-    ) != 0
-
-private fun writeHtsr(context: Context, enabled: Boolean) {
-    Settings.System.putIntForUser(
-        context.contentResolver,
-        "touch_boost_enabled",
-        if (enabled) 1 else 0,
-        UserHandle.USER_CURRENT,
-    )
-}
+import com.xiaomi.settings.utils.PartsToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-    var enabled by remember { mutableStateOf(readHtsr(context)) }
-
-    val iconContainerColor by animateColorAsState(
-        targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
-                        else         PartsTokens.Colors.iconContainer,
-        animationSpec = PartsTokens.MotionSpringColor,
-        label         = "iconContainer",
-    )
-    val iconColor by animateColorAsState(
-        targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
-                        else         PartsTokens.Colors.iconContent,
-        animationSpec = PartsTokens.MotionSpringColor,
-        label         = "iconColor",
-    )
+    val context  = LocalContext.current
+    var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
+    )
+
+    val iconContainer by animateColorAsState(
+        targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
+                        else         MaterialTheme.colorScheme.surfaceContainerHigh,
+        animationSpec = PartsTokens.MotionSpringColor,
+        label         = "touchIconContainer",
+    )
+    val iconContent by animateColorAsState(
+        targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
+                        else         MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = PartsTokens.MotionSpringColor,
+        label         = "touchIconContent",
     )
 
     Scaffold(
@@ -114,99 +90,78 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState()),
+        LazyColumn(
+            modifier       = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                    .clip(PartsTokens.bannerShape)
-                    .background(PartsTokens.Colors.infoBannerContainer)
-                    .padding(
-                        horizontal = PartsTokens.contentPaddingHorizontal,
-                        vertical   = PartsTokens.bannerVerticalPadding,
-                    ),
-                horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                verticalAlignment     = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector        = Icons.Filled.Info,
-                    contentDescription = null,
-                    tint               = PartsTokens.Colors.infoBannerContent,
-                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                )
-                Text(
-                    text  = stringResource(R.string.touch_boost_info),
-                    style = PartsTokens.Type.infoBody,
-                    color = PartsTokens.Colors.infoBannerContent,
-                )
-            }
-
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-
-            PartsCard {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(
-                            role    = Role.Switch,
-                            onClick = {
-                                val next = !enabled
+            item(key = "toggle") {
+                PartsCard(
+                    modifier = Modifier.padding(top = PartsTokens.cardBlockSpacing),
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                                vertical   = PartsTokens.rowPaddingVertical,
+                            ),
+                        verticalAlignment     = Alignment.CenterVertically,
+                    ) {
+                        Box(
+                            modifier         = Modifier
+                                .size(PartsTokens.leadingIconContainerSize)
+                                .clip(PartsTokens.leadingIconShape)
+                                .background(iconContainer),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Icon(
+                                imageVector        = ImageVector.vectorResource(R.drawable.ic_touch_boost),
+                                contentDescription = null,
+                                tint               = iconContent,
+                                modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                            )
+                        }
+                        Spacer(Modifier.size(PartsTokens.rowElementSpacing))
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text  = stringResource(R.string.touch_boost_title),
+                                style = PartsTokens.Type.rowHeadline,
+                                color = PartsTokens.Colors.textPrimary,
+                            )
+                            Text(
+                                text  = stringResource(R.string.touch_boost_summary),
+                                style = PartsTokens.Type.rowSupporting,
+                                color = PartsTokens.Colors.textSecondary,
+                            )
+                        }
+                        Switch(
+                            checked         = enabled,
+                            onCheckedChange = { checked ->
                                 runCatching {
-                                    writeHtsr(context, next)
-                                    enabled = next
+                                    TouchSamplingService.setEnabled(context, checked)
+                                    enabled = checked
                                 }.onFailure {
-                                    Toast.makeText(context, R.string.touch_boost_write_failed, Toast.LENGTH_SHORT).show()
+                                    PartsToast.show(context, R.string.touch_boost_failed)
                                 }
                             },
                         )
-                        .padding(
-                            horizontal = PartsTokens.contentPaddingHorizontal,
-                            vertical   = PartsTokens.rowPaddingVertical,
-                        ),
-                    verticalAlignment     = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(PartsTokens.leadingIconContainerSize)
-                            .clip(PartsTokens.leadingIconShape)
-                            .background(iconContainerColor),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Filled.TouchApp,
-                            contentDescription = null,
-                            tint               = iconColor,
-                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                        )
                     }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text  = stringResource(R.string.touch_boost_switch_title),
-                            style = PartsTokens.Type.rowHeadline,
-                            color = PartsTokens.Colors.textPrimary,
-                        )
-                        Text(
-                            text  = stringResource(R.string.touch_boost_switch_summary),
-                            style = PartsTokens.Type.rowSupporting,
-                            color = PartsTokens.Colors.textSecondary,
-                        )
-                    }
-                    Switch(
-                        checked         = enabled,
-                        onCheckedChange = null,
-                    )
                 }
             }
 
-            Spacer(Modifier.height(PartsTokens.listBottomPadding))
+            item(key = "info") {
+                Text(
+                    text     = stringResource(R.string.touch_boost_description),
+                    style    = PartsTokens.Type.infoBody,
+                    color    = PartsTokens.Colors.textSecondary,
+                    modifier = Modifier.padding(
+                        horizontal = PartsTokens.contentPaddingHorizontal,
+                        vertical   = PartsTokens.rowPaddingVertical,
+                    ),
+                )
+            }
+
+            item(key = "spacer") { Spacer(Modifier.height(PartsTokens.listBottomPadding)) }
         }
     }
 }

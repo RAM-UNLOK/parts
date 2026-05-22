@@ -4,117 +4,20 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-
     <!--
-        XiaomiParts.Theme — window theme for XiaomiPartsActivity.
-
-        Parent: @android:style/Theme.DeviceDefault.NoActionBar
-          ● Guaranteed present in framework-res.apk on all AOSP/platform
-            Soong builds.
-          ● Do NOT use Theme.Material3.* or Theme.MaterialComponents.*
-            here — those are Gradle/androidx artifacts not compiled into
-            framework-res.apk and will fail aapt2 link at build time.
-
-        Dynamic colour (Monet / Material You):
-          ● On Android 12+ the system automatically resolves
-            ?android:attr/colorPrimary, ?colorPrimaryContainer, etc.
-            from the wallpaper-derived tonal palette.
-          ● The Compose side reads MaterialTheme.colorScheme.* which is
-            sourced from dynamicDark/LightColorScheme() in Theme.kt —
-            fully independent of this XML theme.
-
-        aapt2 / framework-res compatibility rules applied here:
-          ● ONLY use android:attr/ for attrs that are public AND present
-            in the platform's framework-res.apk at the target API level.
-          ● M3 container / on-* / outline attrs (colorOnPrimary, etc.)
-            do NOT exist in android:attr/ — they live in the
-            MaterialComponents attr namespace merged via static_libs.
-            Reference them WITHOUT the android: prefix.
-          ● android:attr/colorSurface and android:attr/colorSurfaceVariant
-            exist but are marked private (@hide) — aapt2 rejects them.
-            Map to the nearest public equivalents instead.
-
-        DO NOT declare hardcoded primary/secondary/tertiary hex colors.
-        The whole point is Monet: every user gets their wallpaper color.
+        Window-chrome only. Compose owns all rendering and theming.
+        No color bridge attrs — MaterialTheme.colorScheme handles everything.
     -->
     <style name="XiaomiParts.Theme"
            parent="@android:style/Theme.DeviceDefault.NoActionBar">
-
-        <!-- ── Window chrome ──────────────────────────────── -->
-        <!-- Match Monet colorBackground: no flash before Compose frame 1 -->
         <item name="android:windowBackground">?android:attr/colorBackground</item>
-
-        <!-- Edge-to-edge: draw behind status + navigation bars -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
-
-        <!-- No system scrim overlays on transparent bars (API 29+) -->
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:enforceStatusBarContrast">false</item>
-
-        <!-- Allow content to extend behind system bars -->
         <item name="android:clipToPadding">false</item>
         <item name="android:clipChildren">false</item>
-
-        <!-- Compose WindowInsets.ime handles keyboard avoidance -->
         <item name="android:windowSoftInputMode">adjustResize</item>
-
-        <!-- ── M3 colour attrs (View-system bridge) ──────────────────
-
-             Goal: View-system widgets that reference ?colorPrimary (no
-             android: prefix) get a Monet-derived colour.
-
-             Rules:
-               [A] android:attr/colorPrimary, colorSecondary,
-                   colorTertiary, colorError — public in framework-res
-                   on API 31+. Safe to reference with android: prefix.
-
-               [B] All on-*/container variants (colorOnPrimary,
-                   colorPrimaryContainer, etc.) — NOT in android:attr/.
-                   Reference the MaterialComponents attr directly (no
-                   android: prefix). The MaterialComponents static lib
-                   defines them; Monet populates them at runtime.
-
-               [C] colorSurface, colorSurfaceVariant — present in
-                   android: but @hide / private. aapt2 blocks them.
-                   Map to the nearest public equivalents:
-                     colorSurface        → ?android:attr/colorBackground
-                     colorSurfaceVariant → ?android:attr/colorBackgroundFloating
-        -->
-
-        <!-- [A] Base roles — public android: attrs, safe to reference -->
-        <item name="colorPrimary">?android:attr/colorPrimary</item>
-        <item name="colorSecondary">?android:attr/colorSecondary</item>
-        <item name="colorError">?android:attr/colorError</item>
-
-        <!-- [B] Container / on-* roles — MaterialComponents namespace only.
-             Do NOT add android: prefix; these attrs are not in framework-res. -->
-        <item name="colorOnPrimary">?attr/colorOnPrimary</item>
-        <item name="colorPrimaryContainer">?attr/colorPrimaryContainer</item>
-        <item name="colorOnPrimaryContainer">?attr/colorOnPrimaryContainer</item>
-
-        <item name="colorOnSecondary">?attr/colorOnSecondary</item>
-        <item name="colorSecondaryContainer">?attr/colorSecondaryContainer</item>
-        <item name="colorOnSecondaryContainer">?attr/colorOnSecondaryContainer</item>
-
-        <item name="colorTertiary">?attr/colorTertiary</item>
-        <item name="colorOnTertiary">?attr/colorOnTertiary</item>
-        <item name="colorTertiaryContainer">?attr/colorTertiaryContainer</item>
-        <item name="colorOnTertiaryContainer">?attr/colorOnTertiaryContainer</item>
-
-        <item name="colorOnSurface">?attr/colorOnSurface</item>
-        <item name="colorOnSurfaceVariant">?attr/colorOnSurfaceVariant</item>
-
-        <item name="colorOnError">?attr/colorOnError</item>
-        <item name="colorOutline">?attr/colorOutline</item>
-
-        <!-- [C] Surface roles — android: variants are private (@hide).
-             Use the nearest public android: equivalents as the XML
-             fallback. Compose overrides these at runtime anyway. -->
-        <item name="colorSurface">?android:attr/colorBackground</item>
-        <item name="colorSurfaceVariant">?android:attr/colorBackgroundFloating</item>
-
     </style>
-
 </resources>
