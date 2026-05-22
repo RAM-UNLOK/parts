@@ -21,13 +21,16 @@ object PartsTokens {
     // --- Spacing ---
     val contentPaddingHorizontal: Dp = 16.dp
     val rowPaddingVertical: Dp       = 14.dp
-    val appRowPaddingVertical: Dp    = 12.dp
     val rowElementSpacing: Dp        = 16.dp
-    val cardBlockSpacing: Dp         = 12.dp
+    val cardBlockSpacing: Dp         = 16.dp  // category-to-card, card-to-card block gap
+    val appRowSpacing: Dp            = 2.dp   // gap between per-app rows inside a grouped card
+    val heroToCardSpacing: Dp        = 16.dp  // hero preview widget to content card below
     val categoryTopPadding: Dp       = 20.dp
     val categoryBottomPadding: Dp    = 6.dp
     val listBottomPadding: Dp        = 32.dp
-    val bannerIconTopOffset: Dp      = 1.dp
+    val bannerTopSpacing: Dp         = 20.dp  // top padding for first LazyColumn banner item
+    val bannerIconTopOffset: Dp      = 2.dp
+    val sheetContentTopPadding: Dp   = 8.dp   // clearance below M3 sheet drag handle
 
     // --- Icon sizes ---
     val leadingIconContainerSize: Dp = 40.dp
@@ -42,6 +45,7 @@ object PartsTokens {
     // --- Shapes ---
     val cardShape              = RoundedCornerShape(24.dp)
     val bannerShape            = RoundedCornerShape(20.dp)
+    val iconContainerShape     = RoundedCornerShape(12.dp)  // M3E squircle (Android 14+ Settings style)
     val dialogSelectionShape   = RoundedCornerShape(16.dp)
     val buttonShape            = RoundedCornerShape(50.dp)
     val bottomSheetTopShape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
@@ -50,6 +54,9 @@ object PartsTokens {
     val colourModeIconContainerAlpha: Float = 0.18f
     val colourModeIconDotAlpha: Float       = 0.85f
     val selectedStateLayerAlpha: Float      = 0.12f
+
+    // --- Elevation ---
+    val premiumCardElevation: Dp = 2.dp
 
     // --- Motion ---
     val MotionSpringEnter: SpringSpec<Float> = spring(
