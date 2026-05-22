@@ -11,14 +11,15 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
-import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -26,14 +27,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Speaker
@@ -67,6 +71,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
+import com.xiaomi.settings.utils.PartsToast
 
 private const val TOAST_DEBOUNCE_MS = 2_000L
 
@@ -84,47 +89,37 @@ fun XiaomiPartsHomeScreen(
     var lastToastTime      by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
-        val stickyIntent = context.registerReceiver(
-            null,
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED),
-        )
-        val initialStatus = stickyIntent?.getIntExtra(
-            BatteryManager.EXTRA_STATUS,
-            BatteryManager.BATTERY_STATUS_UNKNOWN,
-        ) ?: BatteryManager.BATTERY_STATUS_UNKNOWN
-        isCharging = initialStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
-                     initialStatus == BatteryManager.BATTERY_STATUS_FULL
+        val stickyIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val status = stickyIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, BatteryManager.BATTERY_STATUS_UNKNOWN)
+            ?: BatteryManager.BATTERY_STATUS_UNKNOWN
+        isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
         showChargingBanner = isCharging
-
-        var activeToast: Toast? = null
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val now     = SystemClock.elapsedRealtime()
+                val now    = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
-
-                if (now - lastToastTime < TOAST_DEBOUNCE_MS) return
-                lastToastTime = now
-
-                activeToast?.cancel()
-                val msgRes = if (plugged) R.string.charging_connected
-                             else         R.string.charging_disconnected
-                val t = Toast.makeText(ctx, msgRes, Toast.LENGTH_SHORT)
-                t.show()
-                activeToast = t
+                if (now - lastToastTime >= TOAST_DEBOUNCE_MS) {
+                    lastToastTime = now
+                    PartsToast.show(
+                        ctx,
+                        if (plugged) R.string.charging_connected else R.string.charging_disconnected,
+                    )
+                }
             }
         }
-
-        val filter = IntentFilter().apply {
-            addAction(Intent.ACTION_POWER_CONNECTED)
-            addAction(Intent.ACTION_POWER_DISCONNECTED)
-        }
-        context.registerReceiver(receiver, filter)
+        context.registerReceiver(
+            receiver,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_POWER_CONNECTED)
+                addAction(Intent.ACTION_POWER_DISCONNECTED)
+            },
+        )
         onDispose {
             context.unregisterReceiver(receiver)
-            activeToast?.cancel()
+            PartsToast.cancel()
         }
     }
 
@@ -154,18 +149,20 @@ fun XiaomiPartsHomeScreen(
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier       = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier       = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
-
+            // ── Charging banner ───────────────────────────────────────────
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
-                    enter   = fadeIn(tween(220)) + slideInVertically(
-                        animationSpec  = spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow),
+                    enter = fadeIn(tween(240)) + slideInVertically(
+                        spring(Spring.DampingRatioNoBouncy, Spring.StiffnessMediumLow),
                         initialOffsetY = { -it / 2 },
+                    ),
+                    exit = fadeOut(tween(180)) + slideOutVertically(
+                        tween(180),
+                        targetOffsetY = { -it / 2 },
                     ),
                 ) {
                     Row(
@@ -176,8 +173,10 @@ fun XiaomiPartsHomeScreen(
                             .clip(PartsTokens.bannerShape)
                             .background(MaterialTheme.colorScheme.tertiaryContainer)
                             .padding(
-                                horizontal = PartsTokens.contentPaddingHorizontal,
-                                vertical   = PartsTokens.rowPaddingVertical,
+                                start  = PartsTokens.contentPaddingHorizontal,
+                                end    = 4.dp,
+                                top    = 12.dp,
+                                bottom = 12.dp,
                             ),
                         horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                         verticalAlignment     = Alignment.CenterVertically,
@@ -186,7 +185,7 @@ fun XiaomiPartsHomeScreen(
                             imageVector        = Icons.Filled.BatteryChargingFull,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                            modifier           = Modifier.size(20.dp),
                         )
                         Text(
                             text     = stringResource(R.string.charging_connected),
@@ -194,7 +193,6 @@ fun XiaomiPartsHomeScreen(
                             color    = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.weight(1f),
                         )
-                        // H-03: use default IconButton (48dp touch target) not size(32dp)
                         IconButton(onClick = { showChargingBanner = false }) {
                             Icon(
                                 imageVector        = Icons.Filled.Close,
@@ -207,80 +205,82 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            item(key = "display-label") {
-                PartsCategory(stringResource(R.string.display_category))
-            }
-            item(key = "display-card") {
-                PartsCard {
-                    PartsRow(
-                        icon        = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        title       = stringResource(R.string.display_colours_title),
-                        summary     = stringResource(R.string.display_colours_summary),
-                        onClick     = onNavigateToDisplay,
-                        showDivider = false,
-                    )
-                }
-            }
-
-            item(key = "perf-label") {
-                PartsCategory(stringResource(R.string.performance_category))
-            }
-            item(key = "perf-card") {
-                PartsCard {
-                    PartsRow(
-                        icon    = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
-                        title   = stringResource(R.string.thermal_title),
-                        summary = stringResource(R.string.thermal_summary),
-                        onClick = onNavigateToThermal,
-                    )
-                    PartsRow(
-                        icon        = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                        title       = stringResource(R.string.touch_boost_title),
-                        summary     = stringResource(R.string.touch_boost_summary),
-                        onClick     = onNavigateToTouch,
-                        showDivider = false,
-                    )
-                }
+            // ── Display ───────────────────────────────────────────────────
+            partsSection(
+                labelKey  = "display-label",
+                cardKey   = "display-card",
+                label     = stringResource(R.string.display_category),
+            ) {
+                PartsRow(
+                    icon        = ImageVector.vectorResource(R.drawable.ic_display_colours),
+                    title       = stringResource(R.string.display_colours_title),
+                    summary     = stringResource(R.string.display_colours_summary),
+                    onClick     = onNavigateToDisplay,
+                    showDivider = false,
+                )
             }
 
-            item(key = "diag-label") {
-                PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics))
+            // ── Performance ───────────────────────────────────────────────
+            partsSection(
+                labelKey = "perf-label",
+                cardKey  = "perf-card",
+                label    = stringResource(R.string.performance_category),
+            ) {
+                PartsRow(
+                    icon    = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
+                    title   = stringResource(R.string.thermal_title),
+                    summary = stringResource(R.string.thermal_summary),
+                    onClick = onNavigateToThermal,
+                )
+                PartsRow(
+                    icon        = ImageVector.vectorResource(R.drawable.ic_touch_boost),
+                    title       = stringResource(R.string.touch_boost_title),
+                    summary     = stringResource(R.string.touch_boost_summary),
+                    onClick     = onNavigateToTouch,
+                    showDivider = false,
+                )
             }
-            item(key = "diag-card") {
-                PartsCard {
-                    PartsRow(
-                        icon    = Icons.Filled.Fingerprint,
-                        title   = stringResource(R.string.fingerprint_calibration_title),
-                        summary = stringResource(R.string.fingerprint_calibration_summary),
-                        onClick = {
-                            if (!CitLauncher.launchFingerprintCalibration(context)) {
-                                Toast.makeText(
-                                    context,
-                                    R.string.fingerprint_calibration_not_found,
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
-                        },
-                    )
-                    PartsRow(
-                        icon        = Icons.Filled.Speaker,
-                        title       = stringResource(R.string.speaker_calibration_title),
-                        summary     = stringResource(R.string.speaker_calibration_summary),
-                        onClick     = {
-                            if (!CitLauncher.launchSpeakerCalibration(context)) {
-                                Toast.makeText(
-                                    context,
-                                    R.string.speaker_calibration_not_found,
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
-                        },
-                        showDivider = false,
-                    )
-                }
+
+            // ── Diagnostics ───────────────────────────────────────────────
+            partsSection(
+                labelKey = "diag-label",
+                cardKey  = "diag-card",
+                label    = stringResource(R.string.xiaomi_parts_category_diagnostics),
+            ) {
+                PartsRow(
+                    icon    = Icons.Filled.Fingerprint,
+                    title   = stringResource(R.string.fingerprint_calibration_title),
+                    summary = stringResource(R.string.fingerprint_calibration_summary),
+                    onClick = {
+                        if (!CitLauncher.launchFingerprintCalibration(context)) {
+                            PartsToast.show(context, R.string.fingerprint_calibration_not_found)
+                        }
+                    },
+                )
+                PartsRow(
+                    icon        = Icons.Filled.Speaker,
+                    title       = stringResource(R.string.speaker_calibration_title),
+                    summary     = stringResource(R.string.speaker_calibration_summary),
+                    onClick     = {
+                        if (!CitLauncher.launchSpeakerCalibration(context)) {
+                            PartsToast.show(context, R.string.speaker_calibration_not_found)
+                        }
+                    },
+                    showDivider = false,
+                )
             }
         }
     }
+}
+
+private fun LazyListScope.partsSection(
+    labelKey: String,
+    cardKey:  String,
+    label:    String,
+    content:  @Composable () -> Unit,
+) {
+    item(key = labelKey) { PartsCategory(label) }
+    item(key = cardKey)  { PartsCard { content() } }
 }
 
 @Composable
@@ -324,14 +324,14 @@ fun PartsRow(
     title:       String,
     summary:     String,
     onClick:     () -> Unit,
-    modifier:    Modifier  = Modifier,
-    showDivider: Boolean   = true,
+    modifier:    Modifier = Modifier,
+    showDivider: Boolean  = true,
     trailing:    @Composable () -> Unit = {
         Icon(
-            imageVector        = Icons.Filled.ChevronRight,
+            imageVector        = Icons.AutoMirrored.Filled.ArrowForwardIos,
             contentDescription = null,
             tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier           = Modifier.size(PartsTokens.trailingIconSize),
+            modifier           = Modifier.size(16.dp),
         )
     },
 ) {
@@ -347,7 +347,6 @@ fun PartsRow(
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
         ) {
-            // H-02: squircle shape instead of CircleShape
             Box(
                 modifier         = Modifier
                     .size(PartsTokens.leadingIconContainerSize)
@@ -378,7 +377,7 @@ fun PartsRow(
         }
         if (showDivider) {
             HorizontalDivider(
-                modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                modifier  = Modifier.padding(start = PartsTokens.contentPaddingHorizontal + PartsTokens.leadingIconContainerSize + PartsTokens.rowElementSpacing),
                 thickness = DividerDefaults.Thickness,
                 color     = MaterialTheme.colorScheme.outlineVariant,
             )
