@@ -10,15 +10,14 @@ import android.graphics.drawable.Drawable
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateFloatAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +35,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DividerDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -59,7 +57,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -90,7 +87,7 @@ private fun appIcon(packageName: String): Drawable? {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
-    val context   = LocalContext.current
+    val context    = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope      = rememberCoroutineScope()
 
@@ -107,7 +104,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 
     Scaffold(
@@ -131,9 +128,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier = Modifier.fillMaxSize().padding(innerPadding),
         ) {
             item(key = "spacer-top") { Spacer(Modifier.height(PartsTokens.cardBlockSpacing)) }
 
@@ -145,7 +140,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 item(key = "empty") {
                     Text(
                         text     = stringResource(R.string.thermal_no_apps),
-                        style    = MaterialTheme.typography.bodyMedium,
+                        style    = PartsTokens.Type.rowSupporting,
                         color    = PartsTokens.Colors.textSecondary,
                         modifier = Modifier.padding(
                             horizontal = PartsTokens.contentPaddingHorizontal,
@@ -159,8 +154,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     key   = { _, entry -> entry.packageName },
                 ) { index, entry ->
                     AppThermalPremiumCard(
-                        entry       = entry,
-                        showDivider = index < appList.lastIndex,
+                        entry           = entry,
+                        showDivider     = index < appList.lastIndex,
                         onSelectProfile = {
                             pendingApp = entry
                             showSheet  = true
@@ -187,7 +182,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 Spacer(Modifier.height(PartsTokens.sheetContentTopPadding))
                 Text(
                     text     = stringResource(R.string.thermal_select_profile),
-                    style    = MaterialTheme.typography.titleMedium,
+                    style    = PartsTokens.Type.sheetTitle,
                     color    = PartsTokens.Colors.textPrimary,
                     modifier = Modifier.padding(
                         horizontal = PartsTokens.contentPaddingHorizontal,
@@ -198,17 +193,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     val isSelected = profile.id == pendingApp?.profileId
                     val bgAlpha by animateFloatAsState(
                         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-                        animationSpec = spring(
-                            dampingRatio = Spring.DampingRatioNoBouncy,
-                            stiffness    = Spring.StiffnessMedium,
-                        ),
-                        label = "profileBg_${profile.id}",
+                        animationSpec = PartsTokens.MotionSpringNoBouncy,
+                        label         = "profileBg_${profile.id}",
                     )
                     ListItem(
                         modifier = Modifier
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                             .clip(PartsTokens.dialogSelectionShape)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+                            .background(PartsTokens.Colors.dialogSelectedLayer.copy(alpha = bgAlpha))
                             .clickable(role = Role.RadioButton) {
                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                                     showSheet = false
@@ -216,11 +208,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                         runCatching {
                                             ThermalService.setAppProfile(context, app.packageName, profile.id)
                                         }.onFailure {
-                                            Toast.makeText(
-                                                context,
-                                                R.string.thermal_failed_toast,
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
+                                            Toast.makeText(context, R.string.thermal_failed_toast, Toast.LENGTH_SHORT).show()
                                         }
                                     }
                                     pendingApp = null
@@ -229,9 +217,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         headlineContent = {
                             Text(
                                 text  = profile.label,
-                                style = MaterialTheme.typography.bodyLarge,
+                                style = PartsTokens.Type.rowHeadline,
                                 color = if (isSelected) PartsTokens.Colors.dialogSelectedText
-                                        else PartsTokens.Colors.textPrimary,
+                                        else            PartsTokens.Colors.textPrimary,
                             )
                         },
                         trailingContent = {
@@ -255,7 +243,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 }
                             }
                         },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                        colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
                     )
                 }
             }
@@ -283,7 +271,7 @@ private fun AppThermalPremiumCard(
             elevation = CardDefaults.elevatedCardElevation(
                 defaultElevation = PartsTokens.premiumCardElevation,
             ),
-            colors = CardDefaults.elevatedCardColors(
+            colors    = CardDefaults.elevatedCardColors(
                 containerColor = PartsTokens.Colors.premiumCardSurface,
             ),
         ) {
@@ -300,13 +288,13 @@ private fun AppThermalPremiumCard(
                         contentDescription = null,
                         modifier           = Modifier
                             .size(PartsTokens.appIconSize)
-                            .clip(PartsTokens.iconContainerShape),
+                            .clip(PartsTokens.leadingIconShape),
                     )
                 } else {
                     Box(
                         modifier = Modifier
                             .size(PartsTokens.appIconSize)
-                            .clip(PartsTokens.iconContainerShape)
+                            .clip(PartsTokens.leadingIconShape)
                             .background(MaterialTheme.colorScheme.surfaceContainerHighest),
                     )
                 }
@@ -314,7 +302,7 @@ private fun AppThermalPremiumCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text     = entry.label,
-                        style    = MaterialTheme.typography.titleSmall,
+                        style    = PartsTokens.Type.cardTitle,
                         color    = PartsTokens.Colors.premiumCardContent,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -325,13 +313,13 @@ private fun AppThermalPremiumCard(
                     onClick = onSelectProfile,
                     shape   = PartsTokens.buttonShape,
                     colors  = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor   = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = PartsTokens.Colors.premiumCardButton,
+                        contentColor   = PartsTokens.Colors.premiumCardButtonContent,
                     ),
                 ) {
                     Text(
                         text     = ThermalService.profileLabel(entry.profileId),
-                        style    = MaterialTheme.typography.labelMedium,
+                        style    = PartsTokens.Type.buttonLabel,
                         maxLines = 1,
                     )
                 }
@@ -341,8 +329,8 @@ private fun AppThermalPremiumCard(
         if (showDivider) {
             HorizontalDivider(
                 modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                thickness = DividerDefaults.Thickness,
-                color     = MaterialTheme.colorScheme.outlineVariant,
+                thickness = PartsTokens.dividerThickness,
+                color     = PartsTokens.Colors.outlineVariant,
             )
         }
     }

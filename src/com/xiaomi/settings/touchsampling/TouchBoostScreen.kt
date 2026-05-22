@@ -10,9 +10,7 @@ import android.os.UserHandle
 import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -81,25 +79,19 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     val iconContainerColor by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
                         else         PartsTokens.Colors.iconContainer,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
-        label = "iconContainer",
+        animationSpec = PartsTokens.MotionSpringColor,
+        label         = "iconContainer",
     )
     val iconColor by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
                         else         PartsTokens.Colors.iconContent,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
-        label = "iconColor",
+        animationSpec = PartsTokens.MotionSpringColor,
+        label         = "iconColor",
     )
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 
     Scaffold(
@@ -135,10 +127,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     .fillMaxWidth()
                     .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                     .clip(PartsTokens.bannerShape)
-                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .background(PartsTokens.Colors.infoBannerContainer)
                     .padding(
                         horizontal = PartsTokens.contentPaddingHorizontal,
-                        vertical   = PartsTokens.rowPaddingVertical,
+                        vertical   = PartsTokens.bannerVerticalPadding,
                     ),
                 horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                 verticalAlignment     = Alignment.CenterVertically,
@@ -146,13 +138,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 Icon(
                     imageVector        = Icons.Filled.Info,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                    tint               = PartsTokens.Colors.infoBannerContent,
                     modifier           = Modifier.size(PartsTokens.leadingIconSize),
                 )
                 Text(
                     text  = stringResource(R.string.touch_boost_info),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                    style = PartsTokens.Type.infoBody,
+                    color = PartsTokens.Colors.infoBannerContent,
                 )
             }
 
@@ -170,11 +162,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                                     writeHtsr(context, next)
                                     enabled = next
                                 }.onFailure {
-                                    Toast.makeText(
-                                        context,
-                                        R.string.touch_boost_write_failed,
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
+                                    Toast.makeText(context, R.string.touch_boost_write_failed, Toast.LENGTH_SHORT).show()
                                 }
                             },
                         )
@@ -188,7 +176,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Box(
                         modifier = Modifier
                             .size(PartsTokens.leadingIconContainerSize)
-                            .clip(PartsTokens.iconContainerShape)
+                            .clip(PartsTokens.leadingIconShape)
                             .background(iconContainerColor),
                         contentAlignment = Alignment.Center,
                     ) {
@@ -202,12 +190,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text  = stringResource(R.string.touch_boost_switch_title),
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = PartsTokens.Type.rowHeadline,
                             color = PartsTokens.Colors.textPrimary,
                         )
                         Text(
                             text  = stringResource(R.string.touch_boost_switch_summary),
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = PartsTokens.Type.rowSupporting,
                             color = PartsTokens.Colors.textSecondary,
                         )
                     }

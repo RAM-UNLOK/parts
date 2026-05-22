@@ -11,12 +11,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -78,12 +76,6 @@ private val ColorMode.hue: Color
         ColorMode.SRGB      -> PartsTokens.Colors.Hues.srgb
     }
 
-private const val ShimmerStart       = -600f
-private const val ShimmerEnd         = 1200f
-private const val ShimmerWidth       = 300f
-private const val ShimmerAlpha       = 0.05f
-private const val BlobRadiusFraction = 0.38f
-
 @Composable
 private fun ColourPreviewHero(
     selectedId: Int,
@@ -93,20 +85,17 @@ private fun ColourPreviewHero(
     val alphas   = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness    = Spring.StiffnessMediumLow,
-            ),
-            label = "alpha_${mode.name}",
+            animationSpec = PartsTokens.MotionSpringEnter,
+            label         = "alpha_${mode.name}",
         )
     }
     val hues = allModes.map { it.hue }
 
     val shimmerOffset by rememberInfiniteTransition(label = "shimmer").animateFloat(
-        initialValue  = ShimmerStart,
-        targetValue   = ShimmerEnd,
+        initialValue  = PartsTokens.shimmerStartPx,
+        targetValue   = PartsTokens.shimmerEndPx,
         animationSpec = infiniteRepeatable(
-            animation  = tween(2800, easing = LinearEasing),
+            animation  = tween(PartsTokens.motionShimmerTweenMs, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
         label = "shimmerOffset",
@@ -119,9 +108,9 @@ private fun ColourPreviewHero(
             .clip(PartsTokens.cardShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
-        val cx = size.width / 2
+        val cx = size.width  / 2
         val cy = size.height / 2
-        val r  = size.width * BlobRadiusFraction
+        val r  = size.width  * PartsTokens.blobRadiusFraction
 
         val positions = listOf(
             Offset(cx * 0.3f, cy * 0.5f),
@@ -148,11 +137,11 @@ private fun ColourPreviewHero(
             brush = Brush.linearGradient(
                 colors = listOf(
                     Color.White.copy(alpha = 0f),
-                    Color.White.copy(alpha = ShimmerAlpha),
+                    Color.White.copy(alpha = PartsTokens.shimmerAlpha),
                     Color.White.copy(alpha = 0f),
                 ),
                 start = Offset(shimmerOffset, 0f),
-                end   = Offset(shimmerOffset + ShimmerWidth, size.height),
+                end   = Offset(shimmerOffset + PartsTokens.shimmerWidthPx, size.height),
             ),
         )
     }
@@ -166,43 +155,34 @@ private fun SelectionRow(
 ) {
     val bgAlpha by animateFloatAsState(
         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMedium,
-        ),
-        label = "selectionBg",
+        animationSpec = PartsTokens.MotionSpringNoBouncy,
+        label         = "selectionBg",
     )
     val hue = mode.hue
 
     val dotContainerColor by animateColorAsState(
-        targetValue   = if (isSelected) hue.copy(alpha = 0.32f)
+        targetValue   = if (isSelected) hue.copy(alpha = PartsTokens.selectedDotContainerAlpha)
                         else            hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha),
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
-        label = "dotContainer",
+        animationSpec = PartsTokens.MotionSpringColor,
+        label         = "dotContainer",
     )
     val dotColor by animateColorAsState(
         targetValue   = if (isSelected) hue
                         else            hue.copy(alpha = PartsTokens.colourModeIconDotAlpha),
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
-        label = "dotColor",
+        animationSpec = PartsTokens.MotionSpringColor,
+        label         = "dotColor",
     )
 
     ListItem(
         modifier = Modifier
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .clip(PartsTokens.dialogSelectionShape)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+            .background(PartsTokens.Colors.dialogSelectedLayer.copy(alpha = bgAlpha))
             .clickable(role = Role.RadioButton, onClick = onClick),
         headlineContent = {
             Text(
                 text  = stringResource(mode.label),
-                style = MaterialTheme.typography.bodyLarge,
+                style = PartsTokens.Type.rowHeadline,
                 color = if (isSelected) PartsTokens.Colors.dialogSelectedText
                         else            PartsTokens.Colors.textPrimary,
             )
@@ -210,7 +190,7 @@ private fun SelectionRow(
         supportingContent = {
             Text(
                 text  = stringResource(mode.description),
-                style = MaterialTheme.typography.bodySmall,
+                style = PartsTokens.Type.rowCaption,
                 color = PartsTokens.Colors.textSecondary,
             )
         },
@@ -251,19 +231,19 @@ private fun SelectionRow(
                 }
             }
         },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
+    val context    = LocalContext.current
     var selectedId by remember { mutableIntStateOf(ColorService.getColorMode(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = 2f),
+        flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 
     Scaffold(
@@ -310,12 +290,13 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                             runCatching {
                                 ColorService.setColorMode(context, mode.id)
                                 selectedId = mode.id
-                            }.onFailure {
                                 Toast.makeText(
                                     context,
-                                    R.string.display_colour_failed,
+                                    context.getString(R.string.color_mode_applied, stringResource(mode.label)),
                                     Toast.LENGTH_SHORT,
                                 ).show()
+                            }.onFailure {
+                                Toast.makeText(context, R.string.display_colour_failed, Toast.LENGTH_SHORT).show()
                             }
                         },
                     )

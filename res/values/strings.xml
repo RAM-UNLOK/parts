@@ -4,18 +4,16 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
-    <!-- Application label -->
     <string name="app_name">Xiaomi Parts</string>
 
     <!-- ── Xiaomi Parts Hub ────────────────────────────────────────── -->
     <string name="xiaomi_parts_title">Xiaomi Parts</string>
-    <!-- Shown as the subtitle on the Settings homepage tile -->
     <string name="xiaomi_parts_summary">Display, Thermal &amp; Touch</string>
+    <string name="xiaomi_parts_category_diagnostics">Diagnostics</string>
 
     <!-- ── HomeScreen category headers ───────────────────────────── -->
     <string name="display_category">Display</string>
     <string name="performance_category">Performance</string>
-    <string name="xiaomi_parts_category_diagnostics">Diagnostics</string>
 
     <!-- ── HomeScreen row titles ─────────────────────────────────── -->
     <string name="display_colours_title">Display Colours</string>
@@ -23,28 +21,24 @@
     <string name="touch_boost_title">Touch Boost</string>
     <string name="touch_boost_summary">Higher polling rate, snappier touch</string>
 
-    <!-- ── Charging banner / toast — HomeScreen UI ───────────────── -->
-    <!-- Used by the BroadcastReceiver in XiaomiPartsHomeScreen.kt      -->
-    <string name="charging_connected">⚡ Charging profile on</string>
-    <string name="charging_disconnected">🔋 Per-app profiles resumed</string>
-
     <!-- ── Common UI ───────────────────────────────────────────── -->
     <string name="dismiss">Dismiss</string>
     <string name="cancel">Cancel</string>
 
+    <!-- ── Charging banner ───────────────────────────────────────── -->
+    <string name="charging_connected">⚡ Charging profile on</string>
+    <string name="charging_disconnected">🔋 Per-app profiles resumed</string>
+
     <!-- ── Display Colours ───────────────────────────────────────── -->
-    <string name="display_title">Display Colours</string>
     <string name="color_mode_vivid">Vivid</string>
     <string name="color_mode_saturated">Saturated</string>
     <string name="color_mode_standard">Standard</string>
     <string name="color_mode_original">Original</string>
     <string name="color_mode_p3">DCI-P3</string>
     <string name="color_mode_srgb">sRGB</string>
-    <string name="color_section_standard">Standard</string>
-    <string name="color_section_expert">Expert — Wide Gamut</string>
     <!-- %1$s = colour mode name -->
     <string name="color_mode_applied">🎨 %1$s applied</string>
-    <string name="color_mode_failed">❌ Colour mode failed</string>
+    <string name="display_colour_failed">❌ Colour mode failed</string>
     <string name="color_mode_vivid_summary">Punchy, boosted saturation</string>
     <string name="color_mode_saturated_summary">Balanced, everyday colours</string>
     <string name="color_mode_standard_summary">Factory-calibrated accuracy</string>
@@ -55,28 +49,18 @@
     <!-- ── Thermal Management ──────────────────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
     <string name="thermal_summary">Per-app thermal profiles</string>
-    <string name="thermal_enable">Thermal profiles</string>
-    <string name="thermal_enable_summary">Per-app thermal tuning, applied automatically</string>
-    <string name="thermal_loading">Loading apps…</string>
-    <string name="thermal_reset">Reset profiles</string>
-    <string name="thermal_reset_confirm">Reset all per-app thermal profiles to Default?</string>
-    <string name="thermal_reset_confirm_btn">Reset</string>
+    <string name="thermal_per_app_category">Per-app profiles</string>
+    <string name="thermal_select_profile">Select thermal profile</string>
+    <string name="thermal_no_apps">No apps configured yet</string>
+    <string name="thermal_failed_toast">❌ Thermal operation failed</string>
     <string name="thermal_reset_success">✅ Profiles reset</string>
     <string name="thermal_reset_failed">❌ Reset failed</string>
     <!-- %1$s = app name, %2$s = profile name -->
     <string name="thermal_profile_applied">🌡️ %1$s → %2$s</string>
-    <string name="thermal_profile_failed">❌ Profile failed for %1$s</string>
     <string name="thermal_service_started">🌡️ Thermal profiles on</string>
     <string name="thermal_service_stopped">❄️ Thermal profiles off</string>
-    <string name="thermal_toggle_failed">❌ Could not toggle thermal profiles</string>
-    <string name="thermal_disabled_hint">Enable to configure per-app thermal tuning</string>
-    <string name="thermal_apps_category">Per-app profiles</string>
-    <!-- Dialog subtitle in the pop-out profile picker -->
-    <string name="thermal_profile_picker_subtitle">Select thermal profile</string>
-
-    <!--
-        Thermal profile labels — must match ThermalState enum order in ThermalUtils.kt.
-    -->
+    <string name="thermal_charging_active">⚡ Charging profile active</string>
+    <string name="thermal_charging_info_body">A charge-optimised thermal profile is active while plugged in. Per-app profiles resume automatically once unplugged.</string>
     <string name="thermal_benchmark">Benchmark</string>
     <string name="thermal_browser">Browser</string>
     <string name="thermal_camera">Camera</string>
@@ -91,40 +75,19 @@
     <string name="thermal_default">Default</string>
     <string name="thermal_streaming">Streaming</string>
 
-    <!-- ── Charging Thermal ────────────────────────────────────────── -->
-    <string name="thermal_charging_active">⚡ Charging profile active</string>
-    <string name="thermal_charging_info_body">A charge-optimised thermal profile is active while plugged in. Per-app profiles are paused and resume automatically once unplugged.</string>
-    <string name="thermal_charging_override_hint">Charging override active — profiles resume when unplugged.</string>
-    <string name="thermal_charging_locked_hint">🔒 Locked while charging</string>
-    <!--
-        Used by ThermalService.applyProfile() background service toast
-        (separate from the HomeScreen BroadcastReceiver toast above).
-    -->
-    <string name="thermal_charging_toast_connected">⚡ Charging profile on</string>
-    <string name="thermal_charging_toast_disconnected">🔋 Per-app profiles resumed</string>
-
     <!-- ── Touch Boost ───────────────────────────────────────────── -->
-    <string name="htsr_title">Touch Boost</string>
-    <string name="htsr_category">Touch Boost</string>
-    <string name="htsr_enable_title">Touch Boost</string>
-    <string name="htsr_enable_summary">Boosts touch polling for snappier, lower-latency input</string>
-    <string name="htsr_info_body">Raises the touch controller polling rate, reducing tap-to-response latency. May slightly increase power draw during active use.</string>
+    <string name="touch_boost_switch_title">Touch Boost</string>
+    <string name="touch_boost_switch_summary">Boosts touch polling for snappier, lower-latency input</string>
+    <string name="touch_boost_info">Raises the touch controller polling rate, reducing tap-to-response latency. May slightly increase power draw during active use.</string>
+    <string name="touch_boost_write_failed">❌ Touch boost failed</string>
     <string name="htsr_enabled_toast">👆 Touch boost on</string>
     <string name="htsr_disabled_toast">✋ Touch boost off</string>
-    <string name="htsr_failed_toast">❌ Touch boost failed</string>
 
     <!-- ── Diagnostics ───────────────────────────────────────────── -->
-
-    <!-- Fingerprint Calibration -->
-    <!-- Launches com.jiiov.fingerprint_factorytest/.xiaomi.XiaomiAfterSalesCalibrationActivity -->
     <string name="fingerprint_calibration_title">Jiiov Fingerprint Calibration</string>
     <string name="fingerprint_calibration_summary">Recalibrate the in-display fingerprint sensor</string>
     <string name="fingerprint_calibration_not_found">❌ Fingerprint calibration not available</string>
-
-    <!-- Speaker Calibration -->
-    <!-- Launches com.miui.cit/.auxiliary.CitAudioCaliSelfTest -->
     <string name="speaker_calibration_title">Speaker Calibration</string>
     <string name="speaker_calibration_summary">Run the CIT speaker self-calibration test</string>
     <string name="speaker_calibration_not_found">❌ Speaker calibration not available</string>
-
 </resources>
