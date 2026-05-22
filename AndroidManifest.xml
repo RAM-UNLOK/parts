@@ -8,38 +8,16 @@
     package="com.xiaomi.settings"
     android:sharedUserId="android.uid.system">
 
-    <!-- Boot restore -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
-    <!-- Display feature AIDL access via SurfaceFlinger -->
     <uses-permission android:name="android.permission.ACCESS_SURFACE_FLINGER" />
-    <!-- Cross-user service start for multi-user builds -->
     <uses-permission android:name="android.permission.INTERACT_ACROSS_USERS_FULL" />
-    <!-- Foreground app detection for per-app thermal profiles -->
     <uses-permission android:name="android.permission.GET_TASKS" />
-    <!-- Write system settings for colour mode persistence -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
-    <!-- Write secure settings for touch polling rate -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
-    <!-- Per-app thermal usage statistics -->
     <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
         tools:ignore="ProtectedPermissions" />
-    <!--
-         BATTERY_STATS: must be declared even though android.uid.system holds it
-         implicitly. Without the declaration the privapp whitelist validator on
-         user/userdebug builds logs a warning and the runtime grant can be
-         silently withheld on strict ROM builds. Required by ChargingMonitor for
-         direct BatteryManager.isCharging() and sticky ACTION_BATTERY_CHANGED
-         reads via registerReceiver(null, filter).
-    -->
     <uses-permission android:name="android.permission.BATTERY_STATS"
         tools:ignore="ProtectedPermissions" />
-    <!--
-         WAKE_LOCK: required by ChargingMonitor.start() which acquires a
-         PARTIAL_WAKE_LOCK (500 ms) to keep the CPU awake for the first
-         readBatteryInfo() sticky call after ACTION_SCREEN_ON. Without this
-         the OS-held screen-on wake lock can be released before the
-         HandlerThread runs, allowing the device to re-enter Doze mid-read.
-    -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
@@ -47,10 +25,6 @@
         android:defaultToDeviceProtectedStorage="true"
         android:directBootAware="true">
 
-        <!-- ════════════════════════════════════════════════
-             Boot receiver — restores all feature states at
-             locked-boot (before user unlock).
-             ════════════════════════════════════════════════ -->
         <receiver
             android:name=".BootCompletedReceiver"
             android:exported="true">
@@ -59,96 +33,60 @@
             </intent-filter>
         </receiver>
 
-        <!-- ════════════════════════════════════════════════
-             DISPLAY — ColorService
-             ════════════════════════════════════════════════ -->
         <service
             android:name=".display.ColorService"
             android:exported="false" />
 
-        <!-- ════════════════════════════════════════════════
-             THERMAL — ThermalService
-             ════════════════════════════════════════════════ -->
         <service
             android:name=".thermal.ThermalService"
             android:exported="false" />
 
-        <!-- ════════════════════════════════════════════════
-             TOUCH BOOST — TouchSamplingService
-             ════════════════════════════════════════════════ -->
         <service
             android:name=".touchsampling.TouchSamplingService"
             android:exported="false" />
 
-        <!-- ════════════════════════════════════════════════
-             XIAOMI PARTS HUB — Compose activity.
-
-             Uses XiaomiParts.Theme (parent DeviceDefault.NoActionBar)
-             with ?colorBackground window background so the Compose
-             Scaffold’s Monet surface colour owns the window from the
-             very first frame.
-             ════════════════════════════════════════════════ -->
         <activity
             android:name=".XiaomiPartsActivity"
             android:label="@string/xiaomi_parts_title"
             android:exported="true"
             android:theme="@style/XiaomiParts.Theme">
-
-            <!-- Launcher anchor: MAIN/DEFAULT pair for top-level placement. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
         </activity>
 
-        <!-- ════════════════════════════════════════════════
-             XIAOMI PARTS HUB — Settings homepage tile alias.
-
-             android:theme is set to XiaomiParts.Theme here (same as
-             the main activity). AOSP Settings applies its own M3
-             preference theme to every injected tile it inflates,
-             so the tile’s visual appearance — Monet colours, 28dp
-             card corners, M3 typography — is controlled by Settings,
-             not by this APK’s theme attribute.
-
-             Three intent-filters:
-             1. EXTRA_SETTINGS + DEFAULT  — primary homepage injection
-                path (AOSP / Paranoid Android / most custom ROMs).
-             2. IA_SETTINGS              — Injectable Activity tile for
-                Android 14+ / newer Settings forks.
-             3. MAIN + DEFAULT           — required anchor for Settings’
-                category resolver on some builds.
-             ════════════════════════════════════════════════ -->
+        <!--
+            Settings homepage tile.
+            android:icon is read directly by the Settings tile renderer to
+            produce the Monet-colored circle + white icon appearance.
+            The <meta-data> icon tag is kept as fallback for older forks.
+        -->
         <activity-alias
             android:name=".XiaomiPartsSettingsTile"
             android:targetActivity=".XiaomiPartsActivity"
             android:label="@string/xiaomi_parts_title"
+            android:icon="@drawable/ic_xiaomi_parts"
             android:exported="true"
             android:theme="@style/XiaomiParts.Theme">
 
-            <!-- 1. EXTRA_SETTINGS: surfaces tile on Settings homepage block -->
             <intent-filter>
                 <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- 2. IA_SETTINGS: Injectable Activity tile for Android 14+ builds -->
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
             </intent-filter>
 
-            <!-- 3. MAIN/DEFAULT anchor required by some Settings category resolvers -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
-            <!-- Category: ia.homepage — renders on the Settings root page -->
             <meta-data
                 android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.homepage" />
-            <!-- Order 110: below standard AOSP categories, above third-party tiles -->
             <meta-data
                 android:name="com.android.settings.order"
                 android:value="110" />
