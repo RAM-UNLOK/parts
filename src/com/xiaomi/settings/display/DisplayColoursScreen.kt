@@ -89,8 +89,7 @@ private fun ColourPreviewHero(
     modifier:   Modifier = Modifier,
 ) {
     val allModes = ColorMode.entries
-
-    val alphas = allModes.map { mode ->
+    val alphas   = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
             animationSpec = spring(
@@ -100,14 +99,12 @@ private fun ColourPreviewHero(
             label = "alpha_${mode.name}",
         )
     }
-
-    // D-02: hues resolved at composable scope (ReadOnlyComposable calls valid here)
     val hues = allModes.map { it.hue }
 
     val shimmerOffset by rememberInfiniteTransition(label = "shimmer").animateFloat(
-        initialValue   = ShimmerStart,
-        targetValue    = ShimmerEnd,
-        animationSpec  = infiniteRepeatable(
+        initialValue  = ShimmerStart,
+        targetValue   = ShimmerEnd,
+        animationSpec = infiniteRepeatable(
             animation  = tween(2800, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
@@ -148,7 +145,7 @@ private fun ColourPreviewHero(
 
         drawRect(
             brush = Brush.linearGradient(
-                colors     = listOf(
+                colors = listOf(
                     Color.White.copy(alpha = 0f),
                     Color.White.copy(alpha = ShimmerAlpha),
                     Color.White.copy(alpha = 0f),
@@ -187,7 +184,7 @@ private fun SelectionRow(
                 text  = stringResource(mode.label),
                 style = MaterialTheme.typography.bodyLarge,
                 color = if (isSelected) PartsTokens.Colors.dialogSelectedText
-                        else PartsTokens.Colors.textPrimary,
+                        else            PartsTokens.Colors.textPrimary,
             )
         },
         supportingContent = {
@@ -215,7 +212,7 @@ private fun SelectionRow(
         },
         trailingContent = {
             AnimatedContent(
-                targetState   = isSelected,
+                targetState    = isSelected,
                 transitionSpec = {
                     fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
                     fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
@@ -242,9 +239,7 @@ private fun SelectionRow(
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-    var selectedId by remember {
-        mutableIntStateOf(ColorService.getColorMode(context))
-    }
+    var selectedId by remember { mutableIntStateOf(ColorService.getColorMode(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
@@ -284,7 +279,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 modifier   = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
             )
 
-            // D-03: heroToCardSpacing (16dp) instead of cardBlockSpacing (was 12dp)
             Spacer(Modifier.height(PartsTokens.heroToCardSpacing))
 
             PartsCard {

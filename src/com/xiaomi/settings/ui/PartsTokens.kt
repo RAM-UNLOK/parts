@@ -18,47 +18,40 @@ import androidx.compose.ui.unit.dp
 
 object PartsTokens {
 
-    // --- Spacing ---
     val contentPaddingHorizontal: Dp = 16.dp
     val rowPaddingVertical: Dp       = 14.dp
     val rowElementSpacing: Dp        = 16.dp
-    val cardBlockSpacing: Dp         = 16.dp  // category-to-card, card-to-card block gap
-    val appRowSpacing: Dp            = 2.dp   // gap between per-app rows inside a grouped card
-    val heroToCardSpacing: Dp        = 16.dp  // hero preview widget to content card below
+    val cardBlockSpacing: Dp         = 16.dp
+    val appRowSpacing: Dp            = 2.dp
+    val heroToCardSpacing: Dp        = 16.dp
     val categoryTopPadding: Dp       = 20.dp
     val categoryBottomPadding: Dp    = 6.dp
     val listBottomPadding: Dp        = 32.dp
-    val bannerTopSpacing: Dp         = 20.dp  // top padding for first LazyColumn banner item
+    val bannerTopSpacing: Dp         = 20.dp
     val bannerIconTopOffset: Dp      = 2.dp
-    val sheetContentTopPadding: Dp   = 8.dp   // clearance below M3 sheet drag handle
+    val sheetContentTopPadding: Dp   = 8.dp
 
-    // --- Icon sizes ---
     val leadingIconContainerSize: Dp = 40.dp
     val leadingIconSize: Dp          = 22.dp
     val trailingIconSize: Dp         = 20.dp
     val colourModeLeadingSize: Dp    = 36.dp
     val colourModeDotSize: Dp        = 14.dp
 
-    // --- Hero ---
     val heroPreviewHeight: Dp = 200.dp
 
-    // --- Shapes ---
-    val cardShape              = RoundedCornerShape(24.dp)
-    val bannerShape            = RoundedCornerShape(20.dp)
-    val iconContainerShape     = RoundedCornerShape(12.dp)  // M3E squircle (Android 14+ Settings style)
-    val dialogSelectionShape   = RoundedCornerShape(16.dp)
-    val buttonShape            = RoundedCornerShape(50.dp)
-    val bottomSheetTopShape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+    val cardShape            = RoundedCornerShape(24.dp)
+    val bannerShape          = RoundedCornerShape(20.dp)
+    val iconContainerShape   = RoundedCornerShape(12.dp)
+    val dialogSelectionShape = RoundedCornerShape(16.dp)
+    val buttonShape          = RoundedCornerShape(50.dp)
+    val bottomSheetTopShape  = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
 
-    // --- Alpha values ---
     val colourModeIconContainerAlpha: Float = 0.18f
     val colourModeIconDotAlpha: Float       = 0.85f
     val selectedStateLayerAlpha: Float      = 0.12f
 
-    // --- Elevation ---
     val premiumCardElevation: Dp = 2.dp
 
-    // --- Motion ---
     val MotionSpringEnter: SpringSpec<Float> = spring(
         dampingRatio = Spring.DampingRatioNoBouncy,
         stiffness    = Spring.StiffnessMediumLow,

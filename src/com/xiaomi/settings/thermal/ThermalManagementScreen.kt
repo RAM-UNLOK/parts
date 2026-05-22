@@ -90,8 +90,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     var showSheet   by remember { mutableStateOf(false) }
     val sheetState  = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope       = rememberCoroutineScope()
-
-    val appList = remember { ThermalService.getAppList(context) }
+    val appList     = remember { ThermalService.getAppList(context) }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -114,21 +113,18 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier       = Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            // TH-05: Spacer before first category
             item(key = "spacer-top") { Spacer(Modifier.height(PartsTokens.cardBlockSpacing)) }
 
             item(key = "per-app-label") {
                 PartsCategory(stringResource(R.string.thermal_per_app_category))
             }
 
-            // TH-02: PerAppPremiumCard inline in list above selected app row
             selectedApp?.let { app ->
                 item(key = "premium-card") {
-                    // TH-02: card rendered inline inside LazyColumn
                     ElevatedCard(
                         modifier  = Modifier
                             .fillMaxWidth()
@@ -137,7 +133,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 vertical   = PartsTokens.appRowSpacing,
                             ),
                         shape     = PartsTokens.cardShape,
-                        // TH-01: 2.dp elevation — not blank .dp
                         elevation = CardDefaults.elevatedCardElevation(
                             defaultElevation = PartsTokens.premiumCardElevation,
                         ),
@@ -176,7 +171,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // TH-03: ALL app rows inside ONE PartsCard (grouped, flat ListItems)
             item(key = "app-list-card") {
                 PartsCard {
                     appList.forEachIndexed { index, entry ->
@@ -184,7 +178,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             entry       = entry,
                             isSelected  = entry.packageName == selectedApp?.packageName,
                             showDivider = index < appList.lastIndex,
-                            onClick     = { selectedApp = if (selectedApp?.packageName == entry.packageName) null else entry },
+                            onClick     = {
+                                selectedApp = if (selectedApp?.packageName == entry.packageName) null
+                                              else entry
+                            },
                         )
                     }
                 }
@@ -205,9 +202,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     .fillMaxWidth()
                     .padding(bottom = PartsTokens.listBottomPadding),
             ) {
-                // TH-04: top padding for drag-handle clearance
                 Spacer(Modifier.height(PartsTokens.sheetContentTopPadding))
-
                 Text(
                     text     = stringResource(R.string.thermal_select_profile),
                     style    = MaterialTheme.typography.titleMedium,
@@ -217,7 +212,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         vertical   = PartsTokens.rowPaddingVertical,
                     ),
                 )
-
                 ThermalService.profiles().forEach { profile ->
                     val isSelected = profile.id == selectedApp?.profileId
                     val bgAlpha by animateFloatAsState(
@@ -250,12 +244,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(
                                 text  = profile.label,
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = if (isSelected) PartsTokens.Colors.dialogSelectedText else PartsTokens.Colors.textPrimary,
+                                color = if (isSelected) PartsTokens.Colors.dialogSelectedText
+                                        else PartsTokens.Colors.textPrimary,
                             )
                         },
                         trailingContent = {
                             AnimatedContent(
-                                targetState   = isSelected,
+                                targetState    = isSelected,
                                 transitionSpec = {
                                     fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
                                     fadeOut(tween(PartsTokens.motionCheckFadeOutMs))

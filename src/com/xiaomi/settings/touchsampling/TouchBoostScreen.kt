@@ -17,7 +17,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -77,7 +76,6 @@ private fun writeHtsr(context: Context, enabled: Boolean) {
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current
-
     var enabled by remember { mutableStateOf(readHtsr(context)) }
 
     val iconContainerColor by animateColorAsState(
@@ -132,7 +130,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         ) {
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
-            // Info banner
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -144,7 +141,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         vertical   = PartsTokens.rowPaddingVertical,
                     ),
                 horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                // TB-02: CenterVertically so icon aligns with text block midpoint
                 verticalAlignment     = Alignment.CenterVertically,
             ) {
                 Icon(
@@ -163,7 +159,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
 
             PartsCard {
-                // TB-01: ONE click handler on the Row; Switch is read-only visual (onCheckedChange = null)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

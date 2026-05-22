@@ -59,10 +59,10 @@ class XiaomiPartsActivity : ComponentActivity() {
                 ) + fadeOut(tween(200))
 
                 NavHost(
-                    navController    = nav,
-                    startDestination = "home",
-                    enterTransition  = { pushEnter },
-                    exitTransition   = { pushExit },
+                    navController      = nav,
+                    startDestination   = "home",
+                    enterTransition    = { pushEnter },
+                    exitTransition     = { pushExit },
                     popEnterTransition = { popEnter },
                     popExitTransition  = { popExit },
                 ) {
