@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.ChevronRight
@@ -173,7 +172,7 @@ fun XiaomiPartsHomeScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                            .padding(top = PartsTokens.cardBlockSpacing)
+                            .padding(top = PartsTokens.bannerTopSpacing)
                             .clip(PartsTokens.bannerShape)
                             .background(MaterialTheme.colorScheme.tertiaryContainer)
                             .padding(
@@ -195,15 +194,13 @@ fun XiaomiPartsHomeScreen(
                             color    = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier = Modifier.weight(1f),
                         )
-                        IconButton(
-                            onClick  = { showChargingBanner = false },
-                            modifier = Modifier.size(32.dp),
-                        ) {
+                        // H-03: use default IconButton (48dp touch target) not size(32dp)
+                        IconButton(onClick = { showChargingBanner = false }) {
                             Icon(
                                 imageVector        = Icons.Filled.Close,
                                 contentDescription = stringResource(R.string.dismiss),
                                 tint               = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier           = Modifier.size(16.dp),
+                                modifier           = Modifier.size(18.dp),
                             )
                         }
                     }
@@ -350,10 +347,11 @@ fun PartsRow(
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
         ) {
+            // H-02: squircle shape instead of CircleShape
             Box(
                 modifier         = Modifier
                     .size(PartsTokens.leadingIconContainerSize)
-                    .clip(CircleShape)
+                    .clip(PartsTokens.iconContainerShape)
                     .background(PartsTokens.Colors.iconContainer),
                 contentAlignment = Alignment.Center,
             ) {
