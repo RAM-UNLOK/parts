@@ -5,9 +5,6 @@
 
 package com.xiaomi.settings.display
 
-import android.content.Context
-import android.os.UserHandle
-import android.provider.Settings
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
@@ -27,10 +24,8 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,16 +62,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 
 private typealias ColorMode = ColorService.ColorMode
 
-/** Maps each ColorMode to its representative hue from [PartsTokens.Colors.Hues]. */
 private val ColorMode.hue: Color
-    get() = when (this) {
+    @Composable get() = when (this) {
         ColorMode.VIVID     -> PartsTokens.Colors.Hues.vivid
         ColorMode.SATURATED -> PartsTokens.Colors.Hues.saturated
         ColorMode.STANDARD  -> PartsTokens.Colors.Hues.standard
@@ -85,123 +78,154 @@ private val ColorMode.hue: Color
         ColorMode.SRGB      -> PartsTokens.Colors.Hues.srgb
     }
 
-// ────────────────────────────────────────────────────────
-// Hero gradient preview
-// ────────────────────────────────────────────────────────
-
-// Internal shimmer geometry — not user-visible tokens.
-private const val ShimmerStart  = -600f
-private const val ShimmerEnd    = 1200f
-private const val ShimmerWidth  = 300f
-private const val ShimmerAlpha  = 0.05f
-// Blob radius as a fraction of the card width.
+private const val ShimmerStart       = -600f
+private const val ShimmerEnd         = 1200f
+private const val ShimmerWidth       = 300f
+private const val ShimmerAlpha       = 0.05f
 private const val BlobRadiusFraction = 0.38f
 
-/**
- * Six radial colour blobs, one per [ColorMode]. The active mode's blob
- * glows at full opacity; the others fade to 35 %. A gentle shimmer
- * diagonal glint sweeps continuously for an "alive" feel.
- *
- * No drawable resource required — pure Compose Canvas.
- */
 @Composable
 private fun ColourPreviewHero(
     selectedId: Int,
     modifier:   Modifier = Modifier,
 ) {
     val allModes = ColorMode.entries
-
-    // Per-mode opacity — 1.0 for selected, 0.35 for others
-    val alphas = allModes.map { mode ->
+    val alphas   = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness    = Spring.StiffnessMediumLow,
-            ),
-            label = "hero-alpha-${mode.name}",
-        ).value
+            animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow),
+            label         = "alpha_${mode.name}",
+        )
     }
+    val hues = allModes.map { it.hue }
 
-    // Shimmer sweep
-    val shimmer = rememberInfiniteTransition(label = "hero-shimmer")
-    val shimmerX by shimmer.animateFloat(
+    val shimmerOffset by rememberInfiniteTransition(label = "shimmer").animateFloat(
         initialValue  = ShimmerStart,
         targetValue   = ShimmerEnd,
         animationSpec = infiniteRepeatable(
-            animation  = tween(durationMillis = 3000, easing = LinearEasing),
+            animation  = tween(2800, easing = LinearEasing),
             repeatMode = RepeatMode.Restart,
         ),
-        label = "hero-shimmer-x",
+        label = "shimmerOffset",
     )
 
-    Box(
+    Canvas(
         modifier = modifier
-            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .fillMaxWidth()
             .height(PartsTokens.heroPreviewHeight)
             .clip(PartsTokens.cardShape)
-            .background(PartsTokens.Colors.heroBase),
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
-        // Blob positions: staggered 2x3 grid (fractional x/y)
+        val cx = size.width / 2
+        val cy = size.height / 2
+        val r  = size.width * BlobRadiusFraction
         val positions = listOf(
-            Offset(0.17f, 0.30f),  // VIVID     — top-left
-            Offset(0.50f, 0.65f),  // SATURATED — mid-centre
-            Offset(0.83f, 0.30f),  // STANDARD  — top-right
-            Offset(0.17f, 0.75f),  // ORIGINAL  — bottom-left
-            Offset(0.50f, 0.25f),  // P3        — top-centre
-            Offset(0.83f, 0.75f),  // SRGB      — bottom-right
+            Offset(cx * 0.3f, cy * 0.5f),
+            Offset(cx * 0.9f, cy * 0.4f),
+            Offset(cx * 1.5f, cy * 0.5f),
+            Offset(cx * 0.5f, cy * 1.5f),
+            Offset(cx * 1.1f, cy * 1.6f),
+            Offset(cx * 1.7f, cy * 1.5f),
         )
-
-        Canvas(modifier = Modifier.fillMaxSize()) {
-            allModes.forEachIndexed { i, mode ->
-                val centre = Offset(size.width * positions[i].x, size.height * positions[i].y)
-                val radius = size.width * BlobRadiusFraction
-                drawCircle(
-                    brush  = Brush.radialGradient(
-                        colors = listOf(mode.hue.copy(alpha = alphas[i]), Color.Transparent),
-                        center = centre,
-                        radius = radius,
-                    ),
-                    radius = radius,
-                    center = centre,
-                )
-            }
-            // Soft white diagonal shimmer glint
-            drawRect(
-                brush = Brush.linearGradient(
-                    colors = listOf(
-                        Color.Transparent,
-                        Color.White.copy(alpha = ShimmerAlpha),
-                        Color.Transparent,
-                    ),
-                    start = Offset(shimmerX, 0f),
-                    end   = Offset(shimmerX + ShimmerWidth, size.height),
+        allModes.forEachIndexed { i, _ ->
+            drawCircle(
+                brush  = Brush.radialGradient(
+                    colors = listOf(hues[i].copy(alpha = alphas[i].value), Color.Transparent),
+                    center = positions.getOrElse(i) { Offset(cx, cy) },
+                    radius = r,
                 ),
+                radius = r,
+                center = positions.getOrElse(i) { Offset(cx, cy) },
             )
         }
+        drawRect(
+            brush = Brush.linearGradient(
+                colors = listOf(Color.White.copy(0f), Color.White.copy(ShimmerAlpha), Color.White.copy(0f)),
+                start  = Offset(shimmerOffset, 0f),
+                end    = Offset(shimmerOffset + ShimmerWidth, size.height),
+            ),
+        )
     }
 }
 
-// ────────────────────────────────────────────────────────
-// Main screen
-// ────────────────────────────────────────────────────────
+@Composable
+private fun SelectionRow(
+    mode:       ColorMode,
+    isSelected: Boolean,
+    onClick:    () -> Unit,
+) {
+    val bgAlpha by animateFloatAsState(
+        targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
+        label         = "selectionBg",
+    )
+    val hue = mode.hue
+
+    ListItem(
+        modifier = Modifier
+            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+            .clip(PartsTokens.dialogSelectionShape)
+            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+            .clickable(role = Role.RadioButton, onClick = onClick),
+        headlineContent = {
+            Text(
+                text  = stringResource(mode.label),
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (isSelected) PartsTokens.Colors.dialogSelectedText else PartsTokens.Colors.textPrimary,
+            )
+        },
+        supportingContent = {
+            Text(
+                text  = stringResource(mode.description),
+                style = MaterialTheme.typography.bodySmall,
+                color = PartsTokens.Colors.textSecondary,
+            )
+        },
+        leadingContent = {
+            Box(
+                modifier         = Modifier
+                    .size(PartsTokens.colourModeLeadingSize)
+                    .clip(CircleShape)
+                    .background(hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(PartsTokens.colourModeDotSize)
+                        .clip(CircleShape)
+                        .background(hue.copy(alpha = PartsTokens.colourModeIconDotAlpha)),
+                )
+            }
+        },
+        trailingContent = {
+            AnimatedContent(
+                targetState   = isSelected,
+                transitionSpec = {
+                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
+                },
+                label = "checkIcon",
+            ) { selected ->
+                if (selected) {
+                    Icon(
+                        imageVector        = Icons.Filled.CheckCircle,
+                        contentDescription = null,
+                        tint               = PartsTokens.Colors.dialogSelectedText,
+                        modifier           = Modifier.size(PartsTokens.trailingIconSize),
+                    )
+                } else {
+                    Box(Modifier.size(PartsTokens.trailingIconSize))
+                }
+            }
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-
-    var selectedId by remember {
-        mutableIntStateOf(
-            Settings.System.getIntForUser(
-                context.contentResolver,
-                Settings.System.DISPLAY_COLOR_MODE,
-                ColorService.ColorMode.STANDARD.id,
-                UserHandle.USER_CURRENT,
-            )
-        )
-    }
+    val context    = LocalContext.current
+    var selectedId by remember { mutableIntStateOf(ColorService.getColorMode(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = PartsTokens.MotionSpringEnter,
@@ -215,7 +239,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             MediumTopAppBar(
                 title = {
                     Text(
-                        text     = stringResource(R.string.display_title),
+                        text     = stringResource(R.string.display_colours_title),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -234,170 +258,33 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            // 1. Hero preview
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-            ColourPreviewHero(selectedId = selectedId)
 
-            // 2. Standard section
-            SectionHeader(stringResource(R.string.color_section_standard))
-            PartsCard {
-                listOf(ColorMode.VIVID, ColorMode.SATURATED, ColorMode.STANDARD)
-                    .forEach { mode ->
-                        mode.SelectionRow(
-                            selectedId = selectedId,
-                            onSelected = { applyMode(context, it) { selectedId = it.id } },
-                        )
-                    }
-            }
+            ColourPreviewHero(
+                selectedId = selectedId,
+                modifier   = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+            )
 
-            // 3. Expert section
-            SectionHeader(stringResource(R.string.color_section_expert))
+            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
+
             PartsCard {
-                listOf(ColorMode.ORIGINAL, ColorMode.P3, ColorMode.SRGB)
-                    .forEach { mode ->
-                        mode.SelectionRow(
-                            selectedId = selectedId,
-                            onSelected = { applyMode(context, it) { selectedId = it.id } },
-                        )
-                    }
+                ColorMode.entries.forEach { mode ->
+                    SelectionRow(
+                        mode       = mode,
+                        isSelected = mode.id == selectedId,
+                        onClick    = {
+                            runCatching {
+                                ColorService.setColorMode(context, mode.id)
+                                selectedId = mode.id
+                            }.onFailure {
+                                Toast.makeText(context, R.string.display_colour_failed, Toast.LENGTH_SHORT).show()
+                            }
+                        },
+                    )
+                }
             }
 
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
         }
-    }
-}
-
-// ────────────────────────────────────────────────────────
-// Section header
-// ────────────────────────────────────────────────────────
-
-@Composable
-private fun SectionHeader(title: String) {
-    Text(
-        text     = title,
-        style    = MaterialTheme.typography.labelLarge,
-        color    = MaterialTheme.colorScheme.secondary,
-        modifier = Modifier.padding(
-            start  = PartsTokens.sectionHeaderStartPadding,
-            top    = PartsTokens.sectionHeaderTopPadding,
-            bottom = PartsTokens.categoryBottomPadding,
-        ),
-    )
-}
-
-// ────────────────────────────────────────────────────────
-// Selection row
-// ────────────────────────────────────────────────────────
-
-@Composable
-private fun ColorMode.SelectionRow(
-    selectedId: Int,
-    onSelected: (ColorMode) -> Unit,
-) {
-    val isSelected = this.id == selectedId
-    // Capture hue before entering nested lambda scopes so the extension
-    // property is always resolved on ColorMode, not on any inner receiver.
-    val modeHue = this.hue
-
-    val containerColor by animateColorAsState(
-        targetValue   = if (isSelected)
-            MaterialTheme.colorScheme.primaryContainer.copy(alpha = PartsTokens.selectedStateLayerAlpha)
-        else
-            Color.Transparent,
-        animationSpec = spring(
-            dampingRatio = Spring.DampingRatioNoBouncy,
-            stiffness    = Spring.StiffnessMediumLow,
-        ),
-        label = "row-bg-${this.name}",
-    )
-
-    ListItem(
-        modifier = Modifier.clickable(role = Role.RadioButton) { onSelected(this@SelectionRow) },
-        colors   = ListItemDefaults.colors(containerColor = containerColor),
-        leadingContent = {
-            Box(
-                modifier         = Modifier
-                    .size(PartsTokens.colourModeLeadingSize)
-                    .clip(CircleShape)
-                    .background(modeHue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
-                contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(PartsTokens.colourModeDotSize)
-                        .clip(CircleShape)
-                        .background(modeHue.copy(alpha = PartsTokens.colourModeIconDotAlpha)),
-                )
-            }
-        },
-        headlineContent = {
-            Text(
-                text  = stringResource(this.labelRes),
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected)
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                else
-                    PartsTokens.Colors.textPrimary,
-            )
-        },
-        supportingContent = {
-            Text(
-                text  = stringResource(this.summaryRes),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected)
-                    MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.75f)
-                else
-                    PartsTokens.Colors.textSecondary,
-            )
-        },
-        trailingContent = {
-            AnimatedContent(
-                targetState    = isSelected,
-                transitionSpec = {
-                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
-                    fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
-                },
-                label = "check-${this.name}",
-            ) { selected ->
-                if (selected) {
-                    Icon(
-                        imageVector        = Icons.Filled.CheckCircle,
-                        contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
-                        modifier           = Modifier.size(PartsTokens.trailingIconSize),
-                    )
-                } else {
-                    // Placeholder preserves trailing column width on deselection.
-                    Box(Modifier.size(PartsTokens.trailingIconSize))
-                }
-            }
-        },
-    )
-}
-
-// ────────────────────────────────────────────────────────
-// Write helper (unchanged)
-// ────────────────────────────────────────────────────────
-
-private fun applyMode(
-    context:   Context,
-    mode:      ColorMode,
-    onSuccess: (ColorMode) -> Unit,
-) {
-    runCatching {
-        Settings.System.putIntForUser(
-            context.contentResolver,
-            Settings.System.DISPLAY_COLOR_MODE,
-            mode.id,
-            UserHandle.USER_CURRENT,
-        )
-        onSuccess(mode)
-        Toast.makeText(
-            context,
-            context.getString(R.string.color_mode_applied, context.getString(mode.labelRes)),
-            Toast.LENGTH_SHORT,
-        ).show()
-    }.onFailure {
-        Toast.makeText(context, R.string.color_mode_failed, Toast.LENGTH_SHORT).show()
     }
 }
