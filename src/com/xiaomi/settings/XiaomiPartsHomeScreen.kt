@@ -13,7 +13,6 @@ import android.os.BatteryManager
 import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.exponentialDecay
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -54,7 +53,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -74,6 +72,10 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
+    val bannerShape   = PartsTokens.bannerShape
+    val spatialSpec   = PartsTokens.MotionDefaultSpatial
+    val effectsSpec   = PartsTokens.MotionDefaultEffects
+
     var isCharging         by remember { mutableStateOf(false) }
     var showChargingBanner by remember { mutableStateOf(false) }
     var lastToastTime      by remember { mutableLongStateOf(0L) }
@@ -90,14 +92,13 @@ fun XiaomiPartsHomeScreen(
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val now    = SystemClock.elapsedRealtime()
+                val now     = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
                 if (now - lastToastTime < PartsTokens.toastDebounceMs) return
                 lastToastTime = now
-                val msgRes = if (plugged) R.string.charging_connected else R.string.charging_disconnected
-                PartsToast.show(ctx, msgRes)
+                PartsToast.show(ctx, if (plugged) R.string.charging_connected else R.string.charging_disconnected)
             }
         }
         context.registerReceiver(receiver, IntentFilter().apply {
@@ -108,7 +109,7 @@ fun XiaomiPartsHomeScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
+        snapAnimationSpec  = spatialSpec,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 
@@ -139,18 +140,15 @@ fun XiaomiPartsHomeScreen(
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
-                    enter   = fadeIn(tween(PartsTokens.motionBannerFadeMs)) +
-                              slideInVertically(
-                                  animationSpec  = PartsTokens.MotionSpringEnter,
-                                  initialOffsetY = { -it / 2 },
-                              ),
+                    enter   = fadeIn(effectsSpec) +
+                              slideInVertically(animationSpec = spatialSpec) { -it / 2 },
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                             .padding(top = PartsTokens.bannerTopSpacing)
-                            .clip(PartsTokens.bannerShape)
+                            .clip(bannerShape)
                             .background(PartsTokens.Colors.chargingBannerContainer)
                             .padding(
                                 horizontal = PartsTokens.contentPaddingHorizontal,
@@ -208,6 +206,7 @@ fun XiaomiPartsHomeScreen(
                         title              = stringResource(R.string.thermal_title),
                         summary            = stringResource(R.string.thermal_summary),
                         onClick            = onNavigateToThermal,
+                        showDivider        = true,
                     )
                     PartsRow(
                         icon               = ImageVector.vectorResource(R.drawable.ic_touch_boost),
@@ -220,47 +219,18 @@ fun XiaomiPartsHomeScreen(
                     )
                 }
             }
-
-            item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
-            item(key = "diag-card") {
-                PartsCard {
-                    PartsRow(
-                        icon    = Icons.Filled.Fingerprint,
-                        title   = stringResource(R.string.fingerprint_calibration_title),
-                        summary = stringResource(R.string.fingerprint_calibration_summary),
-                        onClick = {
-                            if (!CitLauncher.launchFingerprintCalibration(context))
-                                PartsToast.show(context, R.string.fingerprint_calibration_not_found)
-                        },
-                    )
-                    PartsRow(
-                        icon        = Icons.Filled.Speaker,
-                        title       = stringResource(R.string.speaker_calibration_title),
-                        summary     = stringResource(R.string.speaker_calibration_summary),
-                        onClick     = {
-                            if (!CitLauncher.launchSpeakerCalibration(context))
-                                PartsToast.show(context, R.string.speaker_calibration_not_found)
-                        },
-                        showDivider = false,
-                    )
-                }
-            }
         }
     }
 }
 
 @Composable
-fun PartsCategory(
-    title:    String,
-    modifier: Modifier = Modifier,
-) {
+fun PartsCategory(label: String) {
     Text(
-        text     = title,
+        text     = label,
         style    = PartsTokens.Type.categoryLabel,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(
+        modifier = Modifier.padding(
             start  = PartsTokens.contentPaddingHorizontal,
-            end    = PartsTokens.contentPaddingHorizontal,
             top    = PartsTokens.categoryTopPadding,
             bottom = PartsTokens.categoryBottomPadding,
         ),
@@ -268,44 +238,20 @@ fun PartsCategory(
 }
 
 @Composable
-fun PartsCard(
-    modifier: Modifier = Modifier,
-    content:  @Composable () -> Unit,
-) {
-    Surface(
-        modifier       = modifier
-            .fillMaxWidth()
-            .padding(horizontal = PartsTokens.contentPaddingHorizontal),
-        shape          = PartsTokens.cardShape,
-        color          = MaterialTheme.colorScheme.surfaceContainerLow,
-        tonalElevation = PartsTokens.space4,
-    ) {
-        Column { content() }
-    }
-}
-
-@Composable
 fun PartsRow(
     icon:               ImageVector,
+    iconContainerColor: androidx.compose.ui.graphics.Color,
+    iconContentColor:   androidx.compose.ui.graphics.Color,
     title:              String,
     summary:            String,
     onClick:            () -> Unit,
-    modifier:           Modifier  = Modifier,
-    showDivider:        Boolean   = true,
-    iconContainerColor: Color     = PartsTokens.Colors.iconContainer,
-    iconContentColor:   Color     = PartsTokens.Colors.iconContent,
-    trailing:           @Composable () -> Unit = {
-        Icon(
-            imageVector        = Icons.Filled.ChevronRight,
-            contentDescription = null,
-            tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier           = Modifier.size(PartsTokens.trailingIconSize),
-        )
-    },
+    showDivider:        Boolean,
 ) {
+    val leadingShape = PartsTokens.leadingIconShape
+
     Column {
         Row(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .clickable(onClick = onClick)
                 .padding(
@@ -318,7 +264,7 @@ fun PartsRow(
             Box(
                 modifier         = Modifier
                     .size(PartsTokens.leadingIconContainerSize)
-                    .clip(PartsTokens.leadingIconShape)
+                    .clip(leadingShape)
                     .background(iconContainerColor),
                 contentAlignment = Alignment.Center,
             ) {
@@ -341,7 +287,12 @@ fun PartsRow(
                     color = PartsTokens.Colors.textSecondary,
                 )
             }
-            trailing()
+            Icon(
+                imageVector        = Icons.Filled.ChevronRight,
+                contentDescription = null,
+                tint               = PartsTokens.Colors.textSecondary,
+                modifier           = Modifier.size(PartsTokens.trailingIconSize),
+            )
         }
         if (showDivider) {
             HorizontalDivider(

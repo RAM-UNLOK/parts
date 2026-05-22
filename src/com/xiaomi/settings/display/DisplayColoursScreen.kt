@@ -80,11 +80,14 @@ private fun ColourPreviewHero(
     selectedId: Int,
     modifier:   Modifier = Modifier,
 ) {
-    val allModes = ColorMode.entries
-    val alphas   = allModes.map { mode ->
+    val allModes    = ColorMode.entries
+    val cardShape   = PartsTokens.cardShape
+    val spatialSpec = PartsTokens.MotionDefaultSpatial
+
+    val alphas = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = PartsTokens.MotionSpringEnter,
+            animationSpec = spatialSpec,
             label         = "alpha_${mode.name}",
         )
     }
@@ -104,7 +107,7 @@ private fun ColourPreviewHero(
         modifier = modifier
             .fillMaxWidth()
             .height(PartsTokens.heroPreviewHeight)
-            .clip(PartsTokens.cardShape)
+            .clip(cardShape)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         val cx = size.width  / 2
@@ -152,31 +155,34 @@ private fun SelectionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
+    val selectionShape = PartsTokens.dialogSelectionShape
+    val effectsSpec    = PartsTokens.MotionDefaultEffects
+    val hue            = mode.hue
+
     val bgAlpha by animateFloatAsState(
         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-        animationSpec = PartsTokens.MotionSpringNoBouncy,
+        animationSpec = effectsSpec,
         label         = "selectionBg",
     )
-    val hue = mode.hue
 
     ListItem(
         modifier = Modifier
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-            .clip(PartsTokens.dialogSelectionShape)
+            .clip(selectionShape)
             .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
             .clickable(role = Role.RadioButton, onClick = onClick),
         headlineContent = {
             Text(
                 text  = stringResource(mode.label),
-                style = MaterialTheme.typography.bodyLarge,
+                style = PartsTokens.Type.rowHeadline,
                 color = if (isSelected) PartsTokens.Colors.dialogSelectedText
-                        else PartsTokens.Colors.textPrimary,
+                        else            PartsTokens.Colors.textPrimary,
             )
         },
         supportingContent = {
             Text(
                 text  = stringResource(mode.description),
-                style = MaterialTheme.typography.bodySmall,
+                style = PartsTokens.Type.rowSupporting,
                 color = PartsTokens.Colors.textSecondary,
             )
         },
@@ -200,8 +206,7 @@ private fun SelectionRow(
             AnimatedContent(
                 targetState    = isSelected,
                 transitionSpec = {
-                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
-                    fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
+                    fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec)
                 },
                 label = "checkIcon",
             ) { selected ->
@@ -225,10 +230,11 @@ private fun SelectionRow(
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
     val context    = LocalContext.current
+    val spatialSpec = PartsTokens.MotionDefaultSpatial
     var selectedId by remember { mutableIntStateOf(ColorService.getColorMode(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
+        snapAnimationSpec  = spatialSpec,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 

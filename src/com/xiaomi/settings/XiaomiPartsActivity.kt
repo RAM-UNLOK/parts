@@ -9,11 +9,11 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -29,48 +29,44 @@ class XiaomiPartsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             XiaomiPartsTheme {
-                val nav = rememberNavController()
-
-                val pushEnter = slideInHorizontally(
-                    animationSpec = PartsTokens.MotionSpringEnter,
-                    initialOffsetX = { it },
-                ) + fadeIn(tween(PartsTokens.motionNavFadeEnterMs))
-
-                val pushExit = slideOutHorizontally(
-                    animationSpec = tween(PartsTokens.motionNavSlideMs),
-                    targetOffsetX = { -it / 4 },
-                ) + fadeOut(tween(PartsTokens.motionNavFadeExitMs))
-
-                val popEnter = slideInHorizontally(
-                    animationSpec = PartsTokens.MotionSpringEnter,
-                    initialOffsetX = { -it / 4 },
-                ) + fadeIn(tween(PartsTokens.motionNavFadeEnterMs))
-
-                val popExit = slideOutHorizontally(
-                    animationSpec = tween(PartsTokens.motionNavSlideMs),
-                    targetOffsetX = { it },
-                ) + fadeOut(tween(PartsTokens.motionNavFadeExitMs))
-
-                NavHost(
-                    navController = nav,
-                    startDestination = "home",
-                    enterTransition = { pushEnter },
-                    exitTransition = { pushExit },
-                    popEnterTransition = { popEnter },
-                    popExitTransition = { popExit },
-                ) {
-                    composable("home") {
-                        XiaomiPartsHomeScreen(
-                            onNavigateToDisplay = { nav.navigate("displayColours") },
-                            onNavigateToThermal = { nav.navigate("thermal") },
-                            onNavigateToTouch = { nav.navigate("touchBoost") },
-                        )
-                    }
-                    composable("displayColours") { DisplayColoursScreen { nav.popBackStack() } }
-                    composable("thermal") { ThermalManagementScreen { nav.popBackStack() } }
-                    composable("touchBoost") { TouchBoostScreen { nav.popBackStack() } }
-                }
+                PartsNavHost()
             }
         }
+    }
+}
+
+@Composable
+private fun PartsNavHost() {
+    val nav             = rememberNavController()
+    val spatialSpec     = PartsTokens.MotionDefaultSpatial
+    val effectsFadeSpec = PartsTokens.MotionDefaultEffects
+
+    val pushEnter = slideInHorizontally(animationSpec = spatialSpec) { it } +
+                    fadeIn(effectsFadeSpec)
+    val pushExit  = slideOutHorizontally(animationSpec = spatialSpec) { -it / 4 } +
+                    fadeOut(effectsFadeSpec)
+    val popEnter  = slideInHorizontally(animationSpec = spatialSpec) { -it / 4 } +
+                    fadeIn(effectsFadeSpec)
+    val popExit   = slideOutHorizontally(animationSpec = spatialSpec) { it } +
+                    fadeOut(effectsFadeSpec)
+
+    NavHost(
+        navController      = nav,
+        startDestination   = "home",
+        enterTransition    = { pushEnter },
+        exitTransition     = { pushExit },
+        popEnterTransition = { popEnter },
+        popExitTransition  = { popExit },
+    ) {
+        composable("home") {
+            XiaomiPartsHomeScreen(
+                onNavigateToDisplay = { nav.navigate("displayColours") },
+                onNavigateToThermal = { nav.navigate("thermal") },
+                onNavigateToTouch   = { nav.navigate("touchBoost") },
+            )
+        }
+        composable("displayColours") { DisplayColoursScreen { nav.popBackStack() } }
+        composable("thermal")        { ThermalManagementScreen { nav.popBackStack() } }
+        composable("touchBoost")     { TouchBoostScreen { nav.popBackStack() } }
     }
 }

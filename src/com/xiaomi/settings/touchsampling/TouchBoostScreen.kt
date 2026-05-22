@@ -49,24 +49,28 @@ import com.xiaomi.settings.utils.PartsToast
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
-    val context  = LocalContext.current
+    val context      = LocalContext.current
+    val leadingShape = PartsTokens.leadingIconShape
+    val effectsSpec  = PartsTokens.MotionDefaultEffects
+    val spatialSpec  = PartsTokens.MotionDefaultSpatial
+
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = PartsTokens.MotionSpringEnter,
+        snapAnimationSpec  = spatialSpec,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 
     val iconContainer by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
                         else         MaterialTheme.colorScheme.surfaceContainerHigh,
-        animationSpec = PartsTokens.MotionSpringColor,
+        animationSpec = effectsSpec,
         label         = "touchIconContainer",
     )
     val iconContent by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
                         else         MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = PartsTokens.MotionSpringColor,
+        animationSpec = effectsSpec,
         label         = "touchIconContent",
     )
 
@@ -105,12 +109,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                                 horizontal = PartsTokens.contentPaddingHorizontal,
                                 vertical   = PartsTokens.rowPaddingVertical,
                             ),
-                        verticalAlignment     = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier         = Modifier
                                 .size(PartsTokens.leadingIconContainerSize)
-                                .clip(PartsTokens.leadingIconShape)
+                                .clip(leadingShape)
                                 .background(iconContainer),
                             contentAlignment = Alignment.Center,
                         ) {
