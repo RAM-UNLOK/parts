@@ -4,20 +4,42 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources>
+
     <!--
-        Window-chrome only. Compose owns all rendering and theming.
-        No color bridge attrs — MaterialTheme.colorScheme handles everything.
+        Window-chrome layer only.
+        Compose + MaterialTheme own all color, typography, and motion.
+        Parent: Theme.Material3.DynamicColors.DayNight gives the M3 token
+        bridge (colorPrimary, colorSurface, etc.) so the Activity window
+        renders correctly before the first Compose frame is drawn.
     -->
     <style name="XiaomiParts.Theme"
-           parent="@android:style/Theme.DeviceDefault.NoActionBar">
-        <item name="android:windowBackground">?android:attr/colorBackground</item>
+           parent="Theme.Material3.DynamicColors.DayNight">
+
+        <!-- Edge-to-edge: Compose handles insets via WindowCompat -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
         <item name="android:navigationBarColor">@android:color/transparent</item>
         <item name="android:enforceNavigationBarContrast">false</item>
         <item name="android:enforceStatusBarContrast">false</item>
+
+        <!-- Gesture nav — no scrim, Compose content fills edge to edge -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+
+        <!-- Soft keyboard — Compose WindowInsets.ime handles the rest -->
+        <item name="android:windowSoftInputMode">adjustResize</item>
+
+        <!-- Clip flags — Compose draw surfaces extend to window edges -->
         <item name="android:clipToPadding">false</item>
         <item name="android:clipChildren">false</item>
-        <item name="android:windowSoftInputMode">adjustResize</item>
+
+        <!-- No legacy ActionBar — Compose TopAppBar owns the chrome -->
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+
+        <!-- M3 Expressive motion: system-level spring/overshoot hint -->
+        <item name="android:windowActivityTransitions">true</item>
+        <item name="android:windowContentTransitions">true</item>
+
     </style>
+
 </resources>
