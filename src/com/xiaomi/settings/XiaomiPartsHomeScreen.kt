@@ -38,7 +38,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -72,9 +71,9 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    val bannerShape   = PartsTokens.bannerShape
-    val spatialSpec   = PartsTokens.MotionDefaultSpatial
-    val effectsSpec   = PartsTokens.MotionDefaultEffects
+    val bannerShape = PartsTokens.bannerShape
+    val spatialSpec = PartsTokens.MotionDefaultSpatial
+    val effectsSpec = PartsTokens.MotionDefaultEffects
 
     var isCharging         by remember { mutableStateOf(false) }
     var showChargingBanner by remember { mutableStateOf(false) }
@@ -228,13 +227,31 @@ fun PartsCategory(label: String) {
     Text(
         text     = label,
         style    = PartsTokens.Type.categoryLabel,
-        color    = MaterialTheme.colorScheme.primary,
+        color    = PartsTokens.Colors.categoryLabelColor,
         modifier = Modifier.padding(
             start  = PartsTokens.contentPaddingHorizontal,
             top    = PartsTokens.categoryTopPadding,
             bottom = PartsTokens.categoryBottomPadding,
         ),
     )
+}
+
+@Composable
+fun PartsCard(
+    modifier: Modifier = Modifier,
+    content:  @Composable () -> Unit,
+) {
+    Surface(
+        modifier  = modifier
+            .fillMaxWidth()
+            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+            .padding(top = PartsTokens.cardBlockSpacing),
+        shape     = PartsTokens.cardShape,
+        color     = PartsTokens.Colors.topBarScrolled,
+        tonalElevation = PartsTokens.premiumCardElevation,
+    ) {
+        Column { content() }
+    }
 }
 
 @Composable
@@ -247,8 +264,6 @@ fun PartsRow(
     onClick:            () -> Unit,
     showDivider:        Boolean,
 ) {
-    val leadingShape = PartsTokens.leadingIconShape
-
     Column {
         Row(
             modifier = Modifier
@@ -264,7 +279,7 @@ fun PartsRow(
             Box(
                 modifier         = Modifier
                     .size(PartsTokens.leadingIconContainerSize)
-                    .clip(leadingShape)
+                    .clip(PartsTokens.leadingIconShape)
                     .background(iconContainerColor),
                 contentAlignment = Alignment.Center,
             ) {

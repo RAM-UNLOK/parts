@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -63,13 +62,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     val iconContainer by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
-                        else         MaterialTheme.colorScheme.surfaceContainerHigh,
+                        else         PartsTokens.Colors.touchIconContainerOff,
         animationSpec = effectsSpec,
         label         = "touchIconContainer",
     )
     val iconContent by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
-                        else         MaterialTheme.colorScheme.onSurfaceVariant,
+                        else         PartsTokens.Colors.touchIconContentOff,
         animationSpec = effectsSpec,
         label         = "touchIconContent",
     )

@@ -39,7 +39,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -90,13 +89,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope      = rememberCoroutineScope()
 
-    val cardShape       = PartsTokens.cardShape
-    val selectionShape  = PartsTokens.dialogSelectionShape
-    val sheetShape      = PartsTokens.bottomSheetTopShape
-    val buttonShape     = PartsTokens.buttonShape
-    val leadingShape    = PartsTokens.leadingIconShape
-    val spatialSpec     = PartsTokens.MotionDefaultSpatial
-    val effectsSpec     = PartsTokens.MotionDefaultEffects
+    val cardShape      = PartsTokens.cardShape
+    val selectionShape = PartsTokens.dialogSelectionShape
+    val sheetShape     = PartsTokens.bottomSheetTopShape
+    val buttonShape    = PartsTokens.buttonShape
+    val leadingShape   = PartsTokens.leadingIconShape
+    val spatialSpec    = PartsTokens.MotionDefaultSpatial
+    val effectsSpec    = PartsTokens.MotionDefaultEffects
 
     var pendingApp by remember { mutableStateOf<AppThermalEntry?>(null) }
     var showSheet  by remember { mutableStateOf(false) }
@@ -361,7 +360,7 @@ private fun AppThermalPremiumCard(
                         modifier = Modifier
                             .size(PartsTokens.appIconSize)
                             .clip(leadingShape)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                            .background(PartsTokens.Colors.appIconFallback),
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {

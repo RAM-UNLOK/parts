@@ -5,6 +5,7 @@
 
 package com.xiaomi.settings.display
 
+import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
@@ -37,7 +38,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -61,7 +61,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
-import com.xiaomi.settings.utils.PartsToast
 
 private typealias ColorMode = ColorService.ColorMode
 
@@ -80,17 +79,17 @@ private fun ColourPreviewHero(
     selectedId: Int,
     modifier:   Modifier = Modifier,
 ) {
-    val allModes    = ColorMode.entries
-    val cardShape   = PartsTokens.cardShape
-    val spatialSpec = PartsTokens.MotionDefaultSpatial
+    val allModes = ColorMode.entries
+    val cardShape = PartsTokens.cardShape
 
     val alphas = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = spatialSpec,
+            animationSpec = PartsTokens.MotionDefaultEffects,
             label         = "alpha_${mode.name}",
         )
     }
+
     val hues = allModes.map { it.hue }
 
     val shimmerOffset by rememberInfiniteTransition(label = "shimmer").animateFloat(
@@ -103,12 +102,14 @@ private fun ColourPreviewHero(
         label = "shimmerOffset",
     )
 
+    val heroBg = PartsTokens.Colors.heroBg
+
     Canvas(
         modifier = modifier
             .fillMaxWidth()
             .height(PartsTokens.heroPreviewHeight)
             .clip(cardShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
+            .background(heroBg),
     ) {
         val cx = size.width  / 2
         val cy = size.height / 2
@@ -155,21 +156,20 @@ private fun SelectionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
-    val selectionShape = PartsTokens.dialogSelectionShape
-    val effectsSpec    = PartsTokens.MotionDefaultEffects
-    val hue            = mode.hue
-
     val bgAlpha by animateFloatAsState(
         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-        animationSpec = effectsSpec,
+        animationSpec = PartsTokens.MotionDefaultEffects,
         label         = "selectionBg",
     )
+    val selectionLayer = PartsTokens.Colors.selectionLayer
+    val hue            = mode.hue
+    val selectionShape = PartsTokens.dialogSelectionShape
 
     ListItem(
         modifier = Modifier
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .clip(selectionShape)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+            .background(selectionLayer.copy(alpha = bgAlpha))
             .clickable(role = Role.RadioButton, onClick = onClick),
         headlineContent = {
             Text(
@@ -182,13 +182,13 @@ private fun SelectionRow(
         supportingContent = {
             Text(
                 text  = stringResource(mode.description),
-                style = PartsTokens.Type.rowSupporting,
+                style = PartsTokens.Type.rowCaption,
                 color = PartsTokens.Colors.textSecondary,
             )
         },
         leadingContent = {
             Box(
-                modifier = Modifier
+                modifier         = Modifier
                     .size(PartsTokens.colourModeLeadingSize)
                     .clip(CircleShape)
                     .background(hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
@@ -206,7 +206,8 @@ private fun SelectionRow(
             AnimatedContent(
                 targetState    = isSelected,
                 transitionSpec = {
-                    fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec)
+                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
+                    fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
                 },
                 label = "checkIcon",
             ) { selected ->
@@ -222,7 +223,7 @@ private fun SelectionRow(
                 }
             }
         },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
     )
 }
 
@@ -231,7 +232,10 @@ private fun SelectionRow(
 fun DisplayColoursScreen(onBack: () -> Unit) {
     val context    = LocalContext.current
     val spatialSpec = PartsTokens.MotionDefaultSpatial
-    var selectedId by remember { mutableIntStateOf(ColorService.getColorMode(context)) }
+
+    var selectedId by remember {
+        mutableIntStateOf(ColorService.getColorMode(context))
+    }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
         snapAnimationSpec  = spatialSpec,
@@ -265,11 +269,14 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .verticalScroll(rememberScrollState()),
         ) {
             Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
+
             ColourPreviewHero(
                 selectedId = selectedId,
                 modifier   = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
             )
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
+
+            Spacer(Modifier.height(PartsTokens.heroToCardSpacing))
+
             PartsCard {
                 ColorMode.entries.forEach { mode ->
                     SelectionRow(
@@ -280,12 +287,13 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                                 ColorService.setColorMode(context, mode.id)
                                 selectedId = mode.id
                             }.onFailure {
-                                PartsToast.show(context, R.string.display_colour_failed)
+                                Toast.makeText(context, R.string.display_colour_failed, Toast.LENGTH_SHORT).show()
                             }
                         },
                     )
                 }
             }
+
             Spacer(Modifier.height(PartsTokens.listBottomPadding))
         }
     }
