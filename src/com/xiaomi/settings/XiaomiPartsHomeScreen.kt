@@ -31,6 +31,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Fingerprint
+import androidx.compose.material.icons.filled.Speaker
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -57,6 +59,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -132,6 +135,7 @@ fun XiaomiPartsHomeScreen(
             modifier       = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
+
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
@@ -210,6 +214,38 @@ fun XiaomiPartsHomeScreen(
                         title              = stringResource(R.string.touch_boost_title),
                         summary            = stringResource(R.string.touch_boost_summary),
                         onClick            = onNavigateToTouch,
+                        showDivider        = false,
+                    )
+                }
+            }
+
+            item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
+            item(key = "diag-card") {
+                PartsCard {
+                    PartsRow(
+                        icon               = Icons.Filled.Fingerprint,
+                        iconContainerColor = PartsTokens.Colors.diagIconContainer,
+                        iconContentColor   = PartsTokens.Colors.diagIconContent,
+                        title              = stringResource(R.string.fingerprint_calibration_title),
+                        summary            = stringResource(R.string.fingerprint_calibration_summary),
+                        onClick            = {
+                            if (!CitLauncher.launchFingerprintCalibration(context)) {
+                                PartsToast.show(context, R.string.fingerprint_calibration_not_found)
+                            }
+                        },
+                        showDivider        = true,
+                    )
+                    PartsRow(
+                        icon               = Icons.Filled.Speaker,
+                        iconContainerColor = PartsTokens.Colors.diagIconContainer,
+                        iconContentColor   = PartsTokens.Colors.diagIconContent,
+                        title              = stringResource(R.string.speaker_calibration_title),
+                        summary            = stringResource(R.string.speaker_calibration_summary),
+                        onClick            = {
+                            if (!CitLauncher.launchSpeakerCalibration(context)) {
+                                PartsToast.show(context, R.string.speaker_calibration_not_found)
+                            }
+                        },
                         showDivider        = false,
                     )
                 }
