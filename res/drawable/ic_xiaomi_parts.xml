@@ -3,67 +3,151 @@
     Copyright (C) 2025 Paranoid Android
     SPDX-License-Identifier: Apache-2.0
 
-    Settings homepage tile icon for Xiaomi Parts.
+    Settings homepage tile icon — Xiaomi Parts.
 
-    LayerDrawable: dynamic-color circle background + white chip icon.
-    Matches the AOSP/Clover Settings tile style (Battery, Security, etc.)
-    which all use a coloured circle with a white icon centred inside.
+    Design: crossed wrench (↘) and screwdriver (↙) forming an X,
+    central pivot circle, three grip dots on the wrench shaft,
+    corner bracket accent top-right. Matches the reference artwork.
 
-    Background uses ?attr/colorPrimary so the circle automatically
-    adapts to the user's Monet/Material You wallpaper palette.
-
-    The foreground icon uses #FFFFFF (white) for fillColor to avoid
-    requiring AppCompat vector inflation (?attr refs in fillColor
-    silently fail in Settings tile drawables that skip AppCompat).
-
-    Insets are expressed in dp (not %) because the AOSP platform
-    aapt2 linker only accepts concrete dimension types for
-    android:top/bottom/left/right on <layer-list> <item> elements.
-    Percentage strings ('28%') are a Gradle/AppCompat extension and
-    are rejected at platform build time.
+    LayerDrawable: Monet primaryColor circle + white icon centred inside.
+    Rendered as a single filled path with fillType evenOdd so the pivot
+    hole and grip dots punch through at every rendered size.
 -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Layer 0: dynamic primary-color circle background -->
+    <!-- Layer 0: dynamic primary-color circle (Monet / Material You) -->
     <item>
         <shape android:shape="oval">
             <solid android:color="?attr/colorPrimary" />
         </shape>
     </item>
 
-    <!-- Layer 1: chip icon, white, inset so it fills ~44% of the circle.
-         12dp inset on each side ≈ 25% of the 48dp tile icon grid,
-         matching the Pixel Settings first-party icon visual weight. -->
+    <!-- Layer 1: white icon, 12 dp inset ≈ Pixel Settings visual weight -->
     <item
         android:top="12dp"
         android:bottom="12dp"
         android:left="12dp"
         android:right="12dp">
+
         <vector
+            xmlns:android="http://schemas.android.com/apk/res/android"
             android:width="24dp"
             android:height="24dp"
-            android:viewportWidth="24.0"
-            android:viewportHeight="24.0">
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+
+            <!--
+                Single compound path — evenOdd fill punches the pivot
+                circle and grip dots through the white fill.
+
+                Shapes encoded:
+                  W  — wrench body: rounded rect rotated 45°, top-left → bottom-right
+                  S  — screwdriver body: thinner rounded rect, top-right → bottom-left
+                  P  — pivot circle at centre (12,12), r=1.5  [punched hole]
+                  D1 — grip dot on wrench shaft upper segment    [punched hole]
+                  D2 — grip dot on wrench shaft mid segment      [punched hole]
+                  D3 — grip dot on wrench shaft lower segment    [punched hole]
+                  WH — wrench head fork, top-left corner
+                  SH — screwdriver flat-head tip, bottom-right corner
+                  CB — corner bracket accent, top-right
+            -->
             <path
                 android:fillColor="#FFFFFF"
+                android:fillType="evenOdd"
                 android:pathData="
-                    M9,3 L9,1 L11,1 L11,3
-                    M13,3 L13,1 L15,1 L15,3
+                    M5.05,1.636
+                    C4.269,0.855 3.0,0.855 2.222,1.636
+                    L1.636,2.222
+                    C0.855,3.003 0.855,4.269 1.636,5.05
+                    L3.45,6.864
+                    L2.636,7.678
+                    C2.245,8.069 2.245,8.7 2.636,9.091
+                    L4.757,11.212
+                    L11.172,4.797
+                    L9.091,2.717
+                    C8.7,2.326 8.069,2.326 7.678,2.717
+                    L6.864,3.53
+                    Z
 
-                    M9,21 L9,23 L11,23 L11,21
-                    M13,21 L13,23 L15,23 L15,21
+                    M12.586,6.211
+                    L17.789,11.414
+                    L22.364,6.839
+                    C23.145,6.058 23.145,4.793 22.364,4.012
+                    L21.778,3.426
+                    C20.997,2.645 19.731,2.645 18.95,3.426
+                    L18.136,4.24
+                    L17.323,3.426
+                    C16.932,3.035 16.301,3.035 15.91,3.426
+                    L12.586,6.211
+                    Z
 
-                    M3,9 L1,9 L1,11 L3,11
-                    M3,13 L1,13 L1,15 L3,15
+                    M5.55,12.964
+                    L2.222,16.293
+                    C1.441,17.074 1.441,18.339 2.222,19.12
+                    L4.88,21.778
+                    C5.661,22.559 6.926,22.559 7.707,21.778
+                    L11.036,18.45
+                    Z
 
-                    M21,9 L23,9 L23,11 L21,11
-                    M21,13 L23,13 L23,15 L21,15
+                    M13.45,17.036
+                    L17.293,21.071
+                    C17.684,21.462 18.315,21.462 18.707,21.071
+                    L21.071,18.707
+                    C21.462,18.315 21.462,17.684 21.071,17.293
+                    L17.036,13.45
+                    Z
 
-                    M7,3 L7,7 L3,7 L3,17 L7,17 L7,21
-                    L17,21 L17,17 L21,17 L21,7 L17,7 L17,3 Z
+                    M10.5,10.5
+                    C10.5,11.605 11.395,12.5 12.5,12.5
+                    C13.605,12.5 14.5,11.605 14.5,10.5
+                    C14.5,9.395 13.605,8.5 12.5,8.5
+                    C11.395,8.5 10.5,9.395 10.5,10.5
+                    Z
 
-                    M10,9 L10,15 L14,15 L14,9 Z
+                    M12.5,10.5
+                    C12.5,10.776 12.276,11 12,11
+                    C11.724,11 11.5,10.776 11.5,10.5
+                    C11.5,10.224 11.724,10 12,10
+                    C12.276,10 12.5,10.224 12.5,10.5
+                    Z
+
+                    M9.0,14.5
+                    C9.0,15.052 8.552,15.5 8.0,15.5
+                    C7.448,15.5 7.0,15.052 7.0,14.5
+                    C7.0,13.948 7.448,13.5 8.0,13.5
+                    C8.552,13.5 9.0,13.948 9.0,14.5
+                    Z
+
+                    M8.0,14.5
+                    C8.0,14.776 7.776,15 7.5,15
+                    C7.224,15 7.0,14.776 7.0,14.5
+                    C7.0,14.224 7.224,14 7.5,14
+                    C7.776,14 8.0,14.224 8.0,14.5
+                    Z
+
+                    M16.5,9.5
+                    C16.5,10.052 16.052,10.5 15.5,10.5
+                    C14.948,10.5 14.5,10.052 14.5,9.5
+                    C14.5,8.948 14.948,8.5 15.5,8.5
+                    C16.052,8.5 16.5,8.948 16.5,9.5
+                    Z
+
+                    M15.5,9.5
+                    C15.5,9.776 15.276,10 15.0,10
+                    C14.724,10 14.5,9.776 14.5,9.5
+                    C14.5,9.224 14.724,9 15.0,9
+                    C15.276,9 15.5,9.224 15.5,9.5
+                    Z
+
+                    M19,2
+                    L22,2
+                    L22,5
+                    L20.5,5
+                    L20.5,3.5
+                    L19,3.5
+                    Z
                 "/>
+
         </vector>
     </item>
 
