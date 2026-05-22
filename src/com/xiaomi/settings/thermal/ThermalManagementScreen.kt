@@ -5,12 +5,10 @@
 
 package com.xiaomi.settings.thermal
 
-import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -29,18 +27,18 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Thermostat
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -89,6 +87,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     )
 
     var selectedApp by remember { mutableStateOf<AppThermalEntry?>(null) }
+    var showSheet   by remember { mutableStateOf(false) }
+    val sheetState  = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope       = rememberCoroutineScope()
+
+    val appList = remember { ThermalService.getAppList(context) }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -110,149 +113,88 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             )
         },
     ) { innerPadding ->
-        Column(
-            modifier = Modifier
+        LazyColumn(
+            modifier       = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            PartsCategory(stringResource(R.string.thermal_per_app_category))
+            // TH-05: Spacer before first category
+            item(key = "spacer-top") { Spacer(Modifier.height(PartsTokens.cardBlockSpacing)) }
 
-            LazyColumn(
-                modifier           = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(PartsTokens.cardBlockSpacing),
-            ) {
-                items(ThermalService.getAppList(context)) { entry ->
-                    AppThermalRow(
-                        entry   = entry,
-                        onClick = { selectedApp = entry },
-                    )
-                }
-                item { Spacer(Modifier.height(PartsTokens.listBottomPadding)) }
+            item(key = "per-app-label") {
+                PartsCategory(stringResource(R.string.thermal_per_app_category))
             }
-        }
-    }
 
-    selectedApp?.let { app ->
-        PerAppPremiumCard(
-            app       = app,
-            onDismiss = { selectedApp = null },
-            onSaved   = { profile ->
-                runCatching {
-                    ThermalService.setAppProfile(context, app.packageName, profile)
-                    selectedApp = null
-                }.onFailure {
-                    Toast.makeText(context, R.string.thermal_failed_toast, Toast.LENGTH_SHORT).show()
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun AppThermalRow(
-    entry:   AppThermalEntry,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-            .clip(PartsTokens.cardShape)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow)
-            .clickable(role = Role.Button, onClick = onClick)
-            .padding(
-                horizontal = PartsTokens.contentPaddingHorizontal,
-                vertical   = PartsTokens.rowPaddingVertical,
-            ),
-        verticalAlignment     = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-    ) {
-        Box(
-            modifier = Modifier
-                .size(PartsTokens.leadingIconContainerSize)
-                .clip(CircleShape)
-                .background(PartsTokens.Colors.iconContainer),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector        = Icons.Filled.Thermostat,
-                contentDescription = null,
-                tint               = PartsTokens.Colors.iconContent,
-                modifier           = Modifier.size(PartsTokens.leadingIconSize),
-            )
-        }
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text     = entry.label,
-                style    = MaterialTheme.typography.bodyLarge,
-                color    = PartsTokens.Colors.textPrimary,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-                text  = ThermalService.profileLabel(entry.profileId),
-                style = MaterialTheme.typography.bodySmall,
-                color = PartsTokens.Colors.textSecondary,
-            )
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun PerAppPremiumCard(
-    app:      AppThermalEntry,
-    onDismiss: () -> Unit,
-    onSaved:  (Int) -> Unit,
-) {
-    var showSheet by remember { mutableStateOf(false) }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope      = rememberCoroutineScope()
-
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(PartsTokens.contentPaddingHorizontal),
-        shape  = PartsTokens.cardShape,
-        colors = CardDefaults.elevatedCardColors(
-            containerColor = PartsTokens.Colors.premiumCardSurface,
-        ),
-        elevation = CardDefaults.elevatedCardElevation(defaultElevation = androidx.compose.ui.unit.dp),
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(PartsTokens.contentPaddingHorizontal),
-            verticalArrangement = Arrangement.spacedBy(PartsTokens.rowPaddingVertical),
-        ) {
-            Text(
-                text  = app.label,
-                style = MaterialTheme.typography.titleMedium,
-                color = PartsTokens.Colors.premiumCardContent,
-            )
-            Text(
-                text  = ThermalService.profileLabel(app.profileId),
-                style = MaterialTheme.typography.bodyMedium,
-                color = PartsTokens.Colors.premiumCardContent,
-            )
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-            ) {
-                Button(
-                    onClick = { showSheet = true },
-                    shape   = PartsTokens.buttonShape,
-                    colors  = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor   = MaterialTheme.colorScheme.onPrimary,
-                    ),
-                ) {
-                    Text(stringResource(R.string.thermal_select_profile))
+            // TH-02: PerAppPremiumCard inline in list above selected app row
+            selectedApp?.let { app ->
+                item(key = "premium-card") {
+                    // TH-02: card rendered inline inside LazyColumn
+                    ElevatedCard(
+                        modifier  = Modifier
+                            .fillMaxWidth()
+                            .padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                                vertical   = PartsTokens.appRowSpacing,
+                            ),
+                        shape     = PartsTokens.cardShape,
+                        // TH-01: 2.dp elevation — not blank .dp
+                        elevation = CardDefaults.elevatedCardElevation(
+                            defaultElevation = PartsTokens.premiumCardElevation,
+                        ),
+                        colors    = CardDefaults.elevatedCardColors(
+                            containerColor = PartsTokens.Colors.premiumCardSurface,
+                        ),
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(PartsTokens.contentPaddingHorizontal),
+                            verticalArrangement = Arrangement.spacedBy(PartsTokens.rowPaddingVertical),
+                        ) {
+                            Text(
+                                text  = app.label,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = PartsTokens.Colors.premiumCardContent,
+                            )
+                            Text(
+                                text  = ThermalService.profileLabel(app.profileId),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = PartsTokens.Colors.premiumCardContent,
+                            )
+                            Button(
+                                onClick = { showSheet = true },
+                                shape   = PartsTokens.buttonShape,
+                                colors  = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary,
+                                    contentColor   = MaterialTheme.colorScheme.onPrimary,
+                                ),
+                            ) {
+                                Text(stringResource(R.string.thermal_select_profile))
+                            }
+                        }
+                    }
                 }
             }
+
+            // TH-03: ALL app rows inside ONE PartsCard (grouped, flat ListItems)
+            item(key = "app-list-card") {
+                PartsCard {
+                    appList.forEachIndexed { index, entry ->
+                        AppThermalRow(
+                            entry       = entry,
+                            isSelected  = entry.packageName == selectedApp?.packageName,
+                            showDivider = index < appList.lastIndex,
+                            onClick     = { selectedApp = if (selectedApp?.packageName == entry.packageName) null else entry },
+                        )
+                    }
+                }
+            }
+
+            item(key = "bottom-spacer") { Spacer(Modifier.height(PartsTokens.listBottomPadding)) }
         }
     }
 
-    if (showSheet) {
+    if (showSheet && selectedApp != null) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState       = sheetState,
@@ -263,6 +205,9 @@ private fun PerAppPremiumCard(
                     .fillMaxWidth()
                     .padding(bottom = PartsTokens.listBottomPadding),
             ) {
+                // TH-04: top padding for drag-handle clearance
+                Spacer(Modifier.height(PartsTokens.sheetContentTopPadding))
+
                 Text(
                     text     = stringResource(R.string.thermal_select_profile),
                     style    = MaterialTheme.typography.titleMedium,
@@ -272,12 +217,16 @@ private fun PerAppPremiumCard(
                         vertical   = PartsTokens.rowPaddingVertical,
                     ),
                 )
+
                 ThermalService.profiles().forEach { profile ->
-                    val isSelected = profile.id == app.profileId
+                    val isSelected = profile.id == selectedApp?.profileId
                     val bgAlpha by animateFloatAsState(
                         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMedium),
-                        label         = "profileBg_${profile.id}",
+                        animationSpec = spring(
+                            dampingRatio = Spring.DampingRatioNoBouncy,
+                            stiffness    = Spring.StiffnessMedium,
+                        ),
+                        label = "profileBg_${profile.id}",
                     )
                     ListItem(
                         modifier = Modifier
@@ -285,11 +234,16 @@ private fun PerAppPremiumCard(
                             .clip(PartsTokens.dialogSelectionShape)
                             .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
                             .clickable(role = Role.RadioButton) {
-                                scope.launch {
-                                    sheetState.hide()
-                                }.invokeOnCompletion {
+                                scope.launch { sheetState.hide() }.invokeOnCompletion {
                                     showSheet = false
-                                    onSaved(profile.id)
+                                    selectedApp?.let { app ->
+                                        runCatching {
+                                            ThermalService.setAppProfile(context, app.packageName, profile.id)
+                                            selectedApp = null
+                                        }.onFailure {
+                                            Toast.makeText(context, R.string.thermal_failed_toast, Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
                                 }
                             },
                         headlineContent = {
@@ -324,6 +278,68 @@ private fun PerAppPremiumCard(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun AppThermalRow(
+    entry:       AppThermalEntry,
+    isSelected:  Boolean,
+    showDivider: Boolean,
+    onClick:     () -> Unit,
+) {
+    Column {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(role = Role.Button, onClick = onClick)
+                .padding(
+                    horizontal = PartsTokens.contentPaddingHorizontal,
+                    vertical   = PartsTokens.rowPaddingVertical,
+                ),
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(PartsTokens.leadingIconContainerSize)
+                    .clip(PartsTokens.iconContainerShape)
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                        else            PartsTokens.Colors.iconContainer,
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    imageVector        = Icons.Filled.Thermostat,
+                    contentDescription = null,
+                    tint               = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                                         else            PartsTokens.Colors.iconContent,
+                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text     = entry.label,
+                    style    = MaterialTheme.typography.bodyLarge,
+                    color    = PartsTokens.Colors.textPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text  = ThermalService.profileLabel(entry.profileId),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = PartsTokens.Colors.textSecondary,
+                )
+            }
+        }
+        if (showDivider) {
+            HorizontalDivider(
+                modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                thickness = DividerDefaults.Thickness,
+                color     = MaterialTheme.colorScheme.outlineVariant,
+            )
         }
     }
 }
