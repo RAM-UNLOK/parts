@@ -121,7 +121,7 @@ object PartsTokens {
         val topBarScrolled: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainer
 
-        // Card surface — semantically distinct from topBarScrolled
+        // Card surface
         val cardSurface: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainer
 
@@ -135,7 +135,7 @@ object PartsTokens {
         val outlineVariant: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.outlineVariant
 
-        // Row icon containers
+        // Generic row icon containers
         val iconContainer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
         val iconContent: Color
@@ -171,15 +171,19 @@ object PartsTokens {
         val settingsEntryCard: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
 
-        // Module-specific icon containers
+        // Module-specific icon containers — Display
         val displayIconContainer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.tertiaryContainer
         val displayIconContent: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onTertiaryContainer
+
+        // Module-specific icon containers — Thermal
         val thermalIconContainer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.errorContainer
         val thermalIconContent: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onErrorContainer
+
+        // Module-specific icon containers — Touch
         val touchIconContainer: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.primaryContainer
         val touchIconContent: Color
@@ -188,6 +192,12 @@ object PartsTokens {
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.surfaceContainerHigh
         val touchIconContentOff: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSurfaceVariant
+
+        // Module-specific icon containers — Diagnostics (Fingerprint + Speaker)
+        val diagIconContainer: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.secondaryContainer
+        val diagIconContent: Color
+            @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.onSecondaryContainer
 
         // Hero preview background
         val heroBg: Color

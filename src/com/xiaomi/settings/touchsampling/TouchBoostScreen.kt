@@ -49,9 +49,10 @@ import com.xiaomi.settings.utils.PartsToast
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
-    val context     = LocalContext.current
-    val effectsSpec = PartsTokens.MotionDefaultEffects
-    val spatialSpec = PartsTokens.MotionDefaultSpatial
+    val context      = LocalContext.current
+    val effectsSpec  = PartsTokens.MotionDefaultEffects
+    val spatialSpec  = PartsTokens.MotionDefaultSpatial
+    val leadingShape = PartsTokens.leadingIconShape
 
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
@@ -113,7 +114,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         Box(
                             modifier         = Modifier
                                 .size(PartsTokens.leadingIconContainerSize)
-                                .clip(PartsTokens.leadingIconShape)
+                                .clip(leadingShape)
                                 .background(iconContainer),
                             contentAlignment = Alignment.Center,
                         ) {

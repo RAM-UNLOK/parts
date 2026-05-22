@@ -223,7 +223,7 @@ private fun SelectionRow(
                 }
             }
         },
-        colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
 }
 

@@ -54,6 +54,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -85,7 +87,7 @@ private fun appIcon(packageName: String): Drawable? {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
-    val context    = LocalContext.current
+    val context = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope      = rememberCoroutineScope()
 
@@ -152,7 +154,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             modifier = Modifier
                                 .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                                 .clip(selectionShape)
-                                .background(PartsTokens.Colors.dialogSelectedLayer.copy(alpha = bgAlpha))
+                                .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
                                 .clickable(role = Role.RadioButton) {
                                     runCatching {
                                         ThermalService.setGlobalProfile(context, profile.id)
@@ -188,7 +190,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                     }
                                 }
                             },
-                            colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                     }
                 }
@@ -263,7 +265,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         modifier = Modifier
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
                             .clip(selectionShape)
-                            .background(PartsTokens.Colors.dialogSelectedLayer.copy(alpha = bgAlpha))
+                            .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
                             .clickable(role = Role.RadioButton) {
                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                                     showSheet = false
@@ -305,7 +307,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 }
                             }
                         },
-                        colors = ListItemDefaults.colors(containerColor = PartsTokens.Colors.transparent),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
                 }
             }
