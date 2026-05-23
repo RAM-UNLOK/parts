@@ -6,6 +6,7 @@
 package com.xiaomi.settings.ui
 
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
@@ -70,11 +71,13 @@ object PartsTokens {
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.medium
     val buttonShape: Shape
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge
-    // Bottom-sheet: round top corners only, square bottom corners
+    // Bottom-sheet: round top corners only, square bottom corners.
+    // Uses .copy() on extraLarge so the radius stays token-driven
+    // and responds to any dynamic-colour / M3E theme override.
     val bottomSheetTopShape: Shape
-        @Composable @ReadOnlyComposable get() = RoundedCornerShape(
-            topStart = MaterialTheme.shapes.extraLarge.let { 28.dp },
-            topEnd   = MaterialTheme.shapes.extraLarge.let { 28.dp },
+        @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge.copy(
+            bottomStart = CornerSize(0.dp),
+            bottomEnd   = CornerSize(0.dp),
         )
 
     // Alpha constants
