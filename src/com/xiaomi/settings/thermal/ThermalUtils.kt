@@ -40,10 +40,6 @@ class ThermalUtils private constructor(private val context: Context) {
             if (value) {
                 startService()
             } else {
-                // Stop the service first — its onDestroy() writes the default
-                // profile as part of its own teardown. We then write it again
-                // as a belt-and-suspenders guarantee in case the service was
-                // not running at the time this setter was called.
                 stopService()
                 setDefaultThermalProfile()
             }
@@ -66,22 +62,11 @@ class ThermalUtils private constructor(private val context: Context) {
         setThermalProfileInternal(packageName)
     }
 
-    /**
-     * Apply charging thermal profile.
-     * This is the highest-priority profile — overrides all app profiles.
-     * Called by ThermalService whenever charger is connected.
-     */
     fun setChargingThermalProfile() {
         writeSconfig(SCONFIG_CHARGE)
         dlog(TAG, "Charging profile applied (sconfig=$SCONFIG_CHARGE)")
     }
 
-    /**
-     * Reset to default thermal profile.
-     * Used when: screen is off, thermal is disabled, or service is stopping.
-     * References ThermalState.DEFAULT.sconfig as the single source of truth
-     * so this stays correct if the default sconfig value ever changes.
-     */
     fun setDefaultThermalProfile() {
         writeSconfig(ThermalState.DEFAULT.sconfig)
         dlog(TAG, "Default profile applied (sconfig=${ThermalState.DEFAULT.sconfig})")
@@ -188,7 +173,6 @@ class ThermalUtils private constructor(private val context: Context) {
             PackageManager.MATCH_DEFAULT_ONLY,
         ).any { it.activityInfo.packageName == packageName }
 
-    // Removed the redundant 'packageName: String' parameter. We extract it from appInfo.
     private fun isMusicApp(appInfo: ApplicationInfo, pm: PackageManager): Boolean =
         appInfo.category == ApplicationInfo.CATEGORY_AUDIO ||
             MUSIC_PKGS.any { appInfo.packageName.startsWith(it) } ||
@@ -197,7 +181,6 @@ class ThermalUtils private constructor(private val context: Context) {
                 PackageManager.MATCH_DEFAULT_ONLY,
             ).any { it.activityInfo.packageName == appInfo.packageName }
 
-    // Removed the redundant 'packageName: String' parameter. We extract it from appInfo.
     private fun isSocialApp(appInfo: ApplicationInfo): Boolean =
         appInfo.category == ApplicationInfo.CATEGORY_SOCIAL ||
             SOCIAL_PKGS.any { appInfo.packageName.startsWith(it) }
@@ -224,27 +207,22 @@ class ThermalUtils private constructor(private val context: Context) {
         )
 
     /**
-     * Maps to the real sconfig node values from the device thermal map.
-     *
-     * Confirmed mapping (conf file → sconfig value):
-     *   thermal-normal.conf        → 0   (DEFAULT)
-     *   thermal-social / abnormal  → 2   (SOCIAL / ABNORMAL)
-     *   thermal-navigation.conf    → 10  (NAVIGATION)
-     *   thermal-phone.conf         → 5   (DIALER)
-     *   thermal-videochat.conf     → 14  (VIDEO_CALL)  ← also SCONFIG_CHARGE alias
-     *   thermal-camera.conf        → 15  (CAMERA)
-     *   thermal-video.conf         → 11  (VIDEO)
-     *   thermal-youtube.conf       → 8   (YOUTUBE)
-     *   thermal-4k.conf            → 16  (VIDEO_4K)
-     *   thermal-extravideo.conf    → 28  (STREAMING)
-     *   thermal-mgame.conf         → 19  (GAMING / medium)
-     *   thermal-tgame.conf         → 18  (GAMING_HEAVY / top-tier)
-     *   thermal-cgame.conf         → 700 (GAMING_COMPETITIVE)
-     *   thermal-highfps.conf       → 26  (HIGH_FPS)
-     *   thermal-nolimits.conf      → 6   (BENCHMARK / no-limits)
-     *   thermal-charge.conf        → 27  (CHARGE — internal, not user-selectable)
-     *
-     * [id] is an internal UI-only discriminator; [sconfig] is written to the kernel node.
+     * sconfig → thermal conf mapping (from device thermal map):
+     *   0   thermal-normal.conf        DEFAULT / BROWSER (no browser conf; use normal)
+     *   2   thermal-abnormal.conf      SOCIAL
+     *   5   thermal-phone.conf         DIALER
+     *   8   thermal-youtube.conf       YOUTUBE
+     *   10  thermal-navigation.conf    NAVIGATION
+     *   11  thermal-video.conf         VIDEO
+     *   14  thermal-videochat.conf     VIDEO_CALL
+     *   15  thermal-camera.conf        CAMERA
+     *   16  thermal-4k.conf            VIDEO_4K
+     *   18  thermal-tgame.conf         GAMING_HEAVY
+     *   19  thermal-mgame.conf         GAMING
+     *   26  thermal-highfps.conf       HIGH_FPS
+     *   27  thermal-charge.conf        CHARGE (internal, not user-selectable)
+     *   28  thermal-extravideo.conf    STREAMING
+     *   700 thermal-cgame.conf         GAMING_COMPETITIVE
      */
     enum class ThermalState(
         val id: Int,
@@ -252,24 +230,24 @@ class ThermalUtils private constructor(private val context: Context) {
         @param:StringRes val label: Int,
         val userSelectable: Boolean = true,
     ) {
-        DEFAULT        (0,  "0",   R.string.thermal_default),
-        SOCIAL         (1,  "2",   R.string.thermal_social),
-        NAVIGATION     (2,  "10",  R.string.thermal_navigation),
-        DIALER         (3,  "5",   R.string.thermal_dialer),
-        VIDEO_CALL     (4,  "14",  R.string.thermal_video_call),
-        CAMERA         (5,  "15",  R.string.thermal_camera),
-        VIDEO          (6,  "11",  R.string.thermal_video),
-        YOUTUBE        (7,  "8",   R.string.thermal_streaming),
-        VIDEO_4K       (8,  "16",  R.string.thermal_video_4k),
-        STREAMING      (9,  "28",  R.string.thermal_streaming_extra),
-        GAMING         (10, "19",  R.string.thermal_gaming),
-        GAMING_HEAVY   (11, "18",  R.string.thermal_gaming_heavy),
-        GAMING_COMPETITIVE(12, "700", R.string.thermal_gaming_competitive),
-        HIGH_FPS       (13, "26",  R.string.thermal_high_fps),
-        BENCHMARK      (14, "6",   R.string.thermal_benchmark),
-        MUSIC          (15, "0",   R.string.thermal_music),
-        BROWSER        (16, "9",   R.string.thermal_browser),
-        CHARGE         (17, "27",  R.string.thermal_charge, userSelectable = false),
+        DEFAULT            (0,  "0",   R.string.thermal_default),
+        SOCIAL             (1,  "2",   R.string.thermal_social),
+        NAVIGATION         (2,  "10",  R.string.thermal_navigation),
+        DIALER             (3,  "5",   R.string.thermal_dialer),
+        VIDEO_CALL         (4,  "14",  R.string.thermal_video_call),
+        CAMERA             (5,  "15",  R.string.thermal_camera),
+        VIDEO              (6,  "11",  R.string.thermal_video),
+        YOUTUBE            (7,  "8",   R.string.thermal_streaming),
+        VIDEO_4K           (8,  "16",  R.string.thermal_video_4k),
+        STREAMING          (9,  "28",  R.string.thermal_streaming_extra),
+        GAMING             (10, "19",  R.string.thermal_gaming),
+        GAMING_HEAVY       (11, "18",  R.string.thermal_gaming_heavy),
+        GAMING_COMPETITIVE (12, "700", R.string.thermal_gaming_competitive),
+        HIGH_FPS           (13, "26",  R.string.thermal_high_fps),
+        BENCHMARK          (14, "6",   R.string.thermal_benchmark),
+        MUSIC              (15, "0",   R.string.thermal_music),
+        BROWSER            (16, "0",   R.string.thermal_browser),
+        CHARGE             (17, "27",  R.string.thermal_charge, userSelectable = false),
     }
 
     companion object {
@@ -277,7 +255,6 @@ class ThermalUtils private constructor(private val context: Context) {
         const val THERMAL_ENABLED              = "thermal_enabled"
         const val THERMAL_PACKAGE_PREFIX       = "thermal_package_"
         const val THERMAL_SCONFIG              = "/sys/devices/virtual/thermal/thermal_message/sconfig"
-        /** Charging profile — written directly by setChargingThermalProfile(), not via ThermalState. */
         const val SCONFIG_CHARGE               = "27"
 
         private val BENCHMARK_PKGS = listOf(

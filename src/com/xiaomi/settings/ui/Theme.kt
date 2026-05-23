@@ -34,13 +34,6 @@ fun XiaomiPartsTheme(
         else      -> lightColorScheme()
     }
 
-    // enableEdgeToEdge() is called once in XiaomiPartsActivity.onCreate() before
-    // setContent {}. Calling it again inside a SideEffect on every recomposition
-    // is redundant and triggers unnecessary window inset recalculations.
-    // WindowCompat.setDecorFitsSystemWindows is already handled by enableEdgeToEdge().
-    // Status-bar appearance is managed by the dynamic color scheme on API 31+
-    // and falls back correctly on older releases.
-
     MaterialExpressiveTheme(
         colorScheme  = colorScheme,
         typography   = expressiveTypography(),

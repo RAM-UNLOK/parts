@@ -6,10 +6,10 @@
 package com.xiaomi.settings.display
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -89,7 +89,7 @@ private fun ColourPreviewHero(
     val alphas = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = PartsTokens.MotionDefaultEffects,
+            animationSpec = PartsTokens.motionDefaultEffects(),
             label         = "alpha_${mode.name}",
         )
     }
@@ -170,7 +170,7 @@ private fun SelectionRow(
 ) {
     val bgAlpha by animateFloatAsState(
         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-        animationSpec = PartsTokens.MotionDefaultEffects,
+        animationSpec = PartsTokens.motionDefaultEffects(),
         label         = "selectionBg",
     )
     val selectionLayer = PartsTokens.Colors.selectionLayer
@@ -243,7 +243,7 @@ private fun SelectionRow(
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
     val context     = LocalContext.current
-    val spatialSpec = PartsTokens.MotionDefaultSpatial
+    val spatialSpec = PartsTokens.motionDefaultSpatial<Float>()
 
     var selectedId by remember {
         mutableIntStateOf(ColorService.getColorMode(context))

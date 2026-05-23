@@ -37,36 +37,36 @@ class XiaomiPartsActivity : ComponentActivity() {
 
 @Composable
 private fun PartsNavHost() {
-    val nav = rememberNavController()
-    val spatialSpec = PartsTokens.MotionDefaultSpatial
-    val effectsFadeSpec = PartsTokens.MotionDefaultEffects
+    val nav           = rememberNavController()
+    val spatialSpec   = PartsTokens.motionDefaultSpatial<Float>()
+    val effectsSpec   = PartsTokens.motionDefaultEffects<Float>()
 
-    val pushEnter = slideInHorizontally(animationSpec = spatialSpec) { it } +
-        fadeIn(effectsFadeSpec)
-    val pushExit = slideOutHorizontally(animationSpec = spatialSpec) { -it / 4 } +
-        fadeOut(effectsFadeSpec)
-    val popEnter = slideInHorizontally(animationSpec = spatialSpec) { -it / 4 } +
-        fadeIn(effectsFadeSpec)
-    val popExit = slideOutHorizontally(animationSpec = spatialSpec) { it } +
-        fadeOut(effectsFadeSpec)
+    val pushEnter = slideInHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { it } +
+        fadeIn(PartsTokens.motionDefaultEffects())
+    val pushExit  = slideOutHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { -it / 4 } +
+        fadeOut(PartsTokens.motionDefaultEffects())
+    val popEnter  = slideInHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { -it / 4 } +
+        fadeIn(PartsTokens.motionDefaultEffects())
+    val popExit   = slideOutHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { it } +
+        fadeOut(PartsTokens.motionDefaultEffects())
 
     NavHost(
-        navController = nav,
-        startDestination = "home",
-        enterTransition = { pushEnter },
-        exitTransition = { pushExit },
+        navController     = nav,
+        startDestination  = "home",
+        enterTransition   = { pushEnter },
+        exitTransition    = { pushExit },
         popEnterTransition = { popEnter },
-        popExitTransition = { popExit },
+        popExitTransition  = { popExit },
     ) {
         composable("home") {
             XiaomiPartsHomeScreen(
                 onNavigateToDisplay = { nav.navigate("displayColours") },
                 onNavigateToThermal = { nav.navigate("thermal") },
-                onNavigateToTouch = { nav.navigate("touchBoost") },
+                onNavigateToTouch   = { nav.navigate("touchBoost") },
             )
         }
         composable("displayColours") { DisplayColoursScreen { nav.popBackStack() } }
-        composable("thermal") { ThermalManagementScreen { nav.popBackStack() } }
-        composable("touchBoost") { TouchBoostScreen { nav.popBackStack() } }
+        composable("thermal")        { ThermalManagementScreen { nav.popBackStack() } }
+        composable("touchBoost")     { TouchBoostScreen { nav.popBackStack() } }
     }
 }

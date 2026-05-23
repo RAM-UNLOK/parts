@@ -53,27 +53,25 @@ import com.xiaomi.settings.utils.PartsToast
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
     val context      = LocalContext.current
-    val effectsSpec  = PartsTokens.MotionDefaultEffects
-    val spatialSpec  = PartsTokens.MotionDefaultSpatial
     val leadingShape = PartsTokens.leadingIconShape
 
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = spatialSpec,
+        snapAnimationSpec  = PartsTokens.motionDefaultSpatial(),
         flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 
     val iconContainer by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
                         else         PartsTokens.Colors.touchIconContainerOff,
-        animationSpec = effectsSpec,
+        animationSpec = PartsTokens.motionDefaultEffects(),
         label         = "touchIconContainer",
     )
     val iconContent by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
                         else         PartsTokens.Colors.touchIconContentOff,
-        animationSpec = effectsSpec,
+        animationSpec = PartsTokens.motionDefaultEffects(),
         label         = "touchIconContent",
     )
 
@@ -110,7 +108,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
             item(key = "toggle") {
-                // No extra padding(top) here — PartsCard already applies cardBlockSpacing internally.
                 PartsCard {
                     Row(
                         modifier = Modifier

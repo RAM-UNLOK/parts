@@ -7,7 +7,7 @@ package com.xiaomi.settings.thermal
 
 import android.graphics.drawable.Drawable
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateFloatAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -101,8 +101,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     val sheetShape     = PartsTokens.bottomSheetTopShape
     val buttonShape    = PartsTokens.buttonShape
     val leadingShape   = PartsTokens.leadingIconShape
-    val spatialSpec    = PartsTokens.MotionDefaultSpatial
-    val effectsSpec    = PartsTokens.MotionDefaultEffects
+    val spatialSpec    = PartsTokens.motionDefaultSpatial<Float>()
+    val effectsSpec    = PartsTokens.motionDefaultEffects<Float>()
 
     var pendingApp    by remember { mutableStateOf<AppThermalEntry?>(null) }
     var showSheet     by remember { mutableStateOf(false) }
@@ -163,7 +163,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         val isActive = profile.id == globalProfile
                         val bgAlpha by animateFloatAsState(
                             targetValue   = if (isActive) PartsTokens.selectedStateLayerAlpha else 0f,
-                            animationSpec = effectsSpec,
+                            animationSpec = PartsTokens.motionDefaultEffects(),
                             label         = "globalBg_${profile.id}",
                         )
                         ListItem(
@@ -191,7 +191,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 AnimatedContent(
                                     targetState    = isActive,
                                     transitionSpec = {
-                                        fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec)
+                                        fadeIn(PartsTokens.motionDefaultEffects()) togetherWith
+                                            fadeOut(PartsTokens.motionDefaultEffects())
                                     },
                                     label = "check_${profile.id}",
                                 ) { active ->
@@ -275,7 +276,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     val isSelected = profile.id == pendingApp?.profileId
                     val bgAlpha by animateFloatAsState(
                         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-                        animationSpec = effectsSpec,
+                        animationSpec = PartsTokens.motionDefaultEffects(),
                         label         = "profileBg_${profile.id}",
                     )
                     ListItem(
@@ -312,7 +313,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             AnimatedContent(
                                 targetState    = isSelected,
                                 transitionSpec = {
-                                    fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec)
+                                    fadeIn(PartsTokens.motionDefaultEffects()) togetherWith
+                                        fadeOut(PartsTokens.motionDefaultEffects())
                                 },
                                 label = "check_${profile.id}",
                             ) { selected ->

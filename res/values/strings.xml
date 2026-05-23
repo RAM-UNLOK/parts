@@ -24,6 +24,7 @@
     <!-- ── Common UI ───────────────────────────────────────────── -->
     <string name="dismiss">Dismiss</string>
     <string name="cancel">Cancel</string>
+    <string name="navigate_up">Navigate up</string>
 
     <!-- ── Charging banner ───────────────────────────────────────── -->
     <string name="charging_connected">⚡ Charging profile on</string>
@@ -39,6 +40,7 @@
     <!-- %1$s = colour mode name -->
     <string name="color_mode_applied">🎨 %1$s applied</string>
     <string name="display_colour_failed">❌ Colour mode failed</string>
+    <string name="display_colours_failed">❌ Colour mode failed</string>
     <string name="color_mode_vivid_summary">Punchy, boosted saturation</string>
     <string name="color_mode_saturated_summary">Balanced, everyday colours</string>
     <string name="color_mode_standard_summary">Factory-calibrated accuracy</string>
@@ -49,6 +51,8 @@
     <!-- ── Thermal Management ──────────────────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
     <string name="thermal_summary">Per-app thermal profiles</string>
+    <string name="thermal_global_label">Global profile</string>
+    <string name="thermal_per_app_label">Per-app profiles</string>
     <string name="thermal_per_app_category">Per-app profiles</string>
     <string name="thermal_select_profile">Select thermal profile</string>
     <string name="thermal_no_apps">No apps configured yet</string>
@@ -60,16 +64,24 @@
     <string name="thermal_service_started">🌡️ Thermal profiles on</string>
     <string name="thermal_service_stopped">❄️ Thermal profiles off</string>
     <string name="thermal_charging_active">⚡ Charging profile active</string>
+    <string name="thermal_charging_toast_connected">⚡ Charging profile active</string>
+    <string name="thermal_charging_toast_disconnected">🔋 Per-app profiles resumed</string>
     <string name="thermal_charging_info_body">A charge-optimised thermal profile is active while plugged in. Per-app profiles resume automatically once unplugged.</string>
     <string name="thermal_benchmark">Benchmark</string>
     <string name="thermal_browser">Browser</string>
     <string name="thermal_camera">Camera</string>
+    <string name="thermal_charge">Charging</string>
     <string name="thermal_dialer">Dialer</string>
     <string name="thermal_gaming">Gaming</string>
+    <string name="thermal_gaming_heavy">Gaming (Heavy)</string>
+    <string name="thermal_gaming_competitive">Gaming (Competitive)</string>
+    <string name="thermal_high_fps">High FPS</string>
     <string name="thermal_navigation">Navigation</string>
     <string name="thermal_video_call">Video Call</string>
     <string name="thermal_video_streaming">Video Streaming</string>
     <string name="thermal_video">Video</string>
+    <string name="thermal_video_4k">Video 4K</string>
+    <string name="thermal_streaming_extra">Extra Streaming</string>
     <string name="thermal_social">Social</string>
     <string name="thermal_music">Music</string>
     <string name="thermal_default">Default</string>
@@ -78,7 +90,9 @@
     <!-- ── Touch Boost ───────────────────────────────────────────── -->
     <string name="touch_boost_switch_title">Touch Boost</string>
     <string name="touch_boost_switch_summary">Boosts touch polling for snappier, lower-latency input</string>
+    <string name="touch_boost_description">Raises the touch controller polling rate, reducing tap-to-response latency. May slightly increase power draw during active use.</string>
     <string name="touch_boost_info">Raises the touch controller polling rate, reducing tap-to-response latency. May slightly increase power draw during active use.</string>
+    <string name="touch_boost_failed">❌ Touch boost failed</string>
     <string name="touch_boost_write_failed">❌ Touch boost failed</string>
     <string name="htsr_enabled_toast">👆 Touch boost on</string>
     <string name="htsr_disabled_toast">✋ Touch boost off</string>
