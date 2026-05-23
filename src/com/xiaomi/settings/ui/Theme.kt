@@ -13,8 +13,8 @@ import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.expressiveTypography
 import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.typography
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
@@ -36,7 +36,7 @@ fun XiaomiPartsTheme(
 
     MaterialExpressiveTheme(
         colorScheme  = colorScheme,
-        typography   = expressiveTypography(),
+        typography   = typography(),
         motionScheme = MotionScheme.expressive(),
         content      = content,
     )

@@ -73,18 +73,18 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    val spatialSpec = PartsTokens.MotionDefaultSpatial
-    val effectsSpec = PartsTokens.MotionDefaultEffects
+    val spatialSpec = PartsTokens.motionDefaultSpatial<Float>()
+    val effectsSpec = PartsTokens.motionDefaultEffects<Float>()
 
-    var isCharging       by remember { mutableStateOf(false) }
+    var isCharging         by remember { mutableStateOf(false) }
     var showChargingBanner by remember { mutableStateOf(false) }
-    var lastToastTime    by remember { mutableLongStateOf(0L) }
+    var lastToastTime      by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
-        val stickyIntent    = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val initialPlugged  = stickyIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
-        isCharging          = initialPlugged != 0
-        showChargingBanner  = isCharging
+        val stickyIntent   = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val initialPlugged = stickyIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+        isCharging         = initialPlugged != 0
+        showChargingBanner = isCharging
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
