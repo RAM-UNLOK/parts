@@ -60,6 +60,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
@@ -73,8 +74,9 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context = LocalContext.current
 
-    val spatialSpec = PartsTokens.motionDefaultSpatial<Float>()
-    val effectsSpec = PartsTokens.motionDefaultEffects<Float>()
+    val spatialSpecFloat    = PartsTokens.motionDefaultSpatial<Float>()
+    val spatialSpecOffset   = PartsTokens.motionDefaultSpatial<IntOffset>()
+    val effectsSpec         = PartsTokens.motionDefaultEffects<Float>()
 
     var isCharging         by remember { mutableStateOf(false) }
     var showChargingBanner by remember { mutableStateOf(false) }
@@ -88,7 +90,7 @@ fun XiaomiPartsHomeScreen(
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val now    = SystemClock.elapsedRealtime()
+                val now     = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
@@ -107,7 +109,7 @@ fun XiaomiPartsHomeScreen(
     }
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec  = spatialSpec,
+        snapAnimationSpec  = spatialSpecFloat,
         flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
     )
 
@@ -141,7 +143,7 @@ fun XiaomiPartsHomeScreen(
                 AnimatedVisibility(
                     visible = showChargingBanner,
                     enter   = fadeIn(effectsSpec) +
-                        slideInVertically(animationSpec = spatialSpec) { -it / 2 },
+                        slideInVertically(animationSpec = spatialSpecOffset) { -it / 2 },
                 ) {
                     Row(
                         modifier = Modifier
