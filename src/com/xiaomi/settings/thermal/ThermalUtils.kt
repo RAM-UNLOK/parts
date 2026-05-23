@@ -20,9 +20,16 @@ import com.xiaomi.settings.R
 import com.xiaomi.settings.utils.dlog
 import com.xiaomi.settings.utils.writeLine
 
+/** Lightweight model for per-app thermal UI — lives in the data layer. */
+data class AppThermalEntry(
+    val packageName: String,
+    val label:       String,
+    val profileId:   Int,
+)
+
 class ThermalUtils private constructor(private val context: Context) {
 
-    private val sharedPrefs   = PreferenceManager.getDefaultSharedPreferences(context)
+    private val sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context)
     private val serviceIntent = Intent(context, ThermalService::class.java)
 
     var enabled: Boolean = sharedPrefs.getBoolean(THERMAL_ENABLED, true)
@@ -104,15 +111,15 @@ class ThermalUtils private constructor(private val context: Context) {
         runCatching {
             val appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
             return when {
-                isGameApp(appInfo)                                        -> ThermalState.GAMING
-                isCameraApp(packageName, pm)                              -> ThermalState.CAMERA
-                isBrowserApp(context, packageName, UserHandle.myUserId()) -> ThermalState.BROWSER
-                isDialerApp(packageName)                                  -> ThermalState.DIALER
-                isVideoApp(packageName)                                   -> ThermalState.VIDEO
-                isStreamingApp(packageName)                               -> ThermalState.STREAMING
-                isMusicApp(appInfo, pm)                                   -> ThermalState.MUSIC
-                isSocialApp(appInfo)                                      -> ThermalState.SOCIAL
-                else                                                      -> ThermalState.DEFAULT
+                isGameApp(appInfo)              -> ThermalState.GAMING
+                isCameraApp(packageName, pm)    -> ThermalState.CAMERA
+                isBrowserApplication(packageName) -> ThermalState.BROWSER
+                isDialerApp(packageName)        -> ThermalState.DIALER
+                isVideoApp(packageName)         -> ThermalState.VIDEO
+                isStreamingApp(packageName)     -> ThermalState.STREAMING
+                isMusicApp(appInfo, pm)         -> ThermalState.MUSIC
+                isSocialApp(appInfo)            -> ThermalState.SOCIAL
+                else                            -> ThermalState.DEFAULT
             }
         }.onFailure { e ->
             dlog(TAG, "classifyApp($packageName) failed: ${e.message}")
@@ -120,42 +127,39 @@ class ThermalUtils private constructor(private val context: Context) {
         return ThermalState.DEFAULT
     }
 
-    private fun isGameApp(appInfo: ApplicationInfo): Boolean {
-        return appInfo.category == ApplicationInfo.CATEGORY_GAME
-    }
+    private fun isGameApp(appInfo: ApplicationInfo): Boolean =
+        appInfo.category == ApplicationInfo.CATEGORY_GAME
 
-    private fun isCameraApp(packageName: String, pm: PackageManager): Boolean {
-        return pm.queryIntentActivities(
-            Intent(MediaStore.ACTION_IMAGE_CAPTURE), PackageManager.MATCH_DEFAULT_ONLY
+    private fun isCameraApp(packageName: String, pm: PackageManager): Boolean =
+        pm.queryIntentActivities(
+            Intent(MediaStore.ACTION_IMAGE_CAPTURE), PackageManager.MATCH_DEFAULT_ONLY,
         ).any { it.activityInfo.packageName == packageName }
-    }
 
-    private fun isDialerApp(packageName: String): Boolean {
-        return runCatching {
+    @Suppress("RestrictedApi")
+    private fun isBrowserApplication(packageName: String): Boolean =
+        isBrowserApp(context, packageName, UserHandle.myUserId())
+
+    private fun isDialerApp(packageName: String): Boolean =
+        runCatching {
             context.getSystemService(TelecomManager::class.java)
                 ?.defaultDialerPackage == packageName
         }.getOrDefault(false)
-    }
 
-    private fun isVideoApp(packageName: String): Boolean {
-        return VIDEO_PKGS.any { packageName.startsWith(it) }
-    }
+    private fun isVideoApp(packageName: String): Boolean =
+        VIDEO_PKGS.any { packageName.startsWith(it) }
 
-    private fun isStreamingApp(packageName: String): Boolean {
-        return STREAMING_PKGS.any { packageName.startsWith(it) }
-    }
+    private fun isStreamingApp(packageName: String): Boolean =
+        STREAMING_PKGS.any { packageName.startsWith(it) }
 
-    private fun isMusicApp(appInfo: ApplicationInfo, pm: PackageManager): Boolean {
-        return appInfo.category == ApplicationInfo.CATEGORY_AUDIO ||
-               pm.queryIntentActivities(
-                   Intent(Intent.ACTION_VIEW).setType("audio/*"),
-                   PackageManager.MATCH_DEFAULT_ONLY,
-               ).any { it.activityInfo.packageName == appInfo.packageName }
-    }
+    private fun isMusicApp(appInfo: ApplicationInfo, pm: PackageManager): Boolean =
+        appInfo.category == ApplicationInfo.CATEGORY_AUDIO ||
+            pm.queryIntentActivities(
+                Intent(Intent.ACTION_VIEW).setType("audio/*"),
+                PackageManager.MATCH_DEFAULT_ONLY,
+            ).any { it.activityInfo.packageName == appInfo.packageName }
 
-    private fun isSocialApp(appInfo: ApplicationInfo): Boolean {
-        return appInfo.category == ApplicationInfo.CATEGORY_SOCIAL
-    }
+    private fun isSocialApp(appInfo: ApplicationInfo): Boolean =
+        appInfo.category == ApplicationInfo.CATEGORY_SOCIAL
 
     fun writePackage(packageName: String, stateId: Int) {
         val key = "$THERMAL_PACKAGE_PREFIX$packageName"
@@ -172,46 +176,41 @@ class ThermalUtils private constructor(private val context: Context) {
             .apply()
     }
 
-    private fun getPackagePreference(packageName: String): Int {
-        return sharedPrefs.getInt(
+    private fun getPackagePreference(packageName: String): Int =
+        sharedPrefs.getInt(
             "$THERMAL_PACKAGE_PREFIX$packageName",
             ThermalState.DEFAULT.id,
         )
-    }
 
     // DEFAULT is declared first so ThermalState.entries returns it at index 0,
     // which places it at the top of the per-app profile dropdown in the UI.
     // All numeric IDs are stable — reordering the declaration does not change
     // any stored SharedPreferences values.
     enum class ThermalState(
-        val id     : Int,
+        val id: Int,
         val sconfig: String,
         @param:StringRes val label: Int,
     ) {
-        DEFAULT        (11, "0",  R.string.thermal_default),
-        BENCHMARK      (0,  "10", R.string.thermal_benchmark),
-        BROWSER        (1,  "6",  R.string.thermal_browser),
-        CAMERA         (2,  "4",  R.string.thermal_camera),
-        DIALER         (3,  "7",  R.string.thermal_dialer),
-        GAMING         (4,  "11", R.string.thermal_gaming),
-        NAVIGATION     (5,  "2",  R.string.thermal_navigation),
-        VIDEO_CALL     (6,  "14", R.string.thermal_video_call),
-        VIDEO_STREAMING(7,  "15", R.string.thermal_video_streaming),
-        VIDEO          (8,  "12", R.string.thermal_video),
-        SOCIAL         (9,  "20", R.string.thermal_social),
-        MUSIC          (10, "5",  R.string.thermal_music),
-        STREAMING      (12, "9",  R.string.thermal_streaming),
+        DEFAULT(11,  "0",  R.string.thermal_default),
+        BENCHMARK(0, "10", R.string.thermal_benchmark),
+        BROWSER(1,   "6",  R.string.thermal_browser),
+        CAMERA(2,    "4",  R.string.thermal_camera),
+        DIALER(3,    "7",  R.string.thermal_dialer),
+        GAMING(4,    "11", R.string.thermal_gaming),
+        NAVIGATION(5,"2",  R.string.thermal_navigation),
+        VIDEO_CALL(6,"5",  R.string.thermal_video_call),
+        MUSIC(7,     "8",  R.string.thermal_music),
+        VIDEO(8,     "3",  R.string.thermal_video),
+        STREAMING(9, "9",  R.string.thermal_streaming),
+        SOCIAL(10,   "1",  R.string.thermal_social);
     }
 
     companion object {
-        private const val TAG = "ThermalUtils"
-
-        private const val THERMAL_ENABLED        = "thermal_enabled"
-        private const val THERMAL_PACKAGE_PREFIX = "thermal_package_"
-        private const val THERMAL_SCONFIG        = "/sys/devices/virtual/thermal/thermal_message/sconfig"
-
-        /** sconfig=27 → Xiaomi charging thermal configuration (highest priority) */
-        const val SCONFIG_CHARGE = "27"
+        private const val TAG                  = "ThermalUtils"
+        const val THERMAL_ENABLED              = "thermal_enabled"
+        const val THERMAL_PACKAGE_PREFIX       = "thermal_package_"
+        const val THERMAL_SCONFIG              = "/sys/devices/virtual/thermal/thermal_message/sconfig"
+        const val SCONFIG_CHARGE               = "27"
 
         private val VIDEO_PKGS = listOf(
             "com.google.android.youtube",
@@ -221,6 +220,8 @@ class ThermalUtils private constructor(private val context: Context) {
         )
         private val STREAMING_PKGS = listOf(
             "tv.twitch",
+            "tv.twitch.android.app"
+            "com.twitch",
             "com.google.android.youtube.creator",
         )
 

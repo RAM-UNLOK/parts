@@ -105,12 +105,13 @@ class TouchSamplingService : Service() {
     /** Reacts to SharedPreferences changes so the service stays in sync with the UI. */
     private fun registerPreferenceChangeListener() {
         val sharedPref = getSharedPreferences(SHAREDHTSR, Context.MODE_PRIVATE)
-        preferenceChangeListener = SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
-            if (key == HTSR_STATE) {
-                Log.d(TAG, "Preference $key changed — reapplying touch sampling rate")
-                applyTouchSamplingRate(if (prefs.getBoolean(key, false)) 1 else 0)
+        preferenceChangeListener =
+            SharedPreferences.OnSharedPreferenceChangeListener { prefs, key ->
+                if (key == HTSR_STATE) {
+                    Log.d(TAG, "Preference $key changed — reapplying touch sampling rate")
+                    applyTouchSamplingRate(if (prefs.getBoolean(key, false)) 1 else 0)
+                }
             }
-        }
         sharedPref.registerOnSharedPreferenceChangeListener(preferenceChangeListener)
     }
 
@@ -148,12 +149,29 @@ class TouchSamplingService : Service() {
     }
 
     companion object {
-        private const val TAG   = "TouchSamplingService"
-        private val DEBUG       = Log.isLoggable(TAG, Log.DEBUG)
+        private const val TAG = "TouchSamplingService"
+        private val DEBUG     = Log.isLoggable(TAG, Log.DEBUG)
 
         /** SharedPreferences file name — must match TouchBoostScreen. */
         const val SHAREDHTSR = "htsr_prefs"
         /** Preference key for the HTSR enabled boolean. */
         const val HTSR_STATE = "htsr_enable"
+
+        /** Returns the current enabled state from SharedPreferences. */
+        fun isEnabled(context: Context): Boolean =
+            context.getSharedPreferences(SHAREDHTSR, Context.MODE_PRIVATE)
+                .getBoolean(HTSR_STATE, false)
+
+        /**
+         * Persists the enabled state. The running service picks up the change
+         * via its [SharedPreferences.OnSharedPreferenceChangeListener] and
+         * re-applies the hardware sampling rate immediately.
+         */
+        fun setEnabled(context: Context, enabled: Boolean) {
+            context.getSharedPreferences(SHAREDHTSR, Context.MODE_PRIVATE)
+                .edit()
+                .putBoolean(HTSR_STATE, enabled)
+                .apply()
+        }
     }
 }

@@ -27,8 +27,28 @@ class ColorService : Service() {
 
     companion object {
         private const val TAG = "ColorService"
-        private val DEBUG = Log.isLoggable(TAG, Log.DEBUG)
-        private val DEFAULT_COLOR_MODE = SystemProperties.getInt("persist.sys.sf.native_mode", 0)
+        private val DEBUG     = Log.isLoggable(TAG, Log.DEBUG)
+        private val DEFAULT_COLOR_MODE =
+            SystemProperties.getInt("persist.sys.sf.native_mode", 0)
+
+        /** Reads the current colour-mode id from Settings.System. */
+        fun getColorMode(context: Context): Int =
+            Settings.System.getIntForUser(
+                context.contentResolver,
+                Settings.System.DISPLAY_COLOR_MODE,
+                DEFAULT_COLOR_MODE,
+                UserHandle.USER_CURRENT,
+            )
+
+        /** Writes a new colour-mode id to Settings.System. */
+        fun setColorMode(context: Context, id: Int) {
+            Settings.System.putIntForUser(
+                context.contentResolver,
+                Settings.System.DISPLAY_COLOR_MODE,
+                id,
+                UserHandle.USER_CURRENT,
+            )
+        }
     }
 
     private val handler = Handler(Looper.getMainLooper())
@@ -114,12 +134,7 @@ class ColorService : Service() {
             if (DEBUG) Log.d(TAG, "setCurrentColorMode: skipping — in AOD")
             return
         }
-        val colorModeId = Settings.System.getIntForUser(
-            contentResolver,
-            Settings.System.DISPLAY_COLOR_MODE,
-            DEFAULT_COLOR_MODE,
-            UserHandle.USER_CURRENT,
-        )
+        val colorModeId = getColorMode(this)
         val mode = ColorMode.fromId(colorModeId) ?: run {
             Log.e(TAG, "Unknown colour mode id: $colorModeId")
             return
@@ -129,20 +144,32 @@ class ColorService : Service() {
     }
 
     enum class ColorMode(
-        val id       : Int,
-        val mode     : Int,
-        val value    : Int,
-        val cookie   : Int,
-        val isExpert : Boolean = false,
-        @param:StringRes val labelRes  : Int,
-        @param:StringRes val summaryRes: Int,
+        val id: Int,
+        val mode: Int,
+        val value: Int,
+        val cookie: Int,
+        val isExpert: Boolean = false,
+        @param:StringRes val label: Int,
+        @param:StringRes val description: Int,
     ) {
-        VIVID    (258, 0,  2, 255, labelRes = R.string.color_mode_vivid,     summaryRes = R.string.color_mode_vivid_summary),
-        SATURATED(256, 1,  2, 255, labelRes = R.string.color_mode_saturated, summaryRes = R.string.color_mode_saturated_summary),
-        STANDARD (257, 2,  2, 255, labelRes = R.string.color_mode_standard,  summaryRes = R.string.color_mode_standard_summary),
-        ORIGINAL (269, 26, 1, 0,   isExpert = true, labelRes = R.string.color_mode_original, summaryRes = R.string.color_mode_original_summary),
-        P3       (268, 26, 2, 0,   isExpert = true, labelRes = R.string.color_mode_p3,       summaryRes = R.string.color_mode_p3_summary),
-        SRGB     (267, 26, 3, 0,   isExpert = true, labelRes = R.string.color_mode_srgb,     summaryRes = R.string.color_mode_srgb_summary);
+        VIVID(258, 0, 2, 255,
+            label = R.string.color_mode_vivid,
+            description = R.string.color_mode_vivid_summary),
+        SATURATED(256, 1, 2, 255,
+            label = R.string.color_mode_saturated,
+            description = R.string.color_mode_saturated_summary),
+        STANDARD(257, 2, 2, 255,
+            label = R.string.color_mode_standard,
+            description = R.string.color_mode_standard_summary),
+        ORIGINAL(269, 26, 1, 0, isExpert = true,
+            label = R.string.color_mode_original,
+            description = R.string.color_mode_original_summary),
+        P3(268, 26, 2, 0, isExpert = true,
+            label = R.string.color_mode_p3,
+            description = R.string.color_mode_p3_summary),
+        SRGB(267, 26, 3, 0, isExpert = true,
+            label = R.string.color_mode_srgb,
+            description = R.string.color_mode_srgb_summary);
 
         fun setCurrent() {
             DisplayFeatureWrapper.setFeature(mode, value, cookie)

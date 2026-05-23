@@ -52,11 +52,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
@@ -74,23 +76,19 @@ fun XiaomiPartsHomeScreen(
     val spatialSpec = PartsTokens.MotionDefaultSpatial
     val effectsSpec = PartsTokens.MotionDefaultEffects
 
-    var isCharging         by remember { mutableStateOf(false) }
+    var isCharging       by remember { mutableStateOf(false) }
     var showChargingBanner by remember { mutableStateOf(false) }
-    var lastToastTime      by remember { mutableLongStateOf(0L) }
+    var lastToastTime    by remember { mutableLongStateOf(0L) }
 
     DisposableEffect(Unit) {
-        val stickyIntent = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val initialStatus = stickyIntent?.getIntExtra(
-            BatteryManager.EXTRA_STATUS,
-            BatteryManager.BATTERY_STATUS_UNKNOWN,
-        ) ?: BatteryManager.BATTERY_STATUS_UNKNOWN
-        isCharging         = initialStatus == BatteryManager.BATTERY_STATUS_CHARGING ||
-                             initialStatus == BatteryManager.BATTERY_STATUS_FULL
-        showChargingBanner = isCharging
+        val stickyIntent    = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        val initialPlugged  = stickyIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
+        isCharging          = initialPlugged != 0
+        showChargingBanner  = isCharging
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val now     = SystemClock.elapsedRealtime()
+                val now    = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
@@ -99,6 +97,8 @@ fun XiaomiPartsHomeScreen(
                 PartsToast.show(ctx, if (plugged) R.string.charging_connected else R.string.charging_disconnected)
             }
         }
+
+        @Suppress("UnspecifiedRegisterReceiverFlag")
         context.registerReceiver(receiver, IntentFilter().apply {
             addAction(Intent.ACTION_POWER_CONNECTED)
             addAction(Intent.ACTION_POWER_DISCONNECTED)
@@ -132,15 +132,16 @@ fun XiaomiPartsHomeScreen(
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier       = Modifier.fillMaxSize().padding(innerPadding),
+            modifier       = Modifier
+                .fillMaxSize()
+                .padding(innerPadding),
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
-
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
                     enter   = fadeIn(effectsSpec) +
-                              slideInVertically(animationSpec = spatialSpec) { -it / 2 },
+                        slideInVertically(animationSpec = spatialSpec) { -it / 2 },
                 ) {
                     Row(
                         modifier = Modifier
@@ -228,12 +229,12 @@ fun XiaomiPartsHomeScreen(
                         iconContentColor   = PartsTokens.Colors.diagIconContent,
                         title              = stringResource(R.string.fingerprint_calibration_title),
                         summary            = stringResource(R.string.fingerprint_calibration_summary),
-                        onClick            = {
+                        onClick = {
                             if (!CitLauncher.launchFingerprintCalibration(context)) {
                                 PartsToast.show(context, R.string.fingerprint_calibration_not_found)
                             }
                         },
-                        showDivider        = true,
+                        showDivider = true,
                     )
                     PartsRow(
                         icon               = Icons.Filled.Speaker,
@@ -241,12 +242,12 @@ fun XiaomiPartsHomeScreen(
                         iconContentColor   = PartsTokens.Colors.diagIconContent,
                         title              = stringResource(R.string.speaker_calibration_title),
                         summary            = stringResource(R.string.speaker_calibration_summary),
-                        onClick            = {
+                        onClick = {
                             if (!CitLauncher.launchSpeakerCalibration(context)) {
                                 PartsToast.show(context, R.string.speaker_calibration_not_found)
                             }
                         },
-                        showDivider        = false,
+                        showDivider = false,
                     )
                 }
             }
@@ -274,7 +275,7 @@ fun PartsCard(
     content:  @Composable () -> Unit,
 ) {
     Surface(
-        modifier  = modifier
+        modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
             .padding(top = PartsTokens.cardBlockSpacing),
@@ -289,8 +290,8 @@ fun PartsCard(
 @Composable
 fun PartsRow(
     icon:               ImageVector,
-    iconContainerColor: androidx.compose.ui.graphics.Color,
-    iconContentColor:   androidx.compose.ui.graphics.Color,
+    iconContainerColor: Color,
+    iconContentColor:   Color,
     title:              String,
     summary:            String,
     onClick:            () -> Unit,
@@ -300,7 +301,7 @@ fun PartsRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
+                .clickable(role = Role.Button, onClick = onClick)
                 .padding(
                     horizontal = PartsTokens.contentPaddingHorizontal,
                     vertical   = PartsTokens.rowPaddingVertical,
@@ -309,7 +310,7 @@ fun PartsRow(
             horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
         ) {
             Box(
-                modifier         = Modifier
+                modifier = Modifier
                     .size(PartsTokens.leadingIconContainerSize)
                     .clip(PartsTokens.leadingIconShape)
                     .background(iconContainerColor),

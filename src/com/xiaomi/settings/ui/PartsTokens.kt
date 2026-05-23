@@ -53,12 +53,10 @@ object PartsTokens {
     val trailingIconSize:         Dp = space24
     val closeIconSize:            Dp = space20
     val appIconSize:              Dp = space40
-    val colourModeLeadingSize:    Dp = space40
     val colourModeDotSize:        Dp = space16
     val heroPreviewHeight:        Dp = 200.dp
     val premiumCardElevation:     Dp = space4
     val dividerThickness:         Dp = space1
-    val dismissButtonSize:        Dp = space32
 
     // Shape tokens
     val cardShape: Shape
@@ -78,12 +76,8 @@ object PartsTokens {
     const val colourModeIconContainerAlpha: Float = 0.18f
     const val colourModeIconDotAlpha:       Float = 0.85f
     const val selectedStateLayerAlpha:      Float = 0.12f
-    const val selectedDotContainerAlpha:    Float = 0.32f
 
     // Shimmer / blob constants
-    const val shimmerStartPx:     Float = -600f
-    const val shimmerEndPx:       Float = 1200f
-    const val shimmerWidthPx:     Float = 300f
     const val shimmerAlpha:       Float = 0.05f
     const val blobRadiusFraction: Float = 0.38f
     const val frictionMultiplier: Float = 2f

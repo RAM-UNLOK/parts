@@ -5,7 +5,6 @@
 
 package com.xiaomi.settings.thermal
 
-import android.content.pm.PackageManager
 import android.graphics.drawable.Drawable
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateFloatAsState
@@ -29,6 +28,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,6 +37,7 @@ import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MediumTopAppBar
@@ -46,7 +47,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,7 +58,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -68,26 +71,28 @@ import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.PartsToast
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-data class AppThermalEntry(
-    val packageName: String,
-    val label:       String,
-    val profileId:   Int,
-)
+import kotlinx.coroutines.withContext
 
 @Composable
-private fun appIcon(packageName: String): Drawable? {
-    val pm = LocalContext.current.packageManager
-    return remember(packageName) {
-        runCatching { pm.getApplicationIcon(packageName) }.getOrNull()
+private fun appIcon(packageName: String): ImageBitmap? {
+    val context = LocalContext.current
+    var bitmap by remember(packageName) { mutableStateOf<ImageBitmap?>(null) }
+    LaunchedEffect(packageName) {
+        bitmap = withContext(Dispatchers.IO) {
+            runCatching {
+                context.packageManager.getApplicationIcon(packageName).toBitmap().asImageBitmap()
+            }.getOrNull()
+        }
     }
+    return bitmap
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
+    val context    = LocalContext.current
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope      = rememberCoroutineScope()
 
@@ -99,13 +104,16 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     val spatialSpec    = PartsTokens.MotionDefaultSpatial
     val effectsSpec    = PartsTokens.MotionDefaultEffects
 
-    var pendingApp by remember { mutableStateOf<AppThermalEntry?>(null) }
-    var showSheet  by remember { mutableStateOf(false) }
+    var pendingApp    by remember { mutableStateOf<AppThermalEntry?>(null) }
+    var showSheet     by remember { mutableStateOf(false) }
+    var globalProfile by remember { mutableIntStateOf(ThermalService.getGlobalProfile(context)) }
+    var appList       by remember { mutableStateOf<List<AppThermalEntry>>(emptyList()) }
 
-    val appList = remember {
-        runCatching { ThermalService.getAppList(context) }.getOrElse {
-            emptyList<AppThermalEntry>().also {
+    LaunchedEffect(Unit) {
+        appList = withContext(Dispatchers.IO) {
+            runCatching { ThermalService.getAppList(context) }.getOrElse {
                 PartsToast.show(context, R.string.thermal_failed_toast)
+                emptyList()
             }
         }
     }
@@ -127,6 +135,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.navigate_up),
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = PartsTokens.Colors.topBarResting,
                     scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
@@ -144,7 +160,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             item(key = "global-card") {
                 PartsCard {
                     ThermalService.profiles().forEach { profile ->
-                        val isActive = profile.id == ThermalService.getGlobalProfile(context)
+                        val isActive = profile.id == globalProfile
                         val bgAlpha by animateFloatAsState(
                             targetValue   = if (isActive) PartsTokens.selectedStateLayerAlpha else 0f,
                             animationSpec = effectsSpec,
@@ -158,13 +174,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 .clickable(role = Role.RadioButton) {
                                     runCatching {
                                         ThermalService.setGlobalProfile(context, profile.id)
+                                        globalProfile = profile.id
                                     }.onFailure {
                                         PartsToast.show(context, R.string.thermal_failed_toast)
                                     }
                                 },
                             headlineContent = {
                                 Text(
-                                    text  = profile.label,
+                                    text  = context.getString(profile.label),
                                     style = PartsTokens.Type.rowHeadline,
                                     color = if (isActive) PartsTokens.Colors.dialogSelectedText
                                             else          PartsTokens.Colors.textPrimary,
@@ -271,7 +288,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                     showSheet = false
                                     pendingApp?.let { app ->
                                         runCatching {
-                                            ThermalService.setAppProfile(context, app.packageName, profile.id)
+                                            ThermalService.setAppProfile(
+                                                context,
+                                                app.packageName,
+                                                profile.id,
+                                            )
                                         }.onFailure {
                                             PartsToast.show(context, R.string.thermal_failed_toast)
                                         }
@@ -281,7 +302,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             },
                         headlineContent = {
                             Text(
-                                text  = profile.label,
+                                text  = context.getString(profile.label),
                                 style = PartsTokens.Type.rowHeadline,
                                 color = if (isSelected) PartsTokens.Colors.dialogSelectedText
                                         else            PartsTokens.Colors.textPrimary,
@@ -324,7 +345,8 @@ private fun AppThermalPremiumCard(
     buttonShape:     androidx.compose.ui.graphics.Shape,
     onSelectProfile: () -> Unit,
 ) {
-    val icon = appIcon(entry.packageName)
+    val context = LocalContext.current
+    val icon    = appIcon(entry.packageName)
 
     Column {
         ElevatedCard(
@@ -351,7 +373,7 @@ private fun AppThermalPremiumCard(
             ) {
                 if (icon != null) {
                     Image(
-                        bitmap             = icon.toBitmap().asImageBitmap(),
+                        bitmap             = icon,
                         contentDescription = null,
                         modifier           = Modifier
                             .size(PartsTokens.appIconSize)
@@ -383,7 +405,7 @@ private fun AppThermalPremiumCard(
                     ),
                 ) {
                     Text(
-                        text     = ThermalService.profileLabel(entry.profileId),
+                        text     = ThermalService.profileLabel(context, entry.profileId),
                         style    = PartsTokens.Type.buttonLabel,
                         maxLines = 1,
                     )

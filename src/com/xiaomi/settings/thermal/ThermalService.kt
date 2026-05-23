@@ -37,20 +37,22 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
-import android.widget.Toast
+import androidx.preference.PreferenceManager
 import com.xiaomi.settings.R
 import com.xiaomi.settings.utils.ChargingMonitor
+import com.xiaomi.settings.utils.PartsToast
 import com.xiaomi.settings.utils.dlog
 
 /** Background service — monitors foreground app + charger state to apply thermal profiles. */
 class ThermalService : Service() {
 
-    private lateinit var thermalUtils    : ThermalUtils
-    private lateinit var chargingMonitor : ChargingMonitor
-    private lateinit var mainHandler     : Handler
+    private lateinit var thermalUtils: ThermalUtils
+    private lateinit var chargingMonitor: ChargingMonitor
+    private lateinit var mainHandler: Handler
 
     /**
      * Holds the last Toast shown by this service so we can cancel it before
@@ -58,7 +60,6 @@ class ThermalService : Service() {
      * fire in rapid succession (e.g. charger wiggle, USB handshake retries).
      * Always accessed on the main thread via mainHandler.post{}.
      */
-    private var currentToast: Toast? = null
 
     private var currentApp = ""
         set(value) {
@@ -117,22 +118,19 @@ class ThermalService : Service() {
     }
 
     override fun onCreate() {
+        super.onCreate()
         dlog(TAG, "onCreate")
         // Must be created on or after super.onCreate() so the main looper
         // is guaranteed to be attached to this process.
         mainHandler  = Handler(Looper.getMainLooper())
         thermalUtils = ThermalUtils.getInstance(this)
-        super.onCreate()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         dlog(TAG, "onStartCommand")
 
         chargingMonitor = ChargingMonitor(this) { info ->
-            // NOTE: ° is the real degree-sign character (U+00B0).
-            // Kotlin does not process \uXXXX escapes in string literals.
-            dlog(TAG, "Charging changed: ${info.isCharging} via ${info.plugType} " +
-                      "level=${info.level}% temp=${info.tempTenthsC / 10.0}°C")
+            dlog(TAG, "Charging changed: ${info.isCharging} via ${info.plugType} level=${info.level}% temp=${info.tempTenthsC / 10.0}°C")
             applyProfile()
         }
         chargingMonitor.start()
@@ -210,22 +208,57 @@ class ThermalService : Service() {
         if (prevCharging == null) return
         if (isCharging == prevCharging) return
 
-        val msgRes = if (isCharging)
+        val msgRes = if (isCharging) {
             R.string.thermal_charging_toast_connected
-        else
+        } else {
             R.string.thermal_charging_toast_disconnected
-
-        // Toast.makeText() requires the main looper. applyProfile() may be
-        // called from ChargingMonitor's HandlerThread, so always post.
-        // Cancel the previous toast first to prevent stacking.
-        mainHandler.post {
-            currentToast?.cancel()
-            currentToast = Toast.makeText(applicationContext, msgRes, Toast.LENGTH_SHORT)
-                .also { it.show() }
         }
+
+        mainHandler.post { PartsToast.show(applicationContext, msgRes) }
     }
 
     companion object {
-        private const val TAG = "ThermalService"
+        private const val TAG                 = "ThermalService"
+        private const val PREF_GLOBAL_PROFILE = "thermal_global_profile"
+
+        fun profiles(): List<ThermalUtils.ThermalState> = ThermalUtils.ThermalState.entries
+
+        fun profileLabel(context: Context, profileId: Int): String =
+            ThermalUtils.ThermalState.entries
+                .firstOrNull { it.id == profileId }
+                ?.let { context.getString(it.label) }
+                .orEmpty()
+
+        fun getGlobalProfile(context: Context): Int =
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .getInt(PREF_GLOBAL_PROFILE, ThermalUtils.ThermalState.DEFAULT.id)
+
+        fun setGlobalProfile(context: Context, profileId: Int) {
+            PreferenceManager.getDefaultSharedPreferences(context)
+                .edit()
+                .putInt(PREF_GLOBAL_PROFILE, profileId)
+                .apply()
+        }
+
+        fun getAppList(context: Context): List<AppThermalEntry> {
+            val utils = ThermalUtils.getInstance(context)
+            val pm    = context.packageManager
+            return pm.getInstalledApplications(PackageManager.GET_META_DATA)
+                .asSequence()
+                .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
+                .map { appInfo ->
+                    AppThermalEntry(
+                        packageName = appInfo.packageName,
+                        label       = pm.getApplicationLabel(appInfo).toString(),
+                        profileId   = utils.getStateForPackage(appInfo.packageName).id,
+                    )
+                }
+                .sortedBy { it.label.lowercase() }
+                .toList()
+        }
+
+        fun setAppProfile(context: Context, packageName: String, profileId: Int) {
+            ThermalUtils.getInstance(context).writePackage(packageName, profileId)
+        }
     }
 }

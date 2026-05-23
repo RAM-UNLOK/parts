@@ -57,7 +57,7 @@ class BootCompletedReceiver : BroadcastReceiver() {
 
         // Per-app thermal profiles
         runCatching {
-            ThermalUtils.getInstance(context).startService()
+            ThermalUtils.getInstance(context.applicationContext).startService()
         }.onFailure { e -> Log.e(TAG, "Failed to start ThermalService", e) }
 
         // Force-enable all HDR types (Dolby Vision, HDR10, HLG, HDR10+)

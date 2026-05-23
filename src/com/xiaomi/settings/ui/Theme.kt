@@ -6,8 +6,6 @@
 package com.xiaomi.settings.ui
 
 import android.os.Build
-import androidx.activity.ComponentActivity
-import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialExpressiveTheme
@@ -18,10 +16,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.expressiveTypography
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
-import androidx.core.view.WindowCompat
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -39,16 +34,12 @@ fun XiaomiPartsTheme(
         else      -> lightColorScheme()
     }
 
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val activity = view.context as ComponentActivity
-            activity.enableEdgeToEdge()
-            WindowCompat.setDecorFitsSystemWindows(activity.window, false)
-            WindowCompat.getInsetsController(activity.window, view)
-                .isAppearanceLightStatusBars = !darkTheme
-        }
-    }
+    // enableEdgeToEdge() is called once in XiaomiPartsActivity.onCreate() before
+    // setContent {}. Calling it again inside a SideEffect on every recomposition
+    // is redundant and triggers unnecessary window inset recalculations.
+    // WindowCompat.setDecorFitsSystemWindows is already handled by enableEdgeToEdge().
+    // Status-bar appearance is managed by the dynamic color scheme on API 31+
+    // and falls back correctly on older releases.
 
     MaterialExpressiveTheme(
         colorScheme  = colorScheme,

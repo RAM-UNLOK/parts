@@ -25,8 +25,8 @@ import com.xiaomi.settings.ui.XiaomiPartsTheme
 
 class XiaomiPartsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             XiaomiPartsTheme {
                 PartsNavHost()
@@ -37,36 +37,36 @@ class XiaomiPartsActivity : ComponentActivity() {
 
 @Composable
 private fun PartsNavHost() {
-    val nav             = rememberNavController()
-    val spatialSpec     = PartsTokens.MotionDefaultSpatial
+    val nav = rememberNavController()
+    val spatialSpec = PartsTokens.MotionDefaultSpatial
     val effectsFadeSpec = PartsTokens.MotionDefaultEffects
 
     val pushEnter = slideInHorizontally(animationSpec = spatialSpec) { it } +
-                    fadeIn(effectsFadeSpec)
-    val pushExit  = slideOutHorizontally(animationSpec = spatialSpec) { -it / 4 } +
-                    fadeOut(effectsFadeSpec)
-    val popEnter  = slideInHorizontally(animationSpec = spatialSpec) { -it / 4 } +
-                    fadeIn(effectsFadeSpec)
-    val popExit   = slideOutHorizontally(animationSpec = spatialSpec) { it } +
-                    fadeOut(effectsFadeSpec)
+        fadeIn(effectsFadeSpec)
+    val pushExit = slideOutHorizontally(animationSpec = spatialSpec) { -it / 4 } +
+        fadeOut(effectsFadeSpec)
+    val popEnter = slideInHorizontally(animationSpec = spatialSpec) { -it / 4 } +
+        fadeIn(effectsFadeSpec)
+    val popExit = slideOutHorizontally(animationSpec = spatialSpec) { it } +
+        fadeOut(effectsFadeSpec)
 
     NavHost(
-        navController      = nav,
-        startDestination   = "home",
-        enterTransition    = { pushEnter },
-        exitTransition     = { pushExit },
+        navController = nav,
+        startDestination = "home",
+        enterTransition = { pushEnter },
+        exitTransition = { pushExit },
         popEnterTransition = { popEnter },
-        popExitTransition  = { popExit },
+        popExitTransition = { popExit },
     ) {
         composable("home") {
             XiaomiPartsHomeScreen(
                 onNavigateToDisplay = { nav.navigate("displayColours") },
                 onNavigateToThermal = { nav.navigate("thermal") },
-                onNavigateToTouch   = { nav.navigate("touchBoost") },
+                onNavigateToTouch = { nav.navigate("touchBoost") },
             )
         }
         composable("displayColours") { DisplayColoursScreen { nav.popBackStack() } }
-        composable("thermal")        { ThermalManagementScreen { nav.popBackStack() } }
-        composable("touchBoost")     { TouchBoostScreen { nav.popBackStack() } }
+        composable("thermal") { ThermalManagementScreen { nav.popBackStack() } }
+        composable("touchBoost") { TouchBoostScreen { nav.popBackStack() } }
     }
 }

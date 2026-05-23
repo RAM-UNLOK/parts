@@ -5,7 +5,6 @@
 
 package com.xiaomi.settings.display
 
-import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateFloatAsState
 import androidx.compose.animation.core.LinearEasing
@@ -22,6 +21,7 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -33,9 +33,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MediumTopAppBar
@@ -55,12 +57,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.utils.PartsToast
 
 private typealias ColorMode = ColorService.ColorMode
 
@@ -79,7 +83,7 @@ private fun ColourPreviewHero(
     selectedId: Int,
     modifier:   Modifier = Modifier,
 ) {
-    val allModes = ColorMode.entries
+    val allModes  = ColorMode.entries
     val cardShape = PartsTokens.cardShape
 
     val alphas = allModes.map { mode ->
@@ -92,61 +96,69 @@ private fun ColourPreviewHero(
 
     val hues = allModes.map { it.hue }
 
-    val shimmerOffset by rememberInfiniteTransition(label = "shimmer").animateFloat(
-        initialValue  = PartsTokens.shimmerStartPx,
-        targetValue   = PartsTokens.shimmerEndPx,
-        animationSpec = infiniteRepeatable(
-            animation  = tween(PartsTokens.motionShimmerTweenMs, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart,
-        ),
-        label = "shimmerOffset",
-    )
-
-    val heroBg = PartsTokens.Colors.heroBg
-
-    Canvas(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .height(PartsTokens.heroPreviewHeight)
             .clip(cardShape)
-            .background(heroBg),
+            .background(PartsTokens.Colors.heroBg),
     ) {
-        val cx = size.width  / 2
-        val cy = size.height / 2
-        val r  = size.width  * PartsTokens.blobRadiusFraction
+        val widthPx      = with(LocalDensity.current) { maxWidth.toPx() }
+        val shimmerStart = -widthPx * 0.5f
+        val shimmerEnd   = widthPx * 1.5f
+        val shimmerWidth = widthPx * 0.25f
 
-        val positions = listOf(
-            Offset(cx * 0.3f, cy * 0.5f),
-            Offset(cx * 0.9f, cy * 0.4f),
-            Offset(cx * 1.5f, cy * 0.5f),
-            Offset(cx * 0.5f, cy * 1.5f),
-            Offset(cx * 1.1f, cy * 1.6f),
-            Offset(cx * 1.7f, cy * 1.5f),
+        val shimmerOffset by rememberInfiniteTransition(label = "shimmer").animateFloat(
+            initialValue  = shimmerStart,
+            targetValue   = shimmerEnd,
+            animationSpec = infiniteRepeatable(
+                animation  = tween(PartsTokens.motionShimmerTweenMs, easing = LinearEasing),
+                repeatMode = RepeatMode.Restart,
+            ),
+            label = "shimmerOffset",
         )
 
-        allModes.forEachIndexed { i, _ ->
-            drawCircle(
-                brush  = Brush.radialGradient(
-                    colors = listOf(hues[i].copy(alpha = alphas[i].value), Color.Transparent),
-                    center = positions.getOrElse(i) { Offset(cx, cy) },
+        Canvas(modifier = Modifier.matchParentSize()) {
+            val cx = size.width  / 2
+            val cy = size.height / 2
+            val r  = size.width  * PartsTokens.blobRadiusFraction
+
+            val positions = listOf(
+                Offset(cx * 0.3f, cy * 0.5f),
+                Offset(cx * 0.9f, cy * 0.4f),
+                Offset(cx * 1.5f, cy * 0.5f),
+                Offset(cx * 0.5f, cy * 1.5f),
+                Offset(cx * 1.1f, cy * 1.6f),
+                Offset(cx * 1.7f, cy * 1.5f),
+            )
+
+            allModes.forEachIndexed { i, _ ->
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            hues[i].copy(alpha = alphas[i].value),
+                            Color.Transparent,
+                        ),
+                        center = positions.getOrElse(i) { Offset(cx, cy) },
+                        radius = r,
+                    ),
                     radius = r,
+                    center = positions.getOrElse(i) { Offset(cx, cy) },
+                )
+            }
+
+            drawRect(
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        Color.White.copy(alpha = 0f),
+                        Color.White.copy(alpha = PartsTokens.shimmerAlpha),
+                        Color.White.copy(alpha = 0f),
+                    ),
+                    start = Offset(shimmerOffset, 0f),
+                    end   = Offset(shimmerOffset + shimmerWidth, size.height),
                 ),
-                radius = r,
-                center = positions.getOrElse(i) { Offset(cx, cy) },
             )
         }
-
-        drawRect(
-            brush = Brush.linearGradient(
-                colors = listOf(
-                    Color.White.copy(alpha = 0f),
-                    Color.White.copy(alpha = PartsTokens.shimmerAlpha),
-                    Color.White.copy(alpha = 0f),
-                ),
-                start = Offset(shimmerOffset, 0f),
-                end   = Offset(shimmerOffset + PartsTokens.shimmerWidthPx, size.height),
-            ),
-        )
     }
 }
 
@@ -188,8 +200,8 @@ private fun SelectionRow(
         },
         leadingContent = {
             Box(
-                modifier         = Modifier
-                    .size(PartsTokens.colourModeLeadingSize)
+                modifier = Modifier
+                    .size(PartsTokens.leadingIconContainerSize)
                     .clip(CircleShape)
                     .background(hue.copy(alpha = PartsTokens.colourModeIconContainerAlpha)),
                 contentAlignment = Alignment.Center,
@@ -204,10 +216,10 @@ private fun SelectionRow(
         },
         trailingContent = {
             AnimatedContent(
-                targetState    = isSelected,
+                targetState = isSelected,
                 transitionSpec = {
                     fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
-                    fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
+                        fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
                 },
                 label = "checkIcon",
             ) { selected ->
@@ -230,7 +242,7 @@ private fun SelectionRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
-    val context    = LocalContext.current
+    val context     = LocalContext.current
     val spatialSpec = PartsTokens.MotionDefaultSpatial
 
     var selectedId by remember {
@@ -254,6 +266,14 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.navigate_up),
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = PartsTokens.Colors.topBarResting,
                     scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
@@ -268,33 +288,31 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 .padding(innerPadding)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Spacer(Modifier.height(PartsTokens.cardBlockSpacing))
-
-            ColourPreviewHero(
-                selectedId = selectedId,
-                modifier   = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-            )
-
-            Spacer(Modifier.height(PartsTokens.heroToCardSpacing))
+            PartsCard(modifier = Modifier.padding(top = PartsTokens.heroToCardSpacing)) {
+                ColourPreviewHero(
+                    selectedId = selectedId,
+                    modifier   = Modifier.padding(PartsTokens.contentPaddingHorizontal),
+                )
+                Spacer(Modifier.height(PartsTokens.space8))
+            }
 
             PartsCard {
                 ColorMode.entries.forEach { mode ->
                     SelectionRow(
                         mode       = mode,
-                        isSelected = mode.id == selectedId,
+                        isSelected = selectedId == mode.id,
                         onClick    = {
                             runCatching {
                                 ColorService.setColorMode(context, mode.id)
                                 selectedId = mode.id
                             }.onFailure {
-                                Toast.makeText(context, R.string.display_colour_failed, Toast.LENGTH_SHORT).show()
+                                PartsToast.show(context, R.string.display_colours_failed)
                             }
                         },
                     )
                 }
+                Spacer(Modifier.height(PartsTokens.sheetContentTopPadding))
             }
-
-            Spacer(Modifier.height(PartsTokens.listBottomPadding))
         }
     }
 }

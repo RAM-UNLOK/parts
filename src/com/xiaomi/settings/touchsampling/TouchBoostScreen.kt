@@ -20,8 +20,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -86,6 +89,14 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.navigate_up),
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = PartsTokens.Colors.topBarResting,
                     scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
@@ -99,9 +110,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
             item(key = "toggle") {
-                PartsCard(
-                    modifier = Modifier.padding(top = PartsTokens.cardBlockSpacing),
-                ) {
+                // No extra padding(top) here — PartsCard already applies cardBlockSpacing internally.
+                PartsCard {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
