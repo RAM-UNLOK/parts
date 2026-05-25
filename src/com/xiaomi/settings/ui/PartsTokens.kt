@@ -99,13 +99,6 @@ object PartsTokens {
     //   Short1=50  Short2=100  Short3=150  Short4=200
     //   Medium1=250 Medium2=300 Medium3=350 Medium4=400
     //
-    // Easing:
-    //   Spatial enter  → EmphasizedDecelerate (0.05, 0.7, 0.1, 1.0)
-    //   Spatial exit   → EmphasizedAccelerate (0.3, 0.0, 0.8, 0.15)
-    //   Effects enter  → LinearOutSlowIn
-    //   Effects exit   → FastOutLinearIn
-    //   Standard       → FastOutSlowIn
-    //
     // No @ExperimentalMaterial3ExpressiveApi. No MotionScheme.
     // ---------------------------------------------------------------------------
 
@@ -227,7 +220,7 @@ object PartsTokens {
 
     // ---------------------------------------------------------------------------
     // Typography — resolved through MaterialTheme.typography (stable M3)
-    // No hardcoded sp values or FontWeight anywhere.
+    // No hardcoded sp values or FontWeight.
     // ---------------------------------------------------------------------------
     object Type {
         val screenTitle: TextStyle

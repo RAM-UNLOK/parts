@@ -84,7 +84,7 @@ fun XiaomiPartsHomeScreen(
 
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(ctx: Context, intent: Intent) {
-                val now     = android.os.SystemClock.elapsedRealtime()
+                val now     = SystemClock.elapsedRealtime()
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
