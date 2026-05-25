@@ -12,9 +12,6 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -40,7 +37,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -63,12 +59,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
+import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
-
-private val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
-private const val TOAST_DEBOUNCE_MS = 2_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +88,7 @@ fun XiaomiPartsHomeScreen(
                 val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
                 isCharging         = plugged
                 showChargingBanner = plugged
-                if (now - lastToastTime < TOAST_DEBOUNCE_MS) return
+                if (now - lastToastTime < PartsTokens.toastDebounceMs) return
                 lastToastTime = now
                 PartsToast.show(ctx, if (plugged) R.string.charging_connected else R.string.charging_disconnected)
             }
@@ -113,7 +106,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = PartsTokens.Colors.page,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -124,8 +117,8 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = PartsTokens.Colors.topBarResting,
+                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -135,43 +128,46 @@ fun XiaomiPartsHomeScreen(
             modifier       = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 32.dp),
+            contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
-                    enter   = fadeIn(tween(150, easing = FastOutSlowInEasing)) +
-                        slideInVertically(tween(250, easing = EmphasizedDecelerate)) { -it / 2 },
+                    enter   = fadeIn(PartsTokens.defaultEffectsSpec()) +
+                        slideInVertically(animationSpec = PartsTokens.bannerEnterSpec()) { -it / 2 },
                 ) {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                            .padding(top = 20.dp)
-                            .clip(MaterialTheme.shapes.extraLarge)
-                            .background(MaterialTheme.colorScheme.tertiaryContainer)
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+                            .padding(top = PartsTokens.bannerTopSpacing)
+                            .clip(PartsTokens.bannerShape)
+                            .background(PartsTokens.Colors.chargingBannerContainer)
+                            .padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                                vertical   = PartsTokens.bannerVerticalPadding,
+                            ),
+                        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
                         verticalAlignment     = Alignment.CenterVertically,
                     ) {
                         Icon(
                             imageVector        = Icons.Filled.BatteryChargingFull,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier           = Modifier.size(24.dp),
+                            tint               = PartsTokens.Colors.chargingBannerContent,
+                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
                         )
                         Text(
                             text     = stringResource(R.string.charging_connected),
-                            style    = MaterialTheme.typography.titleSmall,
-                            color    = MaterialTheme.colorScheme.onTertiaryContainer,
+                            style    = PartsTokens.Type.bannerLabel,
+                            color    = PartsTokens.Colors.chargingBannerContent,
                             modifier = Modifier.weight(1f),
                         )
                         IconButton(onClick = { showChargingBanner = false }) {
                             Icon(
                                 imageVector        = Icons.Filled.Close,
                                 contentDescription = stringResource(R.string.dismiss),
-                                tint               = MaterialTheme.colorScheme.onTertiaryContainer,
-                                modifier           = Modifier.size(20.dp),
+                                tint               = PartsTokens.Colors.chargingBannerContent,
+                                modifier           = Modifier.size(PartsTokens.closeIconSize),
                             )
                         }
                     }
@@ -183,8 +179,8 @@ fun XiaomiPartsHomeScreen(
                 PartsCard {
                     PartsRow(
                         icon               = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        iconContentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                        iconContainerColor = PartsTokens.Colors.displayIconContainer,
+                        iconContentColor   = PartsTokens.Colors.displayIconContent,
                         title              = stringResource(R.string.display_colours_title),
                         summary            = stringResource(R.string.display_colours_summary),
                         onClick            = onNavigateToDisplay,
@@ -198,8 +194,8 @@ fun XiaomiPartsHomeScreen(
                 PartsCard {
                     PartsRow(
                         icon               = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
-                        iconContainerColor = MaterialTheme.colorScheme.errorContainer,
-                        iconContentColor   = MaterialTheme.colorScheme.onErrorContainer,
+                        iconContainerColor = PartsTokens.Colors.thermalIconContainer,
+                        iconContentColor   = PartsTokens.Colors.thermalIconContent,
                         title              = stringResource(R.string.thermal_title),
                         summary            = stringResource(R.string.thermal_summary),
                         onClick            = onNavigateToThermal,
@@ -207,8 +203,8 @@ fun XiaomiPartsHomeScreen(
                     )
                     PartsRow(
                         icon               = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                        iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
+                        iconContainerColor = PartsTokens.Colors.touchIconContainer,
+                        iconContentColor   = PartsTokens.Colors.touchIconContent,
                         title              = stringResource(R.string.touch_boost_title),
                         summary            = stringResource(R.string.touch_boost_summary),
                         onClick            = onNavigateToTouch,
@@ -222,8 +218,8 @@ fun XiaomiPartsHomeScreen(
                 PartsCard {
                     PartsRow(
                         icon               = Icons.Filled.Fingerprint,
-                        iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
+                        iconContainerColor = PartsTokens.Colors.diagIconContainer,
+                        iconContentColor   = PartsTokens.Colors.diagIconContent,
                         title              = stringResource(R.string.fingerprint_calibration_title),
                         summary            = stringResource(R.string.fingerprint_calibration_summary),
                         onClick = {
@@ -235,8 +231,8 @@ fun XiaomiPartsHomeScreen(
                     )
                     PartsRow(
                         icon               = Icons.Filled.Speaker,
-                        iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
+                        iconContainerColor = PartsTokens.Colors.diagIconContainer,
+                        iconContentColor   = PartsTokens.Colors.diagIconContent,
                         title              = stringResource(R.string.speaker_calibration_title),
                         summary            = stringResource(R.string.speaker_calibration_summary),
                         onClick = {
@@ -256,9 +252,13 @@ fun XiaomiPartsHomeScreen(
 fun PartsCategory(label: String) {
     Text(
         text     = label,
-        style    = MaterialTheme.typography.labelLarge,
-        color    = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp),
+        style    = PartsTokens.Type.categoryLabel,
+        color    = PartsTokens.Colors.categoryLabelColor,
+        modifier = Modifier.padding(
+            start  = PartsTokens.contentPaddingHorizontal,
+            top    = PartsTokens.categoryTopPadding,
+            bottom = PartsTokens.categoryBottomPadding,
+        ),
     )
 }
 
@@ -270,11 +270,11 @@ fun PartsCard(
     Surface(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 16.dp),
-        shape          = MaterialTheme.shapes.extraLarge,
-        color          = MaterialTheme.colorScheme.surfaceContainer,
-        tonalElevation = 4.dp,
+            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+            .padding(top = PartsTokens.cardBlockSpacing),
+        shape          = PartsTokens.cardShape,
+        color          = PartsTokens.Colors.cardSurface,
+        tonalElevation = PartsTokens.premiumCardElevation,
     ) {
         Column { content() }
     }
@@ -295,14 +295,17 @@ fun PartsRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable(role = Role.Button, onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 16.dp),
+                .padding(
+                    horizontal = PartsTokens.contentPaddingHorizontal,
+                    vertical   = PartsTokens.rowPaddingVertical,
+                ),
             verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
         ) {
             Box(
                 modifier = Modifier
-                    .size(40.dp)
-                    .clip(MaterialTheme.shapes.large)
+                    .size(PartsTokens.leadingIconContainerSize)
+                    .clip(PartsTokens.leadingIconShape)
                     .background(iconContainerColor),
                 contentAlignment = Alignment.Center,
             ) {
@@ -310,33 +313,33 @@ fun PartsRow(
                     imageVector        = icon,
                     contentDescription = null,
                     tint               = iconContentColor,
-                    modifier           = Modifier.size(24.dp),
+                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
                 )
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text  = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = PartsTokens.Type.rowHeadline,
+                    color = PartsTokens.Colors.textPrimary,
                 )
                 Text(
                     text  = summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = PartsTokens.Type.rowSupporting,
+                    color = PartsTokens.Colors.textSecondary,
                 )
             }
             Icon(
                 imageVector        = Icons.Filled.ChevronRight,
                 contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier           = Modifier.size(24.dp),
+                tint               = PartsTokens.Colors.textSecondary,
+                modifier           = Modifier.size(PartsTokens.trailingIconSize),
             )
         }
         if (showDivider) {
             HorizontalDivider(
-                modifier  = Modifier.padding(horizontal = 16.dp),
-                thickness = 1.dp,
-                color     = MaterialTheme.colorScheme.outlineVariant,
+                modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                thickness = PartsTokens.dividerThickness,
+                color     = PartsTokens.Colors.outlineVariant,
             )
         }
     }
