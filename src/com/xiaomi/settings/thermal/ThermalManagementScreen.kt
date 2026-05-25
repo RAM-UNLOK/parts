@@ -6,11 +6,7 @@
 package com.xiaomi.settings.thermal
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutLinearInEasing
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -42,7 +38,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -68,11 +63,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
+import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.PartsToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -117,7 +112,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = PartsTokens.Colors.page,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -136,8 +131,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = PartsTokens.Colors.topBarResting,
+                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -154,15 +149,15 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     ThermalService.profiles().forEach { profile ->
                         val isActive = profile.id == globalProfile
                         val bgAlpha by animateFloatAsState(
-                            targetValue   = if (isActive) 0.12f else 0f,
-                            animationSpec = tween(150, easing = FastOutSlowInEasing),
+                            targetValue   = if (isActive) PartsTokens.selectedStateLayerAlpha else 0f,
+                            animationSpec = PartsTokens.defaultEffectsSpec(),
                             label         = "globalBg_${profile.id}",
                         )
                         ListItem(
                             modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .clip(MaterialTheme.shapes.medium)
-                                .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+                                .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+                                .clip(PartsTokens.dialogSelectionShape)
+                                .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
                                 .clickable(role = Role.RadioButton) {
                                     runCatching {
                                         ThermalService.setGlobalProfile(context, profile.id)
@@ -174,17 +169,17 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             headlineContent = {
                                 Text(
                                     text  = context.getString(profile.label),
-                                    style = MaterialTheme.typography.titleMedium,
-                                    color = if (isActive) MaterialTheme.colorScheme.primary
-                                            else          MaterialTheme.colorScheme.onSurface,
+                                    style = PartsTokens.Type.rowHeadline,
+                                    color = if (isActive) PartsTokens.Colors.dialogSelectedText
+                                            else          PartsTokens.Colors.textPrimary,
                                 )
                             },
                             trailingContent = {
                                 AnimatedContent(
                                     targetState    = isActive,
                                     transitionSpec = {
-                                        fadeIn(tween(150, easing = LinearOutSlowInEasing)) togetherWith
-                                            fadeOut(tween(100, easing = FastOutLinearInEasing))
+                                        fadeIn(PartsTokens.checkFadeInSpec()) togetherWith
+                                            fadeOut(PartsTokens.checkFadeOutSpec())
                                     },
                                     label = "check_${profile.id}",
                                 ) { active ->
@@ -192,11 +187,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                         Icon(
                                             imageVector        = Icons.Filled.CheckCircle,
                                             contentDescription = null,
-                                            tint               = MaterialTheme.colorScheme.primary,
-                                            modifier           = Modifier.size(24.dp),
+                                            tint               = PartsTokens.Colors.dialogSelectedText,
+                                            modifier           = Modifier.size(PartsTokens.trailingIconSize),
                                         )
                                     } else {
-                                        Box(Modifier.size(24.dp))
+                                        Box(Modifier.size(PartsTokens.trailingIconSize))
                                     }
                                 }
                             },
@@ -212,9 +207,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 item(key = "empty") {
                     Text(
                         text     = stringResource(R.string.thermal_no_apps),
-                        style    = MaterialTheme.typography.bodyMedium,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                        style    = PartsTokens.Type.rowSupporting,
+                        color    = PartsTokens.Colors.textSecondary,
+                        modifier = Modifier.padding(
+                            horizontal = PartsTokens.contentPaddingHorizontal,
+                            vertical   = PartsTokens.rowPaddingVertical,
+                        ),
                     )
                 }
             } else {
@@ -233,7 +231,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            item(key = "bottom-spacer") { Spacer(Modifier.height(32.dp)) }
+            item(key = "bottom-spacer") { Spacer(Modifier.height(PartsTokens.listBottomPadding)) }
         }
     }
 
@@ -241,35 +239,35 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState       = sheetState,
-            shape            = MaterialTheme.shapes.extraLarge.copy(
-                bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-                bottomEnd   = androidx.compose.foundation.shape.CornerSize(0.dp),
-            ),
+            shape            = PartsTokens.bottomSheetTopShape,
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp),
+                    .padding(bottom = PartsTokens.listBottomPadding),
             ) {
-                Spacer(Modifier.height(8.dp))
+                Spacer(Modifier.height(PartsTokens.sheetContentTopPadding))
                 Text(
                     text     = stringResource(R.string.thermal_select_profile),
-                    style    = MaterialTheme.typography.headlineSmall,
-                    color    = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                    style    = PartsTokens.Type.sheetTitle,
+                    color    = PartsTokens.Colors.textPrimary,
+                    modifier = Modifier.padding(
+                        horizontal = PartsTokens.contentPaddingHorizontal,
+                        vertical   = PartsTokens.rowPaddingVertical,
+                    ),
                 )
                 ThermalService.profiles().forEach { profile ->
                     val isSelected = profile.id == pendingApp?.profileId
                     val bgAlpha by animateFloatAsState(
-                        targetValue   = if (isSelected) 0.12f else 0f,
-                        animationSpec = tween(150, easing = FastOutSlowInEasing),
+                        targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
+                        animationSpec = PartsTokens.defaultEffectsSpec(),
                         label         = "profileBg_${profile.id}",
                     )
                     ListItem(
                         modifier = Modifier
-                            .padding(horizontal = 16.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+                            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
+                            .clip(PartsTokens.dialogSelectionShape)
+                            .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
                             .clickable(role = Role.RadioButton) {
                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
                                     showSheet = false
@@ -290,17 +288,17 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         headlineContent = {
                             Text(
                                 text  = context.getString(profile.label),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary
-                                        else            MaterialTheme.colorScheme.onSurface,
+                                style = PartsTokens.Type.rowHeadline,
+                                color = if (isSelected) PartsTokens.Colors.dialogSelectedText
+                                        else            PartsTokens.Colors.textPrimary,
                             )
                         },
                         trailingContent = {
                             AnimatedContent(
                                 targetState    = isSelected,
                                 transitionSpec = {
-                                    fadeIn(tween(150, easing = LinearOutSlowInEasing)) togetherWith
-                                        fadeOut(tween(100, easing = FastOutLinearInEasing))
+                                    fadeIn(PartsTokens.checkFadeInSpec()) togetherWith
+                                        fadeOut(PartsTokens.checkFadeOutSpec())
                                 },
                                 label = "check_${profile.id}",
                             ) { selected ->
@@ -308,11 +306,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                     Icon(
                                         imageVector        = Icons.Filled.CheckCircle,
                                         contentDescription = null,
-                                        tint               = MaterialTheme.colorScheme.primary,
-                                        modifier           = Modifier.size(24.dp),
+                                        tint               = PartsTokens.Colors.dialogSelectedText,
+                                        modifier           = Modifier.size(PartsTokens.trailingIconSize),
                                     )
                                 } else {
-                                    Box(Modifier.size(24.dp))
+                                    Box(Modifier.size(PartsTokens.trailingIconSize))
                                 }
                             }
                         },
@@ -337,56 +335,61 @@ private fun AppThermalPremiumCard(
         ElevatedCard(
             modifier  = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 12.dp),
-            shape     = MaterialTheme.shapes.extraLarge,
-            elevation = CardDefaults.elevatedCardElevation(defaultElevation = 4.dp),
+                .padding(
+                    horizontal = PartsTokens.contentPaddingHorizontal,
+                    vertical   = PartsTokens.premiumCardSpacing,
+                ),
+            shape     = PartsTokens.cardShape,
+            elevation = CardDefaults.elevatedCardElevation(
+                defaultElevation = PartsTokens.premiumCardElevation,
+            ),
             colors    = CardDefaults.elevatedCardColors(
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
+                containerColor = PartsTokens.Colors.premiumCardSurface,
             ),
         ) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(PartsTokens.contentPaddingHorizontal),
                 verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
             ) {
                 if (icon != null) {
                     Image(
                         bitmap             = icon,
                         contentDescription = null,
                         modifier           = Modifier
-                            .size(40.dp)
-                            .clip(MaterialTheme.shapes.large),
+                            .size(PartsTokens.appIconSize)
+                            .clip(PartsTokens.leadingIconShape),
                     )
                 } else {
                     Box(
                         modifier = Modifier
-                            .size(40.dp)
-                            .clip(MaterialTheme.shapes.large)
-                            .background(MaterialTheme.colorScheme.surfaceContainerHighest),
+                            .size(PartsTokens.appIconSize)
+                            .clip(PartsTokens.leadingIconShape)
+                            .background(PartsTokens.Colors.appIconFallback),
                     )
                 }
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text     = entry.label,
-                        style    = MaterialTheme.typography.titleLarge,
-                        color    = MaterialTheme.colorScheme.onPrimaryContainer,
+                        style    = PartsTokens.Type.cardTitle,
+                        color    = PartsTokens.Colors.premiumCardContent,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
                 Button(
                     onClick = onSelectProfile,
-                    shape   = MaterialTheme.shapes.extraLarge,
+                    shape   = PartsTokens.buttonShape,
                     colors  = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        contentColor   = MaterialTheme.colorScheme.onPrimary,
+                        containerColor = PartsTokens.Colors.premiumCardButton,
+                        contentColor   = PartsTokens.Colors.premiumCardButtonContent,
                     ),
                 ) {
                     Text(
                         text     = ThermalService.profileLabel(context, entry.profileId),
-                        style    = MaterialTheme.typography.labelLarge,
+                        style    = PartsTokens.Type.buttonLabel,
                         maxLines = 1,
                     )
                 }
@@ -394,9 +397,9 @@ private fun AppThermalPremiumCard(
         }
         if (showDivider) {
             HorizontalDivider(
-                modifier  = Modifier.padding(horizontal = 16.dp),
-                thickness = 1.dp,
-                color     = MaterialTheme.colorScheme.outlineVariant,
+                modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
+                thickness = PartsTokens.dividerThickness,
+                color     = PartsTokens.Colors.outlineVariant,
             )
         }
     }

@@ -6,8 +6,6 @@
 package com.xiaomi.settings.touchsampling
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +24,6 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -46,36 +43,37 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.R
+import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.PartsToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
+    val context      = LocalContext.current
+    val leadingShape = PartsTokens.leadingIconShape
 
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val iconContainer by animateColorAsState(
-        targetValue   = if (enabled) MaterialTheme.colorScheme.primaryContainer
-                        else         MaterialTheme.colorScheme.surfaceContainerHigh,
-        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
+                        else         PartsTokens.Colors.touchIconContainerOff,
+        animationSpec = PartsTokens.defaultEffectsSpec(),
         label         = "touchIconContainer",
     )
     val iconContent by animateColorAsState(
-        targetValue   = if (enabled) MaterialTheme.colorScheme.onPrimaryContainer
-                        else         MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = tween(150, easing = FastOutSlowInEasing),
+        targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
+                        else         PartsTokens.Colors.touchIconContentOff,
+        animationSpec = PartsTokens.defaultEffectsSpec(),
         label         = "touchIconContent",
     )
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = PartsTokens.Colors.page,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -94,8 +92,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = PartsTokens.Colors.topBarResting,
+                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -103,20 +101,23 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     ) { innerPadding ->
         LazyColumn(
             modifier       = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 32.dp),
+            contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
         ) {
             item(key = "toggle") {
                 PartsCard {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 16.dp),
+                            .padding(
+                                horizontal = PartsTokens.contentPaddingHorizontal,
+                                vertical   = PartsTokens.rowPaddingVertical,
+                            ),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             modifier         = Modifier
-                                .size(40.dp)
-                                .clip(MaterialTheme.shapes.large)
+                                .size(PartsTokens.leadingIconContainerSize)
+                                .clip(leadingShape)
                                 .background(iconContainer),
                             contentAlignment = Alignment.Center,
                         ) {
@@ -124,20 +125,20 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                                 imageVector        = ImageVector.vectorResource(R.drawable.ic_touch_boost),
                                 contentDescription = null,
                                 tint               = iconContent,
-                                modifier           = Modifier.size(24.dp),
+                                modifier           = Modifier.size(PartsTokens.leadingIconSize),
                             )
                         }
-                        Spacer(Modifier.width(16.dp))
+                        Spacer(Modifier.width(PartsTokens.rowElementSpacing))
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
                                 text  = stringResource(R.string.touch_boost_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                style = PartsTokens.Type.rowHeadline,
+                                color = PartsTokens.Colors.textPrimary,
                             )
                             Text(
                                 text  = stringResource(R.string.touch_boost_summary),
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = PartsTokens.Type.rowSupporting,
+                                color = PartsTokens.Colors.textSecondary,
                             )
                         }
                         Switch(
@@ -158,13 +159,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             item(key = "info") {
                 Text(
                     text     = stringResource(R.string.touch_boost_description),
-                    style    = MaterialTheme.typography.bodyMedium,
-                    color    = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 16.dp),
+                    style    = PartsTokens.Type.infoBody,
+                    color    = PartsTokens.Colors.textSecondary,
+                    modifier = Modifier.padding(
+                        horizontal = PartsTokens.contentPaddingHorizontal,
+                        vertical   = PartsTokens.rowPaddingVertical,
+                    ),
                 )
             }
 
-            item(key = "spacer") { Spacer(Modifier.height(32.dp)) }
+            item(key = "spacer") { Spacer(Modifier.height(PartsTokens.listBottomPadding)) }
         }
     }
 }

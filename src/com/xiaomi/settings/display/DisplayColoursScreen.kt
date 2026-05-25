@@ -6,6 +6,7 @@
 package com.xiaomi.settings.display
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -86,7 +87,7 @@ private fun ColourPreviewHero(
     val alphas = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = PartsTokens.defaultSpatialSpec(),
+            animationSpec = PartsTokens.defaultEffectsSpec(),
             label         = "alpha_${mode.name}",
         )
     }
