@@ -6,9 +6,7 @@
 package com.xiaomi.settings.thermal
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FiniteAnimationSpec
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -96,15 +94,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope      = rememberCoroutineScope()
 
-    val cardShape      = PartsTokens.cardShape
-    val selectionShape = PartsTokens.dialogSelectionShape
-    val sheetShape     = PartsTokens.bottomSheetTopShape
-    val buttonShape    = PartsTokens.buttonShape
-    val leadingShape   = PartsTokens.leadingIconShape
-    val spatialSpec    = PartsTokens.motionDefaultSpatial<Float>()
-    // Hoisted here so it can be captured in non-@Composable transitionSpec lambdas
-    val effectsSpec: FiniteAnimationSpec<Float> = PartsTokens.motionDefaultEffects()
-
     var pendingApp    by remember { mutableStateOf<AppThermalEntry?>(null) }
     var showSheet     by remember { mutableStateOf(false) }
     var globalProfile by remember { mutableIntStateOf(ThermalService.getGlobalProfile(context)) }
@@ -119,10 +108,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         }
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = spatialSpec,
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
-    )
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -164,13 +150,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         val isActive = profile.id == globalProfile
                         val bgAlpha by animateFloatAsState(
                             targetValue   = if (isActive) PartsTokens.selectedStateLayerAlpha else 0f,
-                            animationSpec = effectsSpec,
+                            animationSpec = PartsTokens.defaultEffectsSpec(),
                             label         = "globalBg_${profile.id}",
                         )
                         ListItem(
                             modifier = Modifier
                                 .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                                .clip(selectionShape)
+                                .clip(PartsTokens.dialogSelectionShape)
                                 .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
                                 .clickable(role = Role.RadioButton) {
                                     runCatching {
@@ -192,7 +178,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 AnimatedContent(
                                     targetState    = isActive,
                                     transitionSpec = {
-                                        fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec)
+                                        fadeIn(PartsTokens.checkFadeInSpec()) togetherWith
+                                            fadeOut(PartsTokens.checkFadeOutSpec())
                                     },
                                     label = "check_${profile.id}",
                                 ) { active ->
@@ -236,9 +223,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     AppThermalPremiumCard(
                         entry           = entry,
                         showDivider     = index < appList.lastIndex,
-                        cardShape       = cardShape,
-                        leadingShape    = leadingShape,
-                        buttonShape     = buttonShape,
                         onSelectProfile = {
                             pendingApp = entry
                             showSheet  = true
@@ -255,7 +239,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         ModalBottomSheet(
             onDismissRequest = { showSheet = false },
             sheetState       = sheetState,
-            shape            = sheetShape,
+            shape            = PartsTokens.bottomSheetTopShape,
         ) {
             Column(
                 modifier = Modifier
@@ -276,13 +260,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     val isSelected = profile.id == pendingApp?.profileId
                     val bgAlpha by animateFloatAsState(
                         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-                        animationSpec = effectsSpec,
+                        animationSpec = PartsTokens.defaultEffectsSpec(),
                         label         = "profileBg_${profile.id}",
                     )
                     ListItem(
                         modifier = Modifier
                             .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                            .clip(selectionShape)
+                            .clip(PartsTokens.dialogSelectionShape)
                             .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
                             .clickable(role = Role.RadioButton) {
                                 scope.launch { sheetState.hide() }.invokeOnCompletion {
@@ -313,7 +297,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             AnimatedContent(
                                 targetState    = isSelected,
                                 transitionSpec = {
-                                    fadeIn(effectsSpec) togetherWith fadeOut(effectsSpec)
+                                    fadeIn(PartsTokens.checkFadeInSpec()) togetherWith
+                                        fadeOut(PartsTokens.checkFadeOutSpec())
                                 },
                                 label = "check_${profile.id}",
                             ) { selected ->
@@ -341,9 +326,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 private fun AppThermalPremiumCard(
     entry:           AppThermalEntry,
     showDivider:     Boolean,
-    cardShape:       androidx.compose.ui.graphics.Shape,
-    leadingShape:    androidx.compose.ui.graphics.Shape,
-    buttonShape:     androidx.compose.ui.graphics.Shape,
     onSelectProfile: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -357,7 +339,7 @@ private fun AppThermalPremiumCard(
                     horizontal = PartsTokens.contentPaddingHorizontal,
                     vertical   = PartsTokens.premiumCardSpacing,
                 ),
-            shape     = cardShape,
+            shape     = PartsTokens.cardShape,
             elevation = CardDefaults.elevatedCardElevation(
                 defaultElevation = PartsTokens.premiumCardElevation,
             ),
@@ -378,13 +360,13 @@ private fun AppThermalPremiumCard(
                         contentDescription = null,
                         modifier           = Modifier
                             .size(PartsTokens.appIconSize)
-                            .clip(leadingShape),
+                            .clip(PartsTokens.leadingIconShape),
                     )
                 } else {
                     Box(
                         modifier = Modifier
                             .size(PartsTokens.appIconSize)
-                            .clip(leadingShape)
+                            .clip(PartsTokens.leadingIconShape)
                             .background(PartsTokens.Colors.appIconFallback),
                     )
                 }
@@ -399,7 +381,7 @@ private fun AppThermalPremiumCard(
                 }
                 Button(
                     onClick = onSelectProfile,
-                    shape   = buttonShape,
+                    shape   = PartsTokens.buttonShape,
                     colors  = ButtonDefaults.buttonColors(
                         containerColor = PartsTokens.Colors.premiumCardButton,
                         contentColor   = PartsTokens.Colors.premiumCardButtonContent,

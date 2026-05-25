@@ -12,7 +12,6 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.SystemClock
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
@@ -60,7 +59,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
 import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
@@ -73,10 +71,6 @@ fun XiaomiPartsHomeScreen(
     onNavigateToTouch:   () -> Unit,
 ) {
     val context = LocalContext.current
-
-    val spatialSpecFloat    = PartsTokens.motionDefaultSpatial<Float>()
-    val spatialSpecOffset   = PartsTokens.motionDefaultSpatial<IntOffset>()
-    val effectsSpec         = PartsTokens.motionDefaultEffects<Float>()
 
     var isCharging         by remember { mutableStateOf(false) }
     var showChargingBanner by remember { mutableStateOf(false) }
@@ -108,10 +102,7 @@ fun XiaomiPartsHomeScreen(
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(
-        snapAnimationSpec  = spatialSpecFloat,
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
-    )
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -142,8 +133,8 @@ fun XiaomiPartsHomeScreen(
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = showChargingBanner,
-                    enter   = fadeIn(effectsSpec) +
-                        slideInVertically(animationSpec = spatialSpecOffset) { -it / 2 },
+                    enter   = fadeIn(PartsTokens.defaultEffectsSpec()) +
+                        slideInVertically(animationSpec = PartsTokens.bannerEnterSpec()) { -it / 2 },
                 ) {
                     Row(
                         modifier = Modifier

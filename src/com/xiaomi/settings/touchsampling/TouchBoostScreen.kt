@@ -6,7 +6,6 @@
 package com.xiaomi.settings.touchsampling
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -57,21 +56,18 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = PartsTokens.motionDefaultSpatial(),
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
-    )
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val iconContainer by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
                         else         PartsTokens.Colors.touchIconContainerOff,
-        animationSpec = PartsTokens.motionDefaultEffects(),
+        animationSpec = PartsTokens.defaultEffectsSpec(),
         label         = "touchIconContainer",
     )
     val iconContent by animateColorAsState(
         targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
                         else         PartsTokens.Colors.touchIconContentOff,
-        animationSpec = PartsTokens.motionDefaultEffects(),
+        animationSpec = PartsTokens.defaultEffectsSpec(),
         label         = "touchIconContent",
     )
 

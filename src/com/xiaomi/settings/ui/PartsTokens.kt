@@ -5,10 +5,16 @@
 
 package com.xiaomi.settings.ui
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -18,7 +24,6 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 object PartsTokens {
 
     // Spacing scale — 4 px base unit
@@ -71,9 +76,6 @@ object PartsTokens {
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.medium
     val buttonShape: Shape
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge
-    // Bottom-sheet: round top corners only, square bottom corners.
-    // Uses .copy() on extraLarge so the radius stays token-driven
-    // and responds to any dynamic-colour / M3E theme override.
     val bottomSheetTopShape: Shape
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge.copy(
             bottomStart = CornerSize(0.dp),
@@ -88,45 +90,54 @@ object PartsTokens {
     // Shimmer / blob constants
     const val shimmerAlpha:       Float = 0.05f
     const val blobRadiusFraction: Float = 0.38f
-    const val frictionMultiplier: Float = 2f
     const val toastDebounceMs:    Long  = 2_000L
 
-    // Motion duration constants
-    const val motionNavFadeEnterMs: Int = 220
-    const val motionNavFadeExitMs:  Int = 200
-    const val motionNavSlideMs:     Int = 220
+    // ---------------------------------------------------------------------------
+    // Motion — Stable M3 tokens only
+    //
+    // Duration reference (ms):
+    //   Short1=50  Short2=100  Short3=150  Short4=200
+    //   Medium1=250 Medium2=300 Medium3=350 Medium4=400
+    //
+    // Easing reference:
+    //   Spatial (enter/exit)  → EmphasizedDecelerate / EmphasizedAccelerate
+    //   Effects (fade/color)  → Standard (FastOutSlowIn) or Linear
+    //
+    // No @ExperimentalMaterial3ExpressiveApi. No MotionScheme.
+    // ---------------------------------------------------------------------------
+
+    private val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
+    private val EmphasizedAccelerate = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
+
     const val motionShimmerTweenMs: Int = 2800
-    const val motionBannerFadeMs:   Int = 220
-    const val motionCheckFadeInMs:  Int = 150
-    const val motionCheckFadeOutMs: Int = 100
 
-    // Motion specs — M3 MotionScheme
-    // Kotlin does not allow type parameters on extension properties without
-    // a receiver; these are functions so the type can be inferred at each call-site.
-    @Composable @ReadOnlyComposable
-    fun <T> motionDefaultSpatial(): FiniteAnimationSpec<T> =
-        MaterialTheme.motionScheme.defaultSpatialSpec()
+    fun <T> navSpatialSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 300, easing = EmphasizedDecelerate)
 
-    @Composable @ReadOnlyComposable
-    fun <T> motionFastSpatial(): FiniteAnimationSpec<T> =
-        MaterialTheme.motionScheme.fastSpatialSpec()
+    fun <T> navEffectsSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 150, easing = FastOutSlowInEasing)
 
-    @Composable @ReadOnlyComposable
-    fun <T> motionSlowSpatial(): FiniteAnimationSpec<T> =
-        MaterialTheme.motionScheme.slowSpatialSpec()
+    fun <T> defaultSpatialSpec(): FiniteAnimationSpec<T> =
+        spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
 
-    @Composable @ReadOnlyComposable
-    fun <T> motionDefaultEffects(): FiniteAnimationSpec<T> =
-        MaterialTheme.motionScheme.defaultEffectsSpec()
+    fun <T> defaultEffectsSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 150, easing = FastOutSlowInEasing)
 
-    @Composable @ReadOnlyComposable
-    fun <T> motionFastEffects(): FiniteAnimationSpec<T> =
-        MaterialTheme.motionScheme.fastEffectsSpec()
+    fun <T> checkFadeInSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 150, easing = LinearOutSlowInEasing)
 
-    @Composable @ReadOnlyComposable
-    fun <T> motionSlowEffects(): FiniteAnimationSpec<T> =
-        MaterialTheme.motionScheme.slowEffectsSpec()
+    fun <T> checkFadeOutSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 100, easing = FastOutLinearInEasing)
 
+    fun <T> bannerEnterSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 250, easing = EmphasizedDecelerate)
+
+    fun <T> shimmerSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = motionShimmerTweenMs, easing = LinearEasing)
+
+    // ---------------------------------------------------------------------------
+    // Color roles — resolved through MaterialTheme.colorScheme (stable M3)
+    // ---------------------------------------------------------------------------
     object Colors {
         val page: Color
             @Composable @ReadOnlyComposable get() = MaterialTheme.colorScheme.background
@@ -211,6 +222,10 @@ object PartsTokens {
         }
     }
 
+    // ---------------------------------------------------------------------------
+    // Typography — resolved through MaterialTheme.typography (stable M3)
+    // No hardcoded sp values or FontWeight.
+    // ---------------------------------------------------------------------------
     object Type {
         val screenTitle: TextStyle
             @Composable @ReadOnlyComposable get() = MaterialTheme.typography.headlineMedium

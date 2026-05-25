@@ -37,24 +37,22 @@ class XiaomiPartsActivity : ComponentActivity() {
 
 @Composable
 private fun PartsNavHost() {
-    val nav           = rememberNavController()
-    val spatialSpec   = PartsTokens.motionDefaultSpatial<Float>()
-    val effectsSpec   = PartsTokens.motionDefaultEffects<Float>()
+    val nav = rememberNavController()
 
-    val pushEnter = slideInHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { it } +
-        fadeIn(PartsTokens.motionDefaultEffects())
-    val pushExit  = slideOutHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { -it / 4 } +
-        fadeOut(PartsTokens.motionDefaultEffects())
-    val popEnter  = slideInHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { -it / 4 } +
-        fadeIn(PartsTokens.motionDefaultEffects())
-    val popExit   = slideOutHorizontally(animationSpec = PartsTokens.motionDefaultSpatial()) { it } +
-        fadeOut(PartsTokens.motionDefaultEffects())
+    val pushEnter = slideInHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { it } +
+        fadeIn(PartsTokens.navEffectsSpec())
+    val pushExit  = slideOutHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { -it / 4 } +
+        fadeOut(PartsTokens.navEffectsSpec())
+    val popEnter  = slideInHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { -it / 4 } +
+        fadeIn(PartsTokens.navEffectsSpec())
+    val popExit   = slideOutHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { it } +
+        fadeOut(PartsTokens.navEffectsSpec())
 
     NavHost(
-        navController     = nav,
-        startDestination  = "home",
-        enterTransition   = { pushEnter },
-        exitTransition    = { pushExit },
+        navController      = nav,
+        startDestination   = "home",
+        enterTransition    = { pushEnter },
+        exitTransition     = { pushExit },
         popEnterTransition = { popEnter },
         popExitTransition  = { popExit },
     ) {

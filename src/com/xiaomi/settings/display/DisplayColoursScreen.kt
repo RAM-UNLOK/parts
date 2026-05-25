@@ -10,10 +10,8 @@ import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -89,7 +87,7 @@ private fun ColourPreviewHero(
     val alphas = allModes.map { mode ->
         animateFloatAsState(
             targetValue   = if (mode.id == selectedId) 1f else 0.35f,
-            animationSpec = PartsTokens.motionDefaultEffects(),
+            animationSpec = PartsTokens.defaultEffectsSpec(),
             label         = "alpha_${mode.name}",
         )
     }
@@ -112,7 +110,7 @@ private fun ColourPreviewHero(
             initialValue  = shimmerStart,
             targetValue   = shimmerEnd,
             animationSpec = infiniteRepeatable(
-                animation  = tween(PartsTokens.motionShimmerTweenMs, easing = LinearEasing),
+                animation  = PartsTokens.shimmerSpec(),
                 repeatMode = RepeatMode.Restart,
             ),
             label = "shimmerOffset",
@@ -170,7 +168,7 @@ private fun SelectionRow(
 ) {
     val bgAlpha by animateFloatAsState(
         targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-        animationSpec = PartsTokens.motionDefaultEffects(),
+        animationSpec = PartsTokens.defaultEffectsSpec(),
         label         = "selectionBg",
     )
     val selectionLayer = PartsTokens.Colors.selectionLayer
@@ -218,8 +216,8 @@ private fun SelectionRow(
             AnimatedContent(
                 targetState = isSelected,
                 transitionSpec = {
-                    fadeIn(tween(PartsTokens.motionCheckFadeInMs)) togetherWith
-                        fadeOut(tween(PartsTokens.motionCheckFadeOutMs))
+                    fadeIn(PartsTokens.checkFadeInSpec()) togetherWith
+                        fadeOut(PartsTokens.checkFadeOutSpec())
                 },
                 label = "checkIcon",
             ) { selected ->
@@ -242,17 +240,13 @@ private fun SelectionRow(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
-    val context     = LocalContext.current
-    val spatialSpec = PartsTokens.motionDefaultSpatial<Float>()
+    val context = LocalContext.current
 
     var selectedId by remember {
         mutableIntStateOf(ColorService.getColorMode(context))
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior(
-        snapAnimationSpec  = spatialSpec,
-        flingAnimationSpec = exponentialDecay(frictionMultiplier = PartsTokens.frictionMultiplier),
-    )
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
