@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.dp
 
 object PartsTokens {
 
-    // Spacing — 4 dp base unit
+    // Spacing scale — 4 px base unit
     val space1:  Dp = 1.dp
     val space4:  Dp = 4.dp
     val space8:  Dp = 8.dp
@@ -40,7 +40,7 @@ object PartsTokens {
     val space48: Dp = 48.dp
     val space56: Dp = 56.dp
 
-    // Layout
+    // Layout tokens
     val contentPaddingHorizontal: Dp get() = space16
     val rowPaddingVertical:       Dp get() = space16
     val rowElementSpacing:        Dp get() = space16
@@ -54,7 +54,7 @@ object PartsTokens {
     val bannerVerticalPadding:    Dp get() = space16
     val sheetContentTopPadding:   Dp get() = space8
 
-    // Component sizes
+    // Component size tokens
     val leadingIconContainerSize: Dp = space40
     val leadingIconSize:          Dp = space24
     val trailingIconSize:         Dp = space24
@@ -65,7 +65,7 @@ object PartsTokens {
     val premiumCardElevation:     Dp = space4
     val dividerThickness:         Dp = space1
 
-    // Shapes — delegated to MaterialTheme.shapes (stable M3)
+    // Shape tokens
     val cardShape: Shape
         @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge
     val bannerShape: Shape
@@ -82,16 +82,18 @@ object PartsTokens {
             bottomEnd   = CornerSize(0.dp),
         )
 
-    // Alpha
+    // Alpha constants
     const val colourModeIconContainerAlpha: Float = 0.18f
     const val colourModeIconDotAlpha:       Float = 0.85f
     const val selectedStateLayerAlpha:      Float = 0.12f
-    const val shimmerAlpha:                 Float = 0.05f
-    const val blobRadiusFraction:           Float = 0.38f
-    const val toastDebounceMs:              Long  = 2_000L
+
+    // Shimmer / blob constants
+    const val shimmerAlpha:       Float = 0.05f
+    const val blobRadiusFraction: Float = 0.38f
+    const val toastDebounceMs:    Long  = 2_000L
 
     // ---------------------------------------------------------------------------
-    // Motion — stable M3 only. No @ExperimentalMaterial3ExpressiveApi.
+    // Motion — Stable M3 tokens only
     //
     // Duration reference (ms):
     //   Short1=50  Short2=100  Short3=150  Short4=200
@@ -103,36 +105,41 @@ object PartsTokens {
     //   Effects enter  → LinearOutSlowIn
     //   Effects exit   → FastOutLinearIn
     //   Standard       → FastOutSlowIn
+    //
+    // No @ExperimentalMaterial3ExpressiveApi. No MotionScheme.
     // ---------------------------------------------------------------------------
 
     private val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1.0f)
-    private val EmphasizedAccelerate = CubicBezierEasing(0.3f,  0.0f, 0.8f, 0.15f)
+    private val EmphasizedAccelerate = CubicBezierEasing(0.3f, 0.0f, 0.8f, 0.15f)
 
     const val motionShimmerTweenMs: Int = 2800
 
-    // Nav transitions — M3 Medium2 spatial (300 ms) + Short3 effects (150 ms)
-    fun <T> navSpatialSpec():  FiniteAnimationSpec<T> = tween(300, easing = EmphasizedDecelerate)
-    fun <T> navEffectsSpec():  FiniteAnimationSpec<T> = tween(150, easing = FastOutSlowInEasing)
+    fun <T> navSpatialSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 300, easing = EmphasizedDecelerate)
 
-    // In-screen spatial — spring (M3 default spatial feel)
+    fun <T> navEffectsSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 150, easing = FastOutSlowInEasing)
+
     fun <T> defaultSpatialSpec(): FiniteAnimationSpec<T> =
         spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioNoBouncy)
 
-    // Effects fade — Short3 (150 ms) standard easing
-    fun <T> defaultEffectsSpec(): FiniteAnimationSpec<T> = tween(150, easing = FastOutSlowInEasing)
+    fun <T> defaultEffectsSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 150, easing = FastOutSlowInEasing)
 
-    // Check-mark fade — Short3 in / Short2 out
-    fun <T> checkFadeInSpec():  FiniteAnimationSpec<T> = tween(150, easing = LinearOutSlowInEasing)
-    fun <T> checkFadeOutSpec(): FiniteAnimationSpec<T> = tween(100, easing = FastOutLinearInEasing)
+    fun <T> checkFadeInSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 150, easing = LinearOutSlowInEasing)
 
-    // Banner slide-in — M3 Medium1 (250 ms) emphasized decelerate
-    fun <T> bannerEnterSpec(): FiniteAnimationSpec<T> = tween(250, easing = EmphasizedDecelerate)
+    fun <T> checkFadeOutSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 100, easing = FastOutLinearInEasing)
 
-    // Shimmer — long linear tween
-    fun <T> shimmerSpec(): FiniteAnimationSpec<T> = tween(motionShimmerTweenMs, easing = LinearEasing)
+    fun <T> bannerEnterSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = 250, easing = EmphasizedDecelerate)
+
+    fun <T> shimmerSpec(): FiniteAnimationSpec<T> =
+        tween(durationMillis = motionShimmerTweenMs, easing = LinearEasing)
 
     // ---------------------------------------------------------------------------
-    // Color roles — all resolve through MaterialTheme.colorScheme (stable M3)
+    // Color roles — resolved through MaterialTheme.colorScheme (stable M3)
     // ---------------------------------------------------------------------------
     object Colors {
         val page: Color
@@ -219,8 +226,8 @@ object PartsTokens {
     }
 
     // ---------------------------------------------------------------------------
-    // Typography — all resolved via MaterialTheme.typography (stable M3)
-    // No hardcoded sp or FontWeight.
+    // Typography — resolved through MaterialTheme.typography (stable M3)
+    // No hardcoded sp values or FontWeight anywhere.
     // ---------------------------------------------------------------------------
     object Type {
         val screenTitle: TextStyle
