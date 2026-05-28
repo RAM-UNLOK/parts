@@ -20,7 +20,7 @@ import androidx.navigation.compose.rememberNavController
 import com.xiaomi.settings.display.DisplayColoursScreen
 import com.xiaomi.settings.thermal.ThermalManagementScreen
 import com.xiaomi.settings.touchsampling.TouchBoostScreen
-import com.xiaomi.settings.ui.PartsTokens
+import com.xiaomi.settings.ui.Motion
 import com.xiaomi.settings.ui.XiaomiPartsTheme
 
 class XiaomiPartsActivity : ComponentActivity() {
@@ -39,22 +39,25 @@ class XiaomiPartsActivity : ComponentActivity() {
 private fun PartsNavHost() {
     val nav = rememberNavController()
 
-    val pushEnter = slideInHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { it } +
-        fadeIn(PartsTokens.navEffectsSpec())
-    val pushExit  = slideOutHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { -it / 4 } +
-        fadeOut(PartsTokens.navEffectsSpec())
-    val popEnter  = slideInHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { -it / 4 } +
-        fadeIn(PartsTokens.navEffectsSpec())
-    val popExit   = slideOutHorizontally(animationSpec = PartsTokens.navSpatialSpec()) { it } +
-        fadeOut(PartsTokens.navEffectsSpec())
-
     NavHost(
         navController      = nav,
         startDestination   = "home",
-        enterTransition    = { pushEnter },
-        exitTransition     = { pushExit },
-        popEnterTransition = { popEnter },
-        popExitTransition  = { popExit },
+        enterTransition    = {
+            slideInHorizontally(animationSpec = Motion.navSpatialSpec()) { it } +
+                fadeIn(animationSpec = Motion.navEffectsSpec())
+        },
+        exitTransition     = {
+            slideOutHorizontally(animationSpec = Motion.navSpatialSpec()) { -it / 4 } +
+                fadeOut(animationSpec = Motion.navEffectsSpec())
+        },
+        popEnterTransition = {
+            slideInHorizontally(animationSpec = Motion.navSpatialSpec()) { -it / 4 } +
+                fadeIn(animationSpec = Motion.navEffectsSpec())
+        },
+        popExitTransition  = {
+            slideOutHorizontally(animationSpec = Motion.navSpatialSpec()) { it } +
+                fadeOut(animationSpec = Motion.navEffectsSpec())
+        },
     ) {
         composable("home") {
             XiaomiPartsHomeScreen(

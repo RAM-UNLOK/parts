@@ -5,49 +5,34 @@
 
 package com.xiaomi.settings
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.os.BatteryManager
-import android.os.SystemClock
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Speaker
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,9 +42,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
-import com.xiaomi.settings.ui.PartsTokens
+import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
@@ -70,43 +54,12 @@ fun XiaomiPartsHomeScreen(
     onNavigateToThermal: () -> Unit,
     onNavigateToTouch:   () -> Unit,
 ) {
-    val context = LocalContext.current
-
-    var isCharging         by remember { mutableStateOf(false) }
-    var showChargingBanner by remember { mutableStateOf(false) }
-    var lastToastTime      by remember { mutableLongStateOf(0L) }
-
-    DisposableEffect(Unit) {
-        val stickyIntent   = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val initialPlugged = stickyIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0
-        isCharging         = initialPlugged != 0
-        showChargingBanner = isCharging
-
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(ctx: Context, intent: Intent) {
-                val now     = SystemClock.elapsedRealtime()
-                val plugged = intent.action == Intent.ACTION_POWER_CONNECTED
-                isCharging         = plugged
-                showChargingBanner = plugged
-                if (now - lastToastTime < PartsTokens.toastDebounceMs) return
-                lastToastTime = now
-                PartsToast.show(ctx, if (plugged) R.string.charging_connected else R.string.charging_disconnected)
-            }
-        }
-
-        @Suppress("UnspecifiedRegisterReceiverFlag")
-        context.registerReceiver(receiver, IntentFilter().apply {
-            addAction(Intent.ACTION_POWER_CONNECTED)
-            addAction(Intent.ACTION_POWER_DISCONNECTED)
-        })
-        onDispose { context.unregisterReceiver(receiver) }
-    }
-
+    val context        = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = PartsTokens.Colors.page,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -117,131 +70,117 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = PartsTokens.Colors.topBarResting,
-                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
+                    containerColor         = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
             )
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier       = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
-            contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
+            modifier       = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 32.dp),
         ) {
-            item(key = "charging-banner") {
-                AnimatedVisibility(
-                    visible = showChargingBanner,
-                    enter   = fadeIn(PartsTokens.defaultEffectsSpec()) +
-                        slideInVertically(animationSpec = PartsTokens.bannerEnterSpec()) { -it / 2 },
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                            .padding(top = PartsTokens.bannerTopSpacing)
-                            .clip(PartsTokens.bannerShape)
-                            .background(PartsTokens.Colors.chargingBannerContainer)
-                            .padding(
-                                horizontal = PartsTokens.contentPaddingHorizontal,
-                                vertical   = PartsTokens.bannerVerticalPadding,
-                            ),
-                        horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-                        verticalAlignment     = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Filled.BatteryChargingFull,
-                            contentDescription = null,
-                            tint               = PartsTokens.Colors.chargingBannerContent,
-                            modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                        )
-                        Text(
-                            text     = stringResource(R.string.charging_connected),
-                            style    = PartsTokens.Type.bannerLabel,
-                            color    = PartsTokens.Colors.chargingBannerContent,
-                            modifier = Modifier.weight(1f),
-                        )
-                        IconButton(onClick = { showChargingBanner = false }) {
-                            Icon(
-                                imageVector        = Icons.Filled.Close,
-                                contentDescription = stringResource(R.string.dismiss),
-                                tint               = PartsTokens.Colors.chargingBannerContent,
-                                modifier           = Modifier.size(PartsTokens.closeIconSize),
-                            )
-                        }
-                    }
-                }
-            }
 
             item(key = "display-label") { PartsCategory(stringResource(R.string.display_category)) }
             item(key = "display-card") {
-                PartsCard {
-                    PartsRow(
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape  = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ),
+                ) {
+                    PartsListItem(
                         icon               = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        iconContainerColor = PartsTokens.Colors.displayIconContainer,
-                        iconContentColor   = PartsTokens.Colors.displayIconContent,
+                        iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        iconContentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
                         title              = stringResource(R.string.display_colours_title),
                         summary            = stringResource(R.string.display_colours_summary),
                         onClick            = onNavigateToDisplay,
-                        showDivider        = false,
                     )
                 }
             }
 
             item(key = "perf-label") { PartsCategory(stringResource(R.string.performance_category)) }
             item(key = "perf-card") {
-                PartsCard {
-                    PartsRow(
-                        icon               = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
-                        iconContainerColor = PartsTokens.Colors.thermalIconContainer,
-                        iconContentColor   = PartsTokens.Colors.thermalIconContent,
-                        title              = stringResource(R.string.thermal_title),
-                        summary            = stringResource(R.string.thermal_summary),
-                        onClick            = onNavigateToThermal,
-                        showDivider        = true,
-                    )
-                    PartsRow(
-                        icon               = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                        iconContainerColor = PartsTokens.Colors.touchIconContainer,
-                        iconContentColor   = PartsTokens.Colors.touchIconContent,
-                        title              = stringResource(R.string.touch_boost_title),
-                        summary            = stringResource(R.string.touch_boost_summary),
-                        onClick            = onNavigateToTouch,
-                        showDivider        = false,
-                    )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape  = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ),
+                ) {
+                    Column {
+                        PartsListItem(
+                            icon               = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
+                            iconContainerColor = MaterialTheme.colorScheme.errorContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onErrorContainer,
+                            title              = stringResource(R.string.thermal_title),
+                            summary            = stringResource(R.string.thermal_summary),
+                            onClick            = onNavigateToThermal,
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color    = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                        PartsListItem(
+                            icon               = ImageVector.vectorResource(R.drawable.ic_touch_boost),
+                            iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
+                            title              = stringResource(R.string.touch_boost_title),
+                            summary            = stringResource(R.string.touch_boost_summary),
+                            onClick            = onNavigateToTouch,
+                        )
+                    }
                 }
             }
 
             item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
             item(key = "diag-card") {
-                PartsCard {
-                    PartsRow(
-                        icon               = Icons.Filled.Fingerprint,
-                        iconContainerColor = PartsTokens.Colors.diagIconContainer,
-                        iconContentColor   = PartsTokens.Colors.diagIconContent,
-                        title              = stringResource(R.string.fingerprint_calibration_title),
-                        summary            = stringResource(R.string.fingerprint_calibration_summary),
-                        onClick = {
-                            if (!CitLauncher.launchFingerprintCalibration(context)) {
-                                PartsToast.show(context, R.string.fingerprint_calibration_not_found)
-                            }
-                        },
-                        showDivider = true,
-                    )
-                    PartsRow(
-                        icon               = Icons.Filled.Speaker,
-                        iconContainerColor = PartsTokens.Colors.diagIconContainer,
-                        iconContentColor   = PartsTokens.Colors.diagIconContent,
-                        title              = stringResource(R.string.speaker_calibration_title),
-                        summary            = stringResource(R.string.speaker_calibration_summary),
-                        onClick = {
-                            if (!CitLauncher.launchSpeakerCalibration(context)) {
-                                PartsToast.show(context, R.string.speaker_calibration_not_found)
-                            }
-                        },
-                        showDivider = false,
-                    )
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape  = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    ),
+                ) {
+                    Column {
+                        PartsListItem(
+                            icon               = Icons.Filled.Fingerprint,
+                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
+                            title              = stringResource(R.string.fingerprint_calibration_title),
+                            summary            = stringResource(R.string.fingerprint_calibration_summary),
+                            onClick = {
+                                if (!CitLauncher.launchFingerprintCalibration(context)) {
+                                    PartsToast.show(context, R.string.fingerprint_calibration_not_found)
+                                }
+                            },
+                        )
+                        HorizontalDivider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color    = MaterialTheme.colorScheme.outlineVariant,
+                        )
+                        PartsListItem(
+                            icon               = Icons.Filled.Speaker,
+                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
+                            title              = stringResource(R.string.speaker_calibration_title),
+                            summary            = stringResource(R.string.speaker_calibration_summary),
+                            onClick = {
+                                if (!CitLauncher.launchSpeakerCalibration(context)) {
+                                    PartsToast.show(context, R.string.speaker_calibration_not_found)
+                                }
+                            },
+                        )
+                    }
                 }
             }
         }
@@ -252,60 +191,42 @@ fun XiaomiPartsHomeScreen(
 fun PartsCategory(label: String) {
     Text(
         text     = label,
-        style    = PartsTokens.Type.categoryLabel,
-        color    = PartsTokens.Colors.categoryLabelColor,
-        modifier = Modifier.padding(
-            start  = PartsTokens.contentPaddingHorizontal,
-            top    = PartsTokens.categoryTopPadding,
-            bottom = PartsTokens.categoryBottomPadding,
-        ),
+        style    = MaterialTheme.typography.labelLarge,
+        color    = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
     )
 }
 
 @Composable
-fun PartsCard(
-    modifier: Modifier = Modifier,
-    content:  @Composable () -> Unit,
-) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-            .padding(top = PartsTokens.cardBlockSpacing),
-        shape          = PartsTokens.cardShape,
-        color          = PartsTokens.Colors.cardSurface,
-        tonalElevation = PartsTokens.premiumCardElevation,
-    ) {
-        Column { content() }
-    }
-}
-
-@Composable
-fun PartsRow(
+private fun PartsListItem(
     icon:               ImageVector,
     iconContainerColor: Color,
     iconContentColor:   Color,
     title:              String,
     summary:            String,
     onClick:            () -> Unit,
-    showDivider:        Boolean,
 ) {
-    Column {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(role = Role.Button, onClick = onClick)
-                .padding(
-                    horizontal = PartsTokens.contentPaddingHorizontal,
-                    vertical   = PartsTokens.rowPaddingVertical,
-                ),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
-        ) {
+    ListItem(
+        modifier = Modifier.clickable { onClick() },
+        headlineContent = {
+            Text(
+                text  = title,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+        },
+        supportingContent = {
+            Text(
+                text  = summary,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        },
+        leadingContent = {
             Box(
                 modifier = Modifier
-                    .size(PartsTokens.leadingIconContainerSize)
-                    .clip(PartsTokens.leadingIconShape)
+                    .size(44.dp)
+                    .clip(CircleShape)
                     .background(iconContainerColor),
                 contentAlignment = Alignment.Center,
             ) {
@@ -313,34 +234,18 @@ fun PartsRow(
                     imageVector        = icon,
                     contentDescription = null,
                     tint               = iconContentColor,
-                    modifier           = Modifier.size(PartsTokens.leadingIconSize),
+                    modifier           = Modifier.size(24.dp),
                 )
             }
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text  = title,
-                    style = PartsTokens.Type.rowHeadline,
-                    color = PartsTokens.Colors.textPrimary,
-                )
-                Text(
-                    text  = summary,
-                    style = PartsTokens.Type.rowSupporting,
-                    color = PartsTokens.Colors.textSecondary,
-                )
-            }
+        },
+        trailingContent = {
             Icon(
-                imageVector        = Icons.Filled.ChevronRight,
+                imageVector        = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = null,
-                tint               = PartsTokens.Colors.textSecondary,
-                modifier           = Modifier.size(PartsTokens.trailingIconSize),
+                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier           = Modifier.size(16.dp),
             )
-        }
-        if (showDivider) {
-            HorizontalDivider(
-                modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                thickness = PartsTokens.dividerThickness,
-                color     = PartsTokens.Colors.outlineVariant,
-            )
-        }
-    }
+        },
+        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+    )
 }

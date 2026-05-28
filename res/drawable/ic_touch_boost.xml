@@ -3,11 +3,7 @@
     Copyright (C) 2025 Paranoid Android
     SPDX-License-Identifier: Apache-2.0
 
-    Touch Boost icon.
-    Concept: upright index finger pointing up, with three bold
-    concentric speed-arc lines bursting from the fingertip to the
-    upper-right, communicating fast/boosted touch response.
-    Single compound path with evenOdd for the fingernail cutout.
+    Touch Boost icon. Standard Tap / Gesture Hand representation.
     fillColor white — Compose Icon tint is the sole colour source.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -15,65 +11,7 @@
     android:height="24dp"
     android:viewportWidth="24"
     android:viewportHeight="24">
-
-    <!--
-        Finger body: upright rounded rectangle, wider at base,
-        tapered slightly at tip. Centred left-of-centre to leave
-        room for the speed arcs on the right.
-        evenOdd cuts out a small rounded fingernail rectangle at the tip.
-    -->
     <path
         android:fillColor="@android:color/white"
-        android:fillType="evenOdd"
-        android:pathData="
-            M9,19
-            L9,8
-            C9,6.34 10.34,5 12,5
-            C13.66,5 15,6.34 15,8
-            L15,19
-            C15,20.66 13.66,22 12,22
-            C10.34,22 9,20.66 9,19
-            Z
-
-            M11,7
-            L13,7
-            L13,9
-            C13,9.55 12.55,10 12,10
-            C11.45,10 11,9.55 11,9
-            Z
-        "/>
-
-    <!-- Speed arc 1 — closest to finger, short -->
-    <path
-        android:fillColor="@android:color/white"
-        android:strokeColor="@android:color/white"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round"
-        android:pathData="
-            M16,6
-            A5,5 0 0,1 19,10
-        "/>
-
-    <!-- Speed arc 2 — medium -->
-    <path
-        android:fillColor="@android:color/white"
-        android:strokeColor="@android:color/white"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round"
-        android:pathData="
-            M17.5,4
-            A7.5,7.5 0 0,1 21.5,11
-        "/>
-
-    <!-- Speed arc 3 — outermost -->
-    <path
-        android:fillColor="@android:color/white"
-        android:strokeColor="@android:color/white"
-        android:strokeWidth="1.8"
-        android:strokeLineCap="round"
-        android:pathData="
-            M19,2
-            A10,10 0 0,1 23.5,12
-        "/>
-
+        android:pathData="M18.19,12.44l-3.24,-1.62c1.29,-1 2.12,-2.56 2.12,-4.32c0,-3.03 -2.47,-5.5 -5.5,-5.5s-5.5,2.47 -5.5,5.5c0,2.13 1.22,3.98 3,4.89v3.26c-2.15,-0.46 -2.02,-0.44 -2.26,-0.44c-0.53,0 -1.03,0.21 -1.41,0.59L4,16.22l5.09,5.09C9.52,21.75 10.12,22 10.74,22h6.3c0.98,0 1.81,-0.7 1.97,-1.67l0.8,-4.71C20.03,14.32 19.38,13.04 18.19,12.44zM17.84,15.29l-0.8,4.71H10.74c-0.08,0 -0.16,-0.03 -0.21,-0.09l-4.5,-4.5l2.42,0.67l0.55,0.15V6.5c0,-0.28 0.22,-0.5 0.5,-0.5s0.5,0.22 0.5,0.5v6.5h2V11c0.05,-0.1 0.11,-0.2 0.17,-0.29l2.58,1.29c0.72,0.36 1.13,1.17 0.98,1.96L17.84,15.29zM11.57,3C13.43,3 14.93,4.5 14.93,6.36c0,1.5 -1.02,2.78 -2.43,3.22V8.21c0.64,-0.38 1.07,-1.08 1.07,-1.85c0,-1.19 -0.97,-2.16 -2.16,-2.16c-1.19,0 -2.16,0.97 -2.16,2.16c0,0.77 0.43,1.47 1.07,1.85v1.37c-1.4,-0.44 -2.43,-1.72 -2.43,-3.22C7.93,4.5 9.43,3 11.57,3z"/>
 </vector>

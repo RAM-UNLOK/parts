@@ -7,19 +7,16 @@
 
      This file is read by the AOSP Settings app via the
      com.android.settings.action.EXTRA_SETTINGS intent-filter on
-     XiaomiPartsActivity. It injects the Xiaomi Parts tile onto the
-     Settings homepage under the "Device" group (ia.homepage category).
+     XiaomiPartsActivity.
 
-     Fields:
-       android:key     — unique stable identifier for this header
-       android:title   — tile primary label (string resource)
-       android:summary — tile subtitle shown below the label
-       android:icon    — vector drawable shown on the left of the tile
+     Using TopLevelPreference ensures it inherits the proper "Card"
+     appearance inside the Android 12+ Settings homepage.
 -->
 <PreferenceScreen
-    xmlns:android="http://schemas.android.com/apk/res/android">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:settings="http://schemas.android.com/apk/res-auto">
 
-    <Preference
+    <com.android.settingslib.widget.TopLevelPreference
         android:key="xiaomi_parts_settings"
         android:title="@string/xiaomi_parts_title"
         android:summary="@string/xiaomi_parts_summary"

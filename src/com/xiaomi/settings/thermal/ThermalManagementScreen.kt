@@ -5,55 +5,70 @@
 
 package com.xiaomi.settings.thermal
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.animateFloatAsState
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import android.os.BatteryManager
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material.icons.filled.BatteryChargingFull
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
-import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -63,14 +78,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.graphics.drawable.toBitmap
-import com.xiaomi.settings.PartsCard
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
-import com.xiaomi.settings.ui.PartsTokens
-import com.xiaomi.settings.utils.PartsToast
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -87,235 +100,258 @@ private fun appIcon(packageName: String): ImageBitmap? {
     return bitmap
 }
 
+private fun readIsCharging(context: Context): Boolean {
+    val sticky = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+    return (sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
-    val context    = LocalContext.current
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    val scope      = rememberCoroutineScope()
+    val context      = LocalContext.current
+    val thermalUtils = remember { ThermalUtils.getInstance(context) }
 
-    var pendingApp    by remember { mutableStateOf<AppThermalEntry?>(null) }
-    var showSheet     by remember { mutableStateOf(false) }
-    var globalProfile by remember { mutableIntStateOf(ThermalService.getGlobalProfile(context)) }
-    var appList       by remember { mutableStateOf<List<AppThermalEntry>>(emptyList()) }
+    var thermalEnabled  by remember { mutableStateOf(thermalUtils.enabled) }
+    var appList         by remember { mutableStateOf<List<AppThermalEntry>>(emptyList()) }
+    var isCharging      by remember { mutableStateOf(readIsCharging(context)) }
+    var showResetDialog by remember { mutableStateOf(false) }
+    var pendingApp      by remember { mutableStateOf<AppThermalEntry?>(null) }
+
+    val controlsEnabled = thermalEnabled && !isCharging
+
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context, intent: Intent) {
+                isCharging = (intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0)) != 0
+            }
+        }
+        @Suppress("UnspecifiedRegisterReceiverFlag")
+        context.registerReceiver(receiver, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+        onDispose { context.unregisterReceiver(receiver) }
+    }
 
     LaunchedEffect(Unit) {
         appList = withContext(Dispatchers.IO) {
-            runCatching { ThermalService.getAppList(context) }.getOrElse {
-                PartsToast.show(context, R.string.thermal_failed_toast)
-                emptyList()
-            }
+            runCatching { ThermalService.getAppList(context) }.getOrDefault(emptyList())
         }
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val profiles = remember { ThermalService.profiles().filter { it.userSelectable } }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = PartsTokens.Colors.page,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
-                title = {
-                    Text(
-                        text     = stringResource(R.string.thermal_title),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
+                title = { Text(stringResource(R.string.thermal_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.navigate_up),
-                        )
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.navigate_up))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = PartsTokens.Colors.topBarResting,
-                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
+                    containerColor         = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
             )
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding),
+            modifier       = Modifier.fillMaxSize().padding(innerPadding),
+            contentPadding = PaddingValues(bottom = 32.dp),
         ) {
-            item(key = "global-label") { PartsCategory(stringResource(R.string.thermal_global_label)) }
-            item(key = "global-card") {
-                PartsCard {
-                    ThermalService.profiles().forEach { profile ->
-                        val isActive = profile.id == globalProfile
-                        val bgAlpha by animateFloatAsState(
-                            targetValue   = if (isActive) PartsTokens.selectedStateLayerAlpha else 0f,
-                            animationSpec = PartsTokens.defaultEffectsSpec(),
-                            label         = "globalBg_${profile.id}",
-                        )
-                        ListItem(
-                            modifier = Modifier
-                                .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                                .clip(PartsTokens.dialogSelectionShape)
-                                .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
-                                .clickable(role = Role.RadioButton) {
-                                    runCatching {
-                                        ThermalService.setGlobalProfile(context, profile.id)
-                                        globalProfile = profile.id
-                                    }.onFailure {
-                                        PartsToast.show(context, R.string.thermal_failed_toast)
-                                    }
-                                },
-                            headlineContent = {
-                                Text(
-                                    text  = context.getString(profile.label),
-                                    style = PartsTokens.Type.rowHeadline,
-                                    color = if (isActive) PartsTokens.Colors.dialogSelectedText
-                                            else          PartsTokens.Colors.textPrimary,
-                                )
+            item(key = "charging-banner") {
+                AnimatedVisibility(
+                    visible = isCharging,
+                    enter   = expandVertically() + fadeIn(),
+                    exit    = shrinkVertically() + fadeOut(),
+                ) { ChargingBanner() }
+            }
+
+            item(key = "enable-card") {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).padding(top = 12.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                ) {
+                    ListItem(
+                        modifier = Modifier
+                            .alpha(if (isCharging) 0.38f else 1f)
+                            .clickable(enabled = !isCharging, role = Role.Switch) {
+                                thermalEnabled = !thermalEnabled
+                                thermalUtils.enabled = thermalEnabled
                             },
-                            trailingContent = {
-                                AnimatedContent(
-                                    targetState    = isActive,
-                                    transitionSpec = {
-                                        fadeIn(PartsTokens.checkFadeInSpec()) togetherWith
-                                            fadeOut(PartsTokens.checkFadeOutSpec())
-                                    },
-                                    label = "check_${profile.id}",
-                                ) { active ->
-                                    if (active) {
-                                        Icon(
-                                            imageVector        = Icons.Filled.CheckCircle,
-                                            contentDescription = null,
-                                            tint               = PartsTokens.Colors.dialogSelectedText,
-                                            modifier           = Modifier.size(PartsTokens.trailingIconSize),
-                                        )
-                                    } else {
-                                        Box(Modifier.size(PartsTokens.trailingIconSize))
-                                    }
+                        headlineContent = {
+                            Text(
+                                text  = stringResource(R.string.thermal_enable_title),
+                                style = MaterialTheme.typography.titleLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        },
+                        trailingContent = {
+                            Switch(
+                                checked         = thermalEnabled,
+                                enabled         = !isCharging,
+                                onCheckedChange = { checked ->
+                                    thermalEnabled = checked
+                                    thermalUtils.enabled = checked
                                 }
-                            },
-                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+                    )
+                }
+            }
+
+            item(key = "info-card") {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                    shape = MaterialTheme.shapes.large,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Filled.Info,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.primary,
+                            modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
+                        )
+                        Text(
+                            text       = stringResource(R.string.thermal_enable_summary),
+                            style      = MaterialTheme.typography.bodyMedium,
+                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                         )
                     }
                 }
             }
 
-            item(key = "per-app-label") { PartsCategory(stringResource(R.string.thermal_per_app_label)) }
+            item(key = "reset-card") {
+                Card(
+                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                    shape = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                ) {
+                    ListItem(
+                        modifier = Modifier
+                            .alpha(if (controlsEnabled) 1f else 0.38f)
+                            .clickable(enabled = controlsEnabled, role = Role.Button) { showResetDialog = true },
+                        headlineContent = {
+                            Text(
+                                text  = stringResource(R.string.thermal_reset_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text  = stringResource(R.string.thermal_reset_summary),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        },
+                        leadingContent = {
+                            Icon(
+                                imageVector        = Icons.Filled.RestartAlt,
+                                contentDescription = null,
+                                tint               = MaterialTheme.colorScheme.error,
+                                modifier           = Modifier.padding(start = 8.dp).size(24.dp),
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+                    )
+                }
+            }
+
+            item(key = "per-app-label") {
+                PartsCategory(stringResource(R.string.thermal_per_app_label))
+            }
 
             if (appList.isEmpty()) {
                 item(key = "empty") {
                     Text(
                         text     = stringResource(R.string.thermal_no_apps),
-                        style    = PartsTokens.Type.rowSupporting,
-                        color    = PartsTokens.Colors.textSecondary,
-                        modifier = Modifier.padding(
-                            horizontal = PartsTokens.contentPaddingHorizontal,
-                            vertical   = PartsTokens.rowPaddingVertical,
-                        ),
+                        style    = MaterialTheme.typography.bodyLarge,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(horizontal = 32.dp, vertical = 16.dp),
                     )
                 }
             } else {
-                itemsIndexed(
-                    items = appList,
-                    key   = { _, entry -> entry.packageName },
-                ) { index, entry ->
-                    AppThermalPremiumCard(
-                        entry           = entry,
-                        showDivider     = index < appList.lastIndex,
-                        onSelectProfile = {
-                            pendingApp = entry
-                            showSheet  = true
-                        },
+                items(
+                    count = appList.size,
+                    key   = { appList[it].packageName },
+                ) { index ->
+                    AppThermalCard(
+                        entry   = appList[index],
+                        enabled = controlsEnabled,
+                        onClick = { if (controlsEnabled) pendingApp = appList[index] },
                     )
                 }
             }
-
-            item(key = "bottom-spacer") { Spacer(Modifier.height(PartsTokens.listBottomPadding)) }
         }
     }
 
-    if (showSheet && pendingApp != null) {
-        ModalBottomSheet(
-            onDismissRequest = { showSheet = false },
-            sheetState       = sheetState,
-            shape            = PartsTokens.bottomSheetTopShape,
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = PartsTokens.listBottomPadding),
+    pendingApp?.let { app ->
+        var tempProfile by remember(app.packageName) { mutableIntStateOf(app.profileId) }
+        ProfilePickerDialog(
+            title      = app.label,
+            profiles   = profiles,
+            selectedId = tempProfile,
+            onSelect   = { tempProfile = it },
+            onDismiss  = { pendingApp = null },
+            onConfirm  = {
+                runCatching {
+                    ThermalService.setAppProfile(context, app.packageName, tempProfile)
+                    appList = appList.map {
+                        if (it.packageName == app.packageName) it.copy(profileId = tempProfile) else it
+                    }
+                }
+                pendingApp = null
+            },
+        )
+    }
+
+    if (showResetDialog) {
+        Dialog(onDismissRequest = { showResetDialog = false }) {
+            Card(
+                shape  = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             ) {
-                Spacer(Modifier.height(PartsTokens.sheetContentTopPadding))
-                Text(
-                    text     = stringResource(R.string.thermal_select_profile),
-                    style    = PartsTokens.Type.sheetTitle,
-                    color    = PartsTokens.Colors.textPrimary,
-                    modifier = Modifier.padding(
-                        horizontal = PartsTokens.contentPaddingHorizontal,
-                        vertical   = PartsTokens.rowPaddingVertical,
-                    ),
-                )
-                ThermalService.profiles().forEach { profile ->
-                    val isSelected = profile.id == pendingApp?.profileId
-                    val bgAlpha by animateFloatAsState(
-                        targetValue   = if (isSelected) PartsTokens.selectedStateLayerAlpha else 0f,
-                        animationSpec = PartsTokens.defaultEffectsSpec(),
-                        label         = "profileBg_${profile.id}",
+                Column(modifier = Modifier.padding(24.dp)) {
+                    Text(
+                        text  = stringResource(R.string.thermal_reset_title),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurface,
                     )
-                    ListItem(
-                        modifier = Modifier
-                            .padding(horizontal = PartsTokens.contentPaddingHorizontal)
-                            .clip(PartsTokens.dialogSelectionShape)
-                            .background(PartsTokens.Colors.selectionLayer.copy(alpha = bgAlpha))
-                            .clickable(role = Role.RadioButton) {
-                                scope.launch { sheetState.hide() }.invokeOnCompletion {
-                                    showSheet = false
-                                    pendingApp?.let { app ->
-                                        runCatching {
-                                            ThermalService.setAppProfile(
-                                                context,
-                                                app.packageName,
-                                                profile.id,
-                                            )
-                                        }.onFailure {
-                                            PartsToast.show(context, R.string.thermal_failed_toast)
-                                        }
-                                    }
-                                    pendingApp = null
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text  = stringResource(R.string.thermal_reset_confirm_body),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(24.dp))
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        TextButton(onClick = { showResetDialog = false }) {
+                            Text(stringResource(android.R.string.cancel))
+                        }
+                        Spacer(Modifier.width(8.dp))
+                        TextButton(
+                            onClick = {
+                                runCatching {
+                                    ThermalUtils.getInstance(context).resetProfiles()
+                                    appList = appList.map { it.copy(profileId = ThermalUtils.ThermalState.DEFAULT.id) }
                                 }
+                                showResetDialog = false
                             },
-                        headlineContent = {
-                            Text(
-                                text  = context.getString(profile.label),
-                                style = PartsTokens.Type.rowHeadline,
-                                color = if (isSelected) PartsTokens.Colors.dialogSelectedText
-                                        else            PartsTokens.Colors.textPrimary,
-                            )
-                        },
-                        trailingContent = {
-                            AnimatedContent(
-                                targetState    = isSelected,
-                                transitionSpec = {
-                                    fadeIn(PartsTokens.checkFadeInSpec()) togetherWith
-                                        fadeOut(PartsTokens.checkFadeOutSpec())
-                                },
-                                label = "check_${profile.id}",
-                            ) { selected ->
-                                if (selected) {
-                                    Icon(
-                                        imageVector        = Icons.Filled.CheckCircle,
-                                        contentDescription = null,
-                                        tint               = PartsTokens.Colors.dialogSelectedText,
-                                        modifier           = Modifier.size(PartsTokens.trailingIconSize),
-                                    )
-                                } else {
-                                    Box(Modifier.size(PartsTokens.trailingIconSize))
-                                }
-                            }
-                        },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    )
+                        ) {
+                            Text(stringResource(R.string.thermal_reset_confirm))
+                        }
+                    }
                 }
             }
         }
@@ -323,84 +359,190 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 }
 
 @Composable
-private fun AppThermalPremiumCard(
-    entry:           AppThermalEntry,
-    showDivider:     Boolean,
-    onSelectProfile: () -> Unit,
+private fun AppThermalCard(
+    entry:   AppThermalEntry,
+    enabled: Boolean,
+    onClick: () -> Unit,
 ) {
-    val context = LocalContext.current
-    val icon    = appIcon(entry.packageName)
+    val context   = LocalContext.current
+    val icon      = appIcon(entry.packageName)
+    val isDefault = entry.profileId == ThermalUtils.ThermalState.DEFAULT.id
 
-    Column {
-        ElevatedCard(
-            modifier  = Modifier
-                .fillMaxWidth()
-                .padding(
-                    horizontal = PartsTokens.contentPaddingHorizontal,
-                    vertical   = PartsTokens.premiumCardSpacing,
-                ),
-            shape     = PartsTokens.cardShape,
-            elevation = CardDefaults.elevatedCardElevation(
-                defaultElevation = PartsTokens.premiumCardElevation,
-            ),
-            colors    = CardDefaults.elevatedCardColors(
-                containerColor = PartsTokens.Colors.premiumCardSurface,
-            ),
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .alpha(if (enabled) 1f else 0.38f),
+        shape    = MaterialTheme.shapes.large,
+        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        onClick  = onClick,
+        enabled  = enabled,
+    ) {
+        Row(
+            modifier          = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(PartsTokens.contentPaddingHorizontal),
+                modifier              = Modifier.weight(1f).padding(16.dp),
                 verticalAlignment     = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(PartsTokens.rowElementSpacing),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 if (icon != null) {
                     Image(
                         bitmap             = icon,
                         contentDescription = null,
-                        modifier           = Modifier
-                            .size(PartsTokens.appIconSize)
-                            .clip(PartsTokens.leadingIconShape),
+                        modifier           = Modifier.size(40.dp).clip(CircleShape),
                     )
                 } else {
                     Box(
                         modifier = Modifier
-                            .size(PartsTokens.appIconSize)
-                            .clip(PartsTokens.leadingIconShape)
-                            .background(PartsTokens.Colors.appIconFallback),
+                            .size(40.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                     )
                 }
-                Column(modifier = Modifier.weight(1f)) {
+
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text     = entry.label,
-                        style    = PartsTokens.Type.cardTitle,
-                        color    = PartsTokens.Colors.premiumCardContent,
+                        style    = MaterialTheme.typography.titleMedium,
+                        color    = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text     = entry.packageName,
+                        style    = MaterialTheme.typography.bodySmall,
+                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                Button(
-                    onClick = onSelectProfile,
-                    shape   = PartsTokens.buttonShape,
-                    colors  = ButtonDefaults.buttonColors(
-                        containerColor = PartsTokens.Colors.premiumCardButton,
-                        contentColor   = PartsTokens.Colors.premiumCardButtonContent,
-                    ),
+            }
+
+            VerticalDivider(
+                modifier = Modifier.padding(vertical = 12.dp),
+                color    = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+            )
+
+            Box(
+                modifier         = Modifier.width(96.dp).fillMaxHeight(),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text     = ThermalService.profileLabel(context, entry.profileId),
+                    style    = MaterialTheme.typography.labelLarge,
+                    color    = if (isDefault) MaterialTheme.colorScheme.onSurfaceVariant
+                               else          MaterialTheme.colorScheme.primary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ProfilePickerDialog(
+    title:      String,
+    profiles:   List<ThermalUtils.ThermalState>,
+    selectedId: Int,
+    onSelect:   (Int) -> Unit,
+    onDismiss:  () -> Unit,
+    onConfirm:  () -> Unit,
+) {
+    val context = LocalContext.current
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            shape  = MaterialTheme.shapes.extraLarge,
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+            ) {
+                Text(
+                    text     = title,
+                    style    = MaterialTheme.typography.headlineSmall,
+                    color    = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .verticalScroll(rememberScrollState()),
                 ) {
-                    Text(
-                        text     = ThermalService.profileLabel(context, entry.profileId),
-                        style    = PartsTokens.Type.buttonLabel,
-                        maxLines = 1,
-                    )
+                    profiles.forEach { profile ->
+                        val selected = profile.id == selectedId
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable(role = Role.RadioButton) { onSelect(profile.id) }
+                                .padding(vertical = 14.dp, horizontal = 24.dp),
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            RadioButton(selected = selected, onClick = null)
+                            Text(
+                                text  = context.getString(profile.label),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                    }
+                }
+
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
+                    Spacer(Modifier.width(8.dp))
+                    TextButton(onClick = onConfirm) { Text(stringResource(R.string.thermal_apply)) }
                 }
             }
         }
-        if (showDivider) {
-            HorizontalDivider(
-                modifier  = Modifier.padding(horizontal = PartsTokens.contentPaddingHorizontal),
-                thickness = PartsTokens.dividerThickness,
-                color     = PartsTokens.Colors.outlineVariant,
+    }
+}
+
+@Composable
+private fun ChargingBanner() {
+    Card(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        shape    = MaterialTheme.shapes.large,
+        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+    ) {
+        Row(
+            modifier              = Modifier.fillMaxWidth().padding(16.dp),
+            verticalAlignment     = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            Icon(
+                imageVector        = Icons.Filled.BatteryChargingFull,
+                contentDescription = null,
+                tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                modifier           = Modifier.size(24.dp),
             )
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text  = stringResource(R.string.thermal_charging_toast_connected),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer,
+                )
+                Text(
+                    text  = stringResource(R.string.thermal_charging_banner_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.8f),
+                )
+            }
         }
     }
 }

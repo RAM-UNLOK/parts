@@ -5,25 +5,23 @@
 
 package com.xiaomi.settings.touchsampling
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -36,44 +34,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
-import com.xiaomi.settings.PartsCard
+import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.R
-import com.xiaomi.settings.ui.PartsTokens
 import com.xiaomi.settings.utils.PartsToast
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TouchBoostScreen(onBack: () -> Unit) {
-    val context      = LocalContext.current
-    val leadingShape = PartsTokens.leadingIconShape
-
+    val context = LocalContext.current
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    val iconContainer by animateColorAsState(
-        targetValue   = if (enabled) PartsTokens.Colors.touchIconContainer
-                        else         PartsTokens.Colors.touchIconContainerOff,
-        animationSpec = PartsTokens.defaultEffectsSpec(),
-        label         = "touchIconContainer",
-    )
-    val iconContent by animateColorAsState(
-        targetValue   = if (enabled) PartsTokens.Colors.touchIconContent
-                        else         PartsTokens.Colors.touchIconContentOff,
-        animationSpec = PartsTokens.defaultEffectsSpec(),
-        label         = "touchIconContent",
-    )
+    fun toggle(newValue: Boolean) {
+        runCatching {
+            TouchSamplingService.setEnabled(context, newValue)
+            enabled = newValue
+        }.onFailure {
+            PartsToast.show(context, R.string.touch_boost_failed)
+        }
+    }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = PartsTokens.Colors.page,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -91,84 +80,67 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = PartsTokens.Colors.topBarResting,
-                    scrolledContainerColor = PartsTokens.Colors.topBarScrolled,
-                ),
                 scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor         = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                ),
             )
         },
     ) { innerPadding ->
-        LazyColumn(
-            modifier       = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = PartsTokens.listBottomPadding),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(top = 16.dp),
         ) {
-            item(key = "toggle") {
-                PartsCard {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(
-                                horizontal = PartsTokens.contentPaddingHorizontal,
-                                vertical   = PartsTokens.rowPaddingVertical,
-                            ),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(
-                            modifier         = Modifier
-                                .size(PartsTokens.leadingIconContainerSize)
-                                .clip(leadingShape)
-                                .background(iconContainer),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                imageVector        = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                                contentDescription = null,
-                                tint               = iconContent,
-                                modifier           = Modifier.size(PartsTokens.leadingIconSize),
-                            )
-                        }
-                        Spacer(Modifier.width(PartsTokens.rowElementSpacing))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text  = stringResource(R.string.touch_boost_title),
-                                style = PartsTokens.Type.rowHeadline,
-                                color = PartsTokens.Colors.textPrimary,
-                            )
-                            Text(
-                                text  = stringResource(R.string.touch_boost_summary),
-                                style = PartsTokens.Type.rowSupporting,
-                                color = PartsTokens.Colors.textSecondary,
-                            )
-                        }
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                shape    = MaterialTheme.shapes.extraLarge,
+                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            ) {
+                ListItem(
+                    modifier = Modifier.clickable { toggle(!enabled) },
+                    headlineContent = {
+                        Text(
+                            text  = stringResource(R.string.touch_boost_title),
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    },
+                    trailingContent = {
                         Switch(
                             checked         = enabled,
-                            onCheckedChange = { checked ->
-                                runCatching {
-                                    TouchSamplingService.setEnabled(context, checked)
-                                    enabled = checked
-                                }.onFailure {
-                                    PartsToast.show(context, R.string.touch_boost_failed)
-                                }
-                            },
+                            onCheckedChange = { toggle(it) },
                         )
-                    }
-                }
-            }
-
-            item(key = "info") {
-                Text(
-                    text     = stringResource(R.string.touch_boost_description),
-                    style    = PartsTokens.Type.infoBody,
-                    color    = PartsTokens.Colors.textSecondary,
-                    modifier = Modifier.padding(
-                        horizontal = PartsTokens.contentPaddingHorizontal,
-                        vertical   = PartsTokens.rowPaddingVertical,
-                    ),
+                    },
+                    colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
                 )
             }
 
-            item(key = "spacer") { Spacer(Modifier.height(PartsTokens.listBottomPadding)) }
+            Card(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                shape    = MaterialTheme.shapes.large,
+                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+            ) {
+                Row(
+                    modifier          = Modifier.padding(16.dp),
+                    verticalAlignment = Alignment.Top,
+                ) {
+                    Icon(
+                        imageVector        = Icons.Filled.Info,
+                        contentDescription = null,
+                        tint               = MaterialTheme.colorScheme.primary,
+                        modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
+                    )
+                    Text(
+                        text       = stringResource(R.string.touch_boost_description),
+                        style      = MaterialTheme.typography.bodyMedium,
+                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
+                    )
+                }
+            }
         }
     }
 }

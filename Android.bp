@@ -21,6 +21,10 @@ android_app {
         "vendor.xiaomi.hardware.displayfeature_aidl-V2-java",
         "vendor.xiaomi.hw.touchfeature-V1-java",
 
+        // AndroidX core — androidx.core.os.postDelayed (ColorService)
+        "androidx.core_core",
+        "androidx.core_core-ktx",
+
         // Compose runtime + UI core
         "androidx.compose.runtime_runtime",
         "androidx.compose.runtime_runtime-saveable",
@@ -35,16 +39,19 @@ android_app {
         "androidx.compose.material_material-icons-core",
         "androidx.compose.material_material-icons-extended",
 
+        // MDC-Android — DynamicColors for wallpaper-based theming
+        "com.google.android.material_material",
+
         // Activity integration for setContent
         "androidx.activity_activity-compose",
 
-        // Navigation-Compose (fixes NavHost/composable/rememberNavController)
+        // Navigation-Compose
         "androidx.navigation_navigation-compose",
 
-        // AndroidX preference (fixes PreferenceManager)
+        // AndroidX preference
         "androidx.preference_preference",
 
-        // SettingsLib (fixes com.android.settingslib.applications.AppUtils)
+        // SettingsLib
         "SettingsLib",
     ],
 
