@@ -5,16 +5,16 @@
 -->
 <resources>
 
-    <!-- 
-        Use DeviceDefault.DayNight to natively hook into the system's Monet (Wallpaper) engine.
-        This ensures WindowManager uses the dynamic color for the frame immediately, preventing UI flicker.
+    <!--
+        Theme.Material3.DayNight.NoActionBar is the correct base for a Compose-only app.
+        It carries Monet surface tokens so the Window background and system bars
+        pick up dynamic color before Compose even renders, preventing the grey flash.
     -->
-    <style name="XiaomiParts.Theme" parent="@android:style/Theme.DeviceDefault.DayNight">
-        <!-- Opaque background prevents transparent flicker -->
+    <style name="XiaomiParts.Theme" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowIsTranslucent">false</item>
-        
-        <!-- Natively pulls the Dynamic Monet Background from the System (Wallpaper) -->
-        <item name="android:windowBackground">?android:attr/colorBackground</item>
+
+        <!-- Pulls the Monet-tinted surface from M3 — resolves to dynamic color on API 31+ -->
+        <item name="android:windowBackground">?attr/colorSurface</item>
 
         <!-- Edge-to-edge transparent system bars for Compose -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
