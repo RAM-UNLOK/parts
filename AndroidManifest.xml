@@ -68,12 +68,22 @@
             <!-- Used by modern AOSP/Pixel-style IA homepage tiles -->
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
+                <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
             <meta-data
                 android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.homepage" />
+
+            <!-- Links the TopLevelPreference XML so the tile gets proper Card rounding -->
+            <meta-data
+                android:name="com.android.settings.extra_settings.xml"
+                android:resource="@xml/settings_header" />
+            
+            <meta-data
+                android:name="com.android.settings.preference_xml"
+                android:resource="@xml/settings_header" />
 
             <meta-data
                 android:name="com.android.settings.order"

@@ -97,14 +97,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
-                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                colors   = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             ) {
                 ListItem(
                     modifier = Modifier.clickable { toggle(!enabled) },
                     headlineContent = {
                         Text(
                             text  = stringResource(R.string.touch_boost_title),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     },
@@ -114,14 +116,17 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                             onCheckedChange = { toggle(it) },
                         )
                     },
-                    colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+                    colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
 
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.large,
-                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                colors   = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                ),
             ) {
                 Row(
                     modifier          = Modifier.padding(16.dp),
@@ -130,13 +135,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
+                        tint               = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                     )
                     Text(
                         text       = stringResource(R.string.touch_boost_description),
                         style      = MaterialTheme.typography.bodyMedium,
-                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color      = MaterialTheme.colorScheme.onTertiaryContainer,
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                     )
                 }

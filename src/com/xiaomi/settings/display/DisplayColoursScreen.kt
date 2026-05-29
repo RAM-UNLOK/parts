@@ -6,6 +6,7 @@
 package com.xiaomi.settings.display
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
@@ -222,10 +223,16 @@ private fun SelectionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
-    val bgAlpha by animateFloatAsState(
-        targetValue   = if (isSelected) 0.12f else 0f,
-        animationSpec = Motion.defaultEffectsSpec(),
-        label         = "selectionBg",
+    val containerColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer 
+                      else Color.Transparent,
+        label       = "selectionBg",
+    )
+
+    val contentColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer 
+                      else MaterialTheme.colorScheme.onSurface,
+        label       = "selectionContent",
     )
 
     ListItem(
@@ -233,21 +240,21 @@ private fun SelectionRow(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 2.dp)
             .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+            .background(containerColor)
             .clickable(role = Role.RadioButton, onClick = onClick),
         headlineContent = {
             Text(
                 text  = stringResource(mode.label),
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) MaterialTheme.colorScheme.primary
-                        else            MaterialTheme.colorScheme.onSurface,
+                style = MaterialTheme.typography.titleMedium,
+                color = contentColor,
             )
         },
         supportingContent = {
             Text(
                 text  = stringResource(mode.description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (isSelected) contentColor.copy(alpha = 0.8f) 
+                        else MaterialTheme.colorScheme.onSurfaceVariant,
             )
         },
         leadingContent = {
@@ -268,7 +275,7 @@ private fun SelectionRow(
                     Icon(
                         imageVector        = Icons.Filled.Check,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
+                        tint               = contentColor,
                         modifier           = Modifier.size(24.dp),
                     )
                 } else {
@@ -276,7 +283,7 @@ private fun SelectionRow(
                 }
             }
         },
-        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
 }
 
@@ -345,7 +352,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
-                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                colors   = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
                     ColorMode.entries.forEach { mode ->

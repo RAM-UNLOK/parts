@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -42,6 +41,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -83,6 +83,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.graphics.drawable.toBitmap
 import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
+import com.xiaomi.settings.ui.Motion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -165,8 +166,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     visible = isCharging,
-                    enter   = expandVertically() + fadeIn(),
-                    exit    = shrinkVertically() + fadeOut(),
+                    enter   = expandVertically(animationSpec = Motion.defaultEffectsSpec()) + 
+                              fadeIn(animationSpec = Motion.defaultEffectsSpec()),
+                    exit    = shrinkVertically(animationSpec = Motion.defaultEffectsSpec()) + 
+                              fadeOut(animationSpec = Motion.defaultEffectsSpec()),
                 ) { ChargingBanner() }
             }
 
@@ -174,7 +177,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).padding(top = 12.dp),
                     shape = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ),
                 ) {
                     ListItem(
                         modifier = Modifier
@@ -186,7 +191,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         headlineContent = {
                             Text(
                                 text  = stringResource(R.string.thermal_enable_title),
-                                style = MaterialTheme.typography.titleLarge,
+                                style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurface,
                             )
                         },
@@ -200,7 +205,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 }
                             )
                         },
-                        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
                 }
             }
@@ -209,7 +214,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                     shape = MaterialTheme.shapes.large,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                    ),
                 ) {
                     Row(
                         modifier = Modifier.padding(16.dp),
@@ -218,13 +226,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Icon(
                             imageVector        = Icons.Filled.Info,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.primary,
+                            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                         )
                         Text(
                             text       = stringResource(R.string.thermal_enable_summary),
                             style      = MaterialTheme.typography.bodyMedium,
-                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color      = MaterialTheme.colorScheme.onTertiaryContainer,
                             lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                         )
                     }
@@ -235,7 +243,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor   = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
                 ) {
                     ListItem(
                         modifier = Modifier
@@ -245,25 +256,25 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.error,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
                             )
                         },
                         supportingContent = {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_summary),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
                             )
                         },
                         leadingContent = {
                             Icon(
                                 imageVector        = Icons.Filled.RestartAlt,
                                 contentDescription = null,
-                                tint               = MaterialTheme.colorScheme.error,
+                                tint               = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier           = Modifier.padding(start = 8.dp).size(24.dp),
                             )
                         },
-                        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                     )
                 }
             }
@@ -348,6 +359,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 }
                                 showResetDialog = false
                             },
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
                         ) {
                             Text(stringResource(R.string.thermal_reset_confirm))
                         }
@@ -398,7 +410,7 @@ private fun AppThermalCard(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
                     )
                 }
 
@@ -431,7 +443,7 @@ private fun AppThermalCard(
             ) {
                 Text(
                     text     = ThermalService.profileLabel(context, entry.profileId),
-                    style    = MaterialTheme.typography.labelLarge,
+                    style    = MaterialTheme.typography.labelMedium,
                     color    = if (isDefault) MaterialTheme.colorScheme.onSurfaceVariant
                                else          MaterialTheme.colorScheme.primary,
                     maxLines = 1,
@@ -518,7 +530,10 @@ private fun ChargingBanner() {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
         shape    = MaterialTheme.shapes.large,
-        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer),
+        colors   = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
+        ),
     ) {
         Row(
             modifier              = Modifier.fillMaxWidth().padding(16.dp),

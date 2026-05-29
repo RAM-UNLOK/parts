@@ -84,19 +84,11 @@ fun XiaomiPartsHomeScreen(
 
             item(key = "display-label") { PartsCategory(stringResource(R.string.display_category)) }
             item(key = "display-card") {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape  = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-                ) {
+                PartsCard {
                     PartsListItem(
                         icon               = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        iconContentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                        iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
                         title              = stringResource(R.string.display_colours_title),
                         summary            = stringResource(R.string.display_colours_summary),
                         onClick            = onNavigateToDisplay,
@@ -106,32 +98,21 @@ fun XiaomiPartsHomeScreen(
 
             item(key = "perf-label") { PartsCategory(stringResource(R.string.performance_category)) }
             item(key = "perf-card") {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape  = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-                ) {
+                PartsCard {
                     Column {
                         PartsListItem(
                             icon               = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
-                            iconContainerColor = MaterialTheme.colorScheme.errorContainer,
-                            iconContentColor   = MaterialTheme.colorScheme.onErrorContainer,
+                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
                             title              = stringResource(R.string.thermal_title),
                             summary            = stringResource(R.string.thermal_summary),
                             onClick            = onNavigateToThermal,
                         )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color    = MaterialTheme.colorScheme.outlineVariant,
-                        )
+                        PartsDivider()
                         PartsListItem(
                             icon               = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                            iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
+                            iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
                             title              = stringResource(R.string.touch_boost_title),
                             summary            = stringResource(R.string.touch_boost_summary),
                             onClick            = onNavigateToTouch,
@@ -142,20 +123,12 @@ fun XiaomiPartsHomeScreen(
 
             item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
             item(key = "diag-card") {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape  = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                    ),
-                ) {
+                PartsCard {
                     Column {
                         PartsListItem(
                             icon               = Icons.Filled.Fingerprint,
-                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
+                            iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
                             title              = stringResource(R.string.fingerprint_calibration_title),
                             summary            = stringResource(R.string.fingerprint_calibration_summary),
                             onClick = {
@@ -164,10 +137,7 @@ fun XiaomiPartsHomeScreen(
                                 }
                             },
                         )
-                        HorizontalDivider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color    = MaterialTheme.colorScheme.outlineVariant,
-                        )
+                        PartsDivider()
                         PartsListItem(
                             icon               = Icons.Filled.Speaker,
                             iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -188,10 +158,32 @@ fun XiaomiPartsHomeScreen(
 }
 
 @Composable
+fun PartsCard(content: @Composable () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        shape  = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+        content = { content() }
+    )
+}
+
+@Composable
+fun PartsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(horizontal = 16.dp),
+        color    = MaterialTheme.colorScheme.outlineVariant,
+    )
+}
+
+@Composable
 fun PartsCategory(label: String) {
     Text(
         text     = label,
-        style    = MaterialTheme.typography.labelLarge,
+        style    = MaterialTheme.typography.titleSmall,
         color    = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
     )
@@ -225,7 +217,7 @@ private fun PartsListItem(
         leadingContent = {
             Box(
                 modifier = Modifier
-                    .size(44.dp)
+                    .size(48.dp)
                     .clip(CircleShape)
                     .background(iconContainerColor),
                 contentAlignment = Alignment.Center,
@@ -246,6 +238,6 @@ private fun PartsListItem(
                 modifier           = Modifier.size(16.dp),
             )
         },
-        colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
+        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
     )
 }
