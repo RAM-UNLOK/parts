@@ -49,7 +49,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     fun toggle(newValue: Boolean) {
         runCatching {
@@ -62,7 +62,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -82,8 +82,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             )
         },
@@ -92,19 +92,21 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(top = 16.dp),
+                .padding(top = 8.dp),
         ) {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
-                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                colors   = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             ) {
                 ListItem(
                     modifier = Modifier.clickable { toggle(!enabled) },
                     headlineContent = {
                         Text(
                             text  = stringResource(R.string.touch_boost_title),
-                            style = MaterialTheme.typography.titleLarge,
+                            style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                         )
                     },
@@ -121,7 +123,9 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.large,
-                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+                colors   = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                ),
             ) {
                 Row(
                     modifier          = Modifier.padding(16.dp),
@@ -130,13 +134,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
+                        tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                     )
                     Text(
                         text       = stringResource(R.string.touch_boost_description),
                         style      = MaterialTheme.typography.bodyMedium,
-                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color      = MaterialTheme.colorScheme.onSecondaryContainer,
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                     )
                 }
