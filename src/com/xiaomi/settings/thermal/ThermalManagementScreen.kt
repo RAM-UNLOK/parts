@@ -148,9 +148,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            // LargeTopAppBar gives the screen breathing room and collapses into a
-            // tinted surfaceContainerHigh bar on scroll — making the Monet tonal
-            // separation visible immediately when the user scrolls the app list.
             LargeTopAppBar(
                 title = {
                     Text(
@@ -179,8 +176,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             modifier       = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(bottom = 32.dp),
         ) {
-            // Charging banner — secondaryContainer is the Monet secondary tone zone,
-            // distinct from primary. Good for informational (non-error) state banners.
+            // secondaryContainer — Monet secondary tone zone for informational banners.
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     modifier = Modifier.animateItem(),
@@ -190,8 +186,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 ) { ChargingBanner() }
             }
 
-            // Master enable toggle — surfaceContainerHigh lifts above background so
-            // the wallpaper-derived Monet tonal difference is clearly visible.
+            // surfaceContainerHigh — lifts the master toggle above the background
+            // so the Monet tonal separation is immediately visible.
             item(key = "enable-card") {
                 Card(
                     modifier = Modifier
@@ -232,7 +228,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // Info callout — tertiaryContainer is the Monet accent-complement zone.
+            // tertiaryContainer — Monet accent-complement zone, third distinct tint.
             item(key = "info-card") {
                 Card(
                     modifier = Modifier
@@ -264,9 +260,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-            // Reset card — errorContainer is the Monet error tone zone. Using it for
-            // a destructive action gives semantic meaning AND surfaces a third distinct
-            // Monet-derived color, making the full palette legible in one screen.
+            // errorContainer — Monet error zone; semantic for destructive actions.
             item(key = "reset-card") {
                 Card(
                     modifier = Modifier
@@ -403,6 +397,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 }
                                 showResetDialog = false
                             },
+                            shape  = MaterialTheme.shapes.large,
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,
                                 contentColor   = MaterialTheme.colorScheme.onErrorContainer,
@@ -428,16 +423,31 @@ private fun AppThermalCard(
     val icon      = appIcon(entry.packageName)
     val isDefault = entry.profileId == ThermalUtils.ThermalState.DEFAULT.id
 
-    // Cards with a non-default profile animate to tertiaryContainer so the user
-    // sees at a glance which apps have active custom thermal profiles, while the
-    // Monet accent-complement palette becomes visible across the list.
+    // Cards with a non-default profile animate to tertiaryContainer.
+    // contentColor must also animate so text stays readable on the new surface.
     val cardColor by animateColorAsState(
         targetValue   = if (!isDefault && enabled)
             MaterialTheme.colorScheme.tertiaryContainer
         else
             MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label         = "cardColor",
+        label         = "cardColor_${entry.packageName}",
+    )
+    val appNameColor by animateColorAsState(
+        targetValue   = if (!isDefault && enabled)
+            MaterialTheme.colorScheme.onTertiaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label         = "appNameColor_${entry.packageName}",
+    )
+    val packageNameColor by animateColorAsState(
+        targetValue   = if (!isDefault && enabled)
+            MaterialTheme.colorScheme.onTertiaryContainer.copy(alpha = 0.7f)
+        else
+            MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label         = "packageNameColor_${entry.packageName}",
     )
     val profileLabelColor by animateColorAsState(
         targetValue   = if (!isDefault && enabled)
@@ -445,7 +455,7 @@ private fun AppThermalCard(
         else
             MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label         = "profileLabelColor",
+        label         = "profileLabelColor_${entry.packageName}",
     )
 
     Card(
@@ -492,14 +502,14 @@ private fun AppThermalCard(
                     Text(
                         text     = entry.label,
                         style    = MaterialTheme.typography.titleMedium,
-                        color    = MaterialTheme.colorScheme.onSurface,
+                        color    = appNameColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     Text(
                         text     = entry.packageName,
                         style    = MaterialTheme.typography.bodySmall,
-                        color    = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color    = packageNameColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -508,7 +518,7 @@ private fun AppThermalCard(
 
             VerticalDivider(
                 modifier = Modifier.padding(vertical = 12.dp),
-                color    = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+                color    = MaterialTheme.colorScheme.outlineVariant,
             )
 
             Box(
@@ -570,13 +580,15 @@ private fun ProfilePickerDialog(
                 ) {
                     profiles.forEach { profile ->
                         val selected = profile.id == selectedId
+                        // Unique label per profile.id prevents AnimatedValue collision
+                        // across all rows sharing the same composition scope.
                         val rowBg by animateColorAsState(
                             targetValue   = if (selected)
                                 MaterialTheme.colorScheme.secondaryContainer
                             else
                                 Color.Transparent,
                             animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                            label         = "profileRowBg",
+                            label         = "profileRowBg_${profile.id}",
                         )
                         Row(
                             modifier = Modifier
