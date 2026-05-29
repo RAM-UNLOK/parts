@@ -93,9 +93,10 @@ private val blobPositions = listOf(
 
 @Composable
 private fun ColourPreviewHero(
-    selectedId: Int,
-    onSelect:   (Int) -> Unit,
-    modifier:   Modifier = Modifier,
+    selectedId:   Int,
+    onSelect:     (Int) -> Unit,
+    shimmerColor: Color,
+    modifier:     Modifier = Modifier,
 ) {
     val allModes = ColorMode.entries
     val scope    = rememberCoroutineScope()
@@ -138,8 +139,6 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(MaterialTheme.shapes.extraLarge)
-            // Hero uses surfaceContainerHighest — top of the surface tier,
-            // gives the preview canvas the strongest tonal pop from Monet.
             .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
@@ -195,9 +194,9 @@ private fun ColourPreviewHero(
             drawRect(
                 brush = Brush.linearGradient(
                     colors = listOf(
-                        Color.White.copy(alpha = 0f),
-                        Color.White.copy(alpha = shimmerAlpha),
-                        Color.White.copy(alpha = 0f),
+                        shimmerColor.copy(alpha = 0f),
+                        shimmerColor.copy(alpha = shimmerAlpha),
+                        shimmerColor.copy(alpha = 0f),
                     ),
                     start = Offset(shimmerStartX, 0f),
                     end   = Offset(shimmerStartX + shimmerW, size.height),
@@ -225,8 +224,6 @@ private fun SelectionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
-    // Animate the row background between secondaryContainer (selected)
-    // and transparent (unselected) so Monet tones are visible on tap.
     val bgColor by animateColorAsState(
         targetValue   = if (isSelected)
             MaterialTheme.colorScheme.secondaryContainer
@@ -247,7 +244,7 @@ private fun SelectionRow(
     ListItem(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp)
             .clip(MaterialTheme.shapes.large)
             .background(bgColor)
             .clickable(role = Role.RadioButton, onClick = onClick),
@@ -304,11 +301,16 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         mutableIntStateOf(ColorService.getColorMode(context))
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    // exitUntilCollapsed matches the rest of the app and avoids the jumpy
+    // show/hide on a short finite list that enterAlways causes.
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+
+    // Monet-derived shimmer: onSurface adapts to the wallpaper tonal palette
+    // and never bleaches out blobs in light dynamic themes the way White does.
+    val shimmerColor = MaterialTheme.colorScheme.onSurface
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        // background gives a clear tonal gap under surfaceContainerHigh cards
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MediumTopAppBar(
@@ -344,8 +346,9 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
             Spacer(Modifier.height(16.dp))
 
             ColourPreviewHero(
-                selectedId = selectedId,
-                onSelect   = { id ->
+                selectedId   = selectedId,
+                shimmerColor = shimmerColor,
+                onSelect     = { id ->
                     runCatching {
                         ColorService.setColorMode(context, id)
                         selectedId = id
@@ -358,8 +361,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(16.dp))
 
-            // Options card: surfaceContainerHigh lifts above background,
-            // making the Monet tonal difference visible.
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
