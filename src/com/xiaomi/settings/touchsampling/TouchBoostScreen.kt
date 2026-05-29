@@ -6,16 +6,15 @@
 package com.xiaomi.settings.touchsampling
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -83,7 +82,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
@@ -91,15 +90,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         },
     ) { innerPadding ->
         Column(
-            modifier = Modifier
+            modifier            = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(top = 12.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // Toggle card: surfaceContainerHigh lifted above background canvas
-            // so the Monet tonal difference registers visually.
+            // Toggle card — surfaceContainerHigh lifts above background so the
+            // wallpaper-derived Monet tonal difference is visible.
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth(),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -111,7 +111,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                         Text(
                             text  = stringResource(R.string.touch_boost_title),
                             style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    },
+                    supportingContent = {
+                        Text(
+                            text  = stringResource(R.string.touch_boost_summary),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     },
                     trailingContent = {
@@ -124,13 +130,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 )
             }
 
-            Spacer(Modifier.height(8.dp))
-
-            // Info card: secondaryContainer for tinted informational callout.
-            // Uses onSecondaryContainer throughout for proper contrast on the
-            // Monet-derived secondary tonal surface.
+            // Info callout — secondaryContainer is a Monet-tinted surface that makes
+            // the wallpaper palette immediately visible in dark mode as a warm/cool tonal wash.
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth(),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -139,18 +142,18 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 Row(
                     modifier          = Modifier.padding(20.dp),
                     verticalAlignment = Alignment.Top,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Icon(
-                        imageVector        = Icons.Filled.Info,
+                        imageVector        = Icons.Outlined.Info,
                         contentDescription = null,
                         tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                        modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
+                        modifier           = Modifier.padding(top = 2.dp),
                     )
                     Text(
-                        text       = stringResource(R.string.touch_boost_description),
-                        style      = MaterialTheme.typography.bodyMedium,
-                        color      = MaterialTheme.colorScheme.onSecondaryContainer,
-                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
+                        text  = stringResource(R.string.touch_boost_description),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSecondaryContainer,
                     )
                 }
             }
