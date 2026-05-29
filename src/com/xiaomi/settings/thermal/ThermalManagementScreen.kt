@@ -52,10 +52,10 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -148,7 +148,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            MediumTopAppBar(
+            // LargeTopAppBar gives the screen breathing room and collapses into a
+            // tinted surfaceContainerHigh bar on scroll — making the Monet tonal
+            // separation visible immediately when the user scrolls the app list.
+            LargeTopAppBar(
                 title = {
                     Text(
                         text     = stringResource(R.string.thermal_title),
@@ -164,7 +167,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
@@ -176,6 +179,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             modifier       = Modifier.fillMaxSize().padding(innerPadding),
             contentPadding = PaddingValues(bottom = 32.dp),
         ) {
+            // Charging banner — secondaryContainer is the Monet secondary tone zone,
+            // distinct from primary. Good for informational (non-error) state banners.
             item(key = "charging-banner") {
                 AnimatedVisibility(
                     modifier = Modifier.animateItem(),
@@ -185,6 +190,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 ) { ChargingBanner() }
             }
 
+            // Master enable toggle — surfaceContainerHigh lifts above background so
+            // the wallpaper-derived Monet tonal difference is clearly visible.
             item(key = "enable-card") {
                 Card(
                     modifier = Modifier
@@ -192,7 +199,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp)
                         .padding(top = 12.dp),
-                    shape  = MaterialTheme.shapes.large,
+                    shape  = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
@@ -225,10 +232,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
+            // Info callout — tertiaryContainer is the Monet accent-complement zone.
             item(key = "info-card") {
-                // tertiaryContainer is the Monet accent-complement zone — produces a
-                // clearly tinted warm/cool surface in dark mode unlike secondaryContainer
-                // which resolves near-neutral in most Monet dark themes.
                 Card(
                     modifier = Modifier
                         .animateItem()
@@ -259,12 +264,15 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
+            // Reset card — errorContainer is the Monet error tone zone. Using it for
+            // a destructive action gives semantic meaning AND surfaces a third distinct
+            // Monet-derived color, making the full palette legible in one screen.
             item(key = "reset-card") {
                 Card(
                     modifier = Modifier
                         .animateItem()
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
                     shape  = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -420,17 +428,20 @@ private fun AppThermalCard(
     val icon      = appIcon(entry.packageName)
     val isDefault = entry.profileId == ThermalUtils.ThermalState.DEFAULT.id
 
+    // Cards with a non-default profile animate to tertiaryContainer so the user
+    // sees at a glance which apps have active custom thermal profiles, while the
+    // Monet accent-complement palette becomes visible across the list.
     val cardColor by animateColorAsState(
         targetValue   = if (!isDefault && enabled)
             MaterialTheme.colorScheme.tertiaryContainer
         else
-            MaterialTheme.colorScheme.surfaceContainerHigh,
+            MaterialTheme.colorScheme.surfaceContainer,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label         = "cardColor",
     )
     val profileLabelColor by animateColorAsState(
         targetValue   = if (!isDefault && enabled)
-            MaterialTheme.colorScheme.onTertiaryContainer
+            MaterialTheme.colorScheme.tertiary
         else
             MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -561,7 +572,7 @@ private fun ProfilePickerDialog(
                         val selected = profile.id == selectedId
                         val rowBg by animateColorAsState(
                             targetValue   = if (selected)
-                                MaterialTheme.colorScheme.tertiaryContainer
+                                MaterialTheme.colorScheme.secondaryContainer
                             else
                                 Color.Transparent,
                             animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
@@ -582,7 +593,7 @@ private fun ProfilePickerDialog(
                                 text  = context.getString(profile.label),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = if (selected)
-                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                    MaterialTheme.colorScheme.onSecondaryContainer
                                 else
                                     MaterialTheme.colorScheme.onSurface,
                             )
@@ -615,7 +626,7 @@ private fun ChargingBanner() {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .padding(top = 12.dp),
-        shape  = MaterialTheme.shapes.large,
+        shape  = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
         ),
