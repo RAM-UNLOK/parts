@@ -12,6 +12,8 @@ import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -30,20 +32,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BatteryChargingFull
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -148,13 +149,22 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MediumTopAppBar(
-                title = { Text(stringResource(R.string.thermal_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                title = {
+                    Text(
+                        text     = stringResource(R.string.thermal_title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.navigate_up))
+                        Icon(
+                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.navigate_up),
+                        )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
@@ -198,7 +208,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(
                                 text  = stringResource(R.string.thermal_enable_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onSurface,
                             )
                         },
                         trailingContent = {
@@ -208,7 +217,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 onCheckedChange = { checked ->
                                     thermalEnabled = checked
                                     thermalUtils.enabled = checked
-                                }
+                                },
                             )
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
@@ -222,33 +231,32 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         .animateItem()
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape  = MaterialTheme.shapes.large,
+                    shape  = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.secondaryContainer,
                     ),
                 ) {
                     Row(
-                        modifier          = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.Top,
+                        modifier              = Modifier.padding(20.dp),
+                        verticalAlignment     = Alignment.Top,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
                         Icon(
-                            imageVector        = Icons.Filled.Info,
+                            imageVector        = Icons.Outlined.Info,
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSecondaryContainer,
-                            modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
+                            modifier           = Modifier.padding(top = 2.dp),
                         )
                         Text(
-                            text       = stringResource(R.string.thermal_enable_summary),
-                            style      = MaterialTheme.typography.bodyMedium,
-                            color      = MaterialTheme.colorScheme.onSecondaryContainer,
-                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
+                            text  = stringResource(R.string.thermal_enable_summary),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
                     }
                 }
             }
 
             item(key = "reset-card") {
-                // Reset action uses errorContainer to signal destructive intent clearly.
                 Card(
                     modifier = Modifier
                         .animateItem()
@@ -262,7 +270,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     ListItem(
                         modifier = Modifier
                             .alpha(if (controlsEnabled) 1f else 0.38f)
-                            .clickable(enabled = controlsEnabled, role = Role.Button) { showResetDialog = true },
+                            .clickable(enabled = controlsEnabled, role = Role.Button) {
+                                showResetDialog = true
+                            },
                         headlineContent = {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_title),
@@ -282,7 +292,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 imageVector        = Icons.Filled.RestartAlt,
                                 contentDescription = null,
                                 tint               = MaterialTheme.colorScheme.onErrorContainer,
-                                modifier           = Modifier.padding(start = 8.dp).size(24.dp),
                             )
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
@@ -310,13 +319,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             } else {
                 items(
-                    count = appList.size,
-                    key   = { appList[it].packageName },
-                ) { index ->
+                    items = appList,
+                    key   = { it.packageName },
+                ) { entry ->
                     AppThermalCard(
-                        entry    = appList[index],
+                        entry    = entry,
                         enabled  = controlsEnabled,
-                        onClick  = { if (controlsEnabled) pendingApp = appList[index] },
+                        onClick  = { if (controlsEnabled) pendingApp = entry },
                         modifier = Modifier.animateItem(),
                     )
                 }
@@ -346,41 +355,40 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     if (showResetDialog) {
         Dialog(onDismissRequest = { showResetDialog = false }) {
-            // Dialog container: surfaceContainerHighest for max elevation clarity.
             Card(
                 shape  = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
             ) {
-                Column(modifier = Modifier.padding(24.dp)) {
+                Column(
+                    modifier            = Modifier.padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
                     Text(
                         text  = stringResource(R.string.thermal_reset_title),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurface,
                     )
-                    Spacer(Modifier.height(16.dp))
                     Text(
                         text  = stringResource(R.string.thermal_reset_confirm_body),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    Spacer(Modifier.height(24.dp))
                     Row(
                         modifier              = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.End,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     ) {
                         TextButton(onClick = { showResetDialog = false }) {
                             Text(stringResource(android.R.string.cancel))
                         }
-                        Spacer(Modifier.width(8.dp))
-                        // FilledTonalButton uses the error tonal pair,
-                        // signalling a destructive action more clearly than TextButton.
                         FilledTonalButton(
                             onClick = {
                                 runCatching {
                                     ThermalUtils.getInstance(context).resetProfiles()
-                                    appList = appList.map { it.copy(profileId = ThermalUtils.ThermalState.DEFAULT.id) }
+                                    appList = appList.map {
+                                        it.copy(profileId = ThermalUtils.ThermalState.DEFAULT.id)
+                                    }
                                 }
                                 showResetDialog = false
                             },
@@ -409,27 +417,21 @@ private fun AppThermalCard(
     val icon      = appIcon(entry.packageName)
     val isDefault = entry.profileId == ThermalUtils.ThermalState.DEFAULT.id
 
-    // Animate card container: tertiaryContainer when a custom profile is set,
-    // surfaceContainerHigh for default — shows Monet color on active entries.
     val cardColor by animateColorAsState(
         targetValue   = if (!isDefault && enabled)
             MaterialTheme.colorScheme.tertiaryContainer
         else
             MaterialTheme.colorScheme.surfaceContainerHigh,
-        animationSpec = androidx.compose.animation.core.spring(
-            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-        ),
-        label = "cardColor",
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label         = "cardColor",
     )
-    val labelColor by animateColorAsState(
+    val profileLabelColor by animateColorAsState(
         targetValue   = if (!isDefault && enabled)
             MaterialTheme.colorScheme.onTertiaryContainer
         else
             MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = androidx.compose.animation.core.spring(
-            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-        ),
-        label = "labelColor",
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label         = "profileLabelColor",
     )
 
     Card(
@@ -439,15 +441,19 @@ private fun AppThermalCard(
             .alpha(if (enabled) 1f else 0.38f),
         shape   = MaterialTheme.shapes.large,
         colors  = CardDefaults.cardColors(containerColor = cardColor),
-        onClick  = onClick,
-        enabled  = enabled,
+        onClick = onClick,
+        enabled = enabled,
     ) {
         Row(
-            modifier          = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            modifier          = Modifier
+                .fillMaxWidth()
+                .height(IntrinsicSize.Min),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                modifier              = Modifier.weight(1f).padding(16.dp),
+                modifier              = Modifier
+                    .weight(1f)
+                    .padding(16.dp),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -455,7 +461,9 @@ private fun AppThermalCard(
                     Image(
                         bitmap             = icon,
                         contentDescription = null,
-                        modifier           = Modifier.size(40.dp).clip(CircleShape),
+                        modifier           = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
                     )
                 } else {
                     Box(
@@ -490,13 +498,15 @@ private fun AppThermalCard(
             )
 
             Box(
-                modifier         = Modifier.width(96.dp).fillMaxHeight(),
+                modifier         = Modifier
+                    .width(96.dp)
+                    .fillMaxHeight(),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text     = ThermalService.profileLabel(context, entry.profileId),
                     style    = MaterialTheme.typography.labelLarge,
-                    color    = labelColor,
+                    color    = profileLabelColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -524,7 +534,10 @@ private fun ProfilePickerDialog(
             ),
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                modifier            = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(0.dp),
             ) {
                 Text(
                     text     = title,
@@ -532,10 +545,8 @@ private fun ProfilePickerDialog(
                     color    = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(horizontal = 24.dp),
+                    modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
                 )
-
-                Spacer(Modifier.height(16.dp))
 
                 Column(
                     modifier = Modifier
@@ -545,16 +556,13 @@ private fun ProfilePickerDialog(
                 ) {
                     profiles.forEach { profile ->
                         val selected = profile.id == selectedId
-                        // Row background: tertiaryContainer tint when selected.
                         val rowBg by animateColorAsState(
                             targetValue   = if (selected)
                                 MaterialTheme.colorScheme.tertiaryContainer
                             else
                                 Color.Transparent,
-                            animationSpec = androidx.compose.animation.core.spring(
-                                stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
-                            ),
-                            label = "profileRowBg",
+                            animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                            label         = "profileRowBg",
                         )
                         Row(
                             modifier = Modifier
@@ -580,14 +588,17 @@ private fun ProfilePickerDialog(
                 }
 
                 Row(
-                    modifier = Modifier
+                    modifier              = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 24.dp, vertical = 16.dp),
-                    horizontalArrangement = Arrangement.End,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                 ) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
-                    Spacer(Modifier.width(8.dp))
-                    TextButton(onClick = onConfirm) { Text(stringResource(R.string.thermal_apply)) }
+                    TextButton(onClick = onDismiss) {
+                        Text(stringResource(android.R.string.cancel))
+                    }
+                    TextButton(onClick = onConfirm) {
+                        Text(stringResource(R.string.thermal_apply))
+                    }
                 }
             }
         }
@@ -597,14 +608,19 @@ private fun ProfilePickerDialog(
 @Composable
 private fun ChargingBanner() {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).padding(top = 12.dp),
-        shape    = MaterialTheme.shapes.large,
-        colors   = CardDefaults.cardColors(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp)
+            .padding(top = 12.dp),
+        shape  = MaterialTheme.shapes.extraLarge,
+        colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
         ),
     ) {
         Row(
-            modifier              = Modifier.fillMaxWidth().padding(16.dp),
+            modifier              = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
             verticalAlignment     = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp),
         ) {
