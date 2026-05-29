@@ -192,7 +192,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp)
                         .padding(top = 12.dp),
-                    shape  = MaterialTheme.shapes.extraLarge,
+                    shape  = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
@@ -226,14 +226,17 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
 
             item(key = "info-card") {
+                // tertiaryContainer is the Monet accent-complement zone — produces a
+                // clearly tinted warm/cool surface in dark mode unlike secondaryContainer
+                // which resolves near-neutral in most Monet dark themes.
                 Card(
                     modifier = Modifier
                         .animateItem()
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
-                    shape  = MaterialTheme.shapes.extraLarge,
+                    shape  = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                     ),
                 ) {
                     Row(
@@ -244,13 +247,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Icon(
                             imageVector        = Icons.Outlined.Info,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier           = Modifier.padding(top = 2.dp),
                         )
                         Text(
                             text  = stringResource(R.string.thermal_enable_summary),
                             style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
                         )
                     }
                 }
@@ -262,7 +265,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         .animateItem()
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    shape  = MaterialTheme.shapes.extraLarge,
+                    shape  = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
                     ),
@@ -612,7 +615,7 @@ private fun ChargingBanner() {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .padding(top = 12.dp),
-        shape  = MaterialTheme.shapes.extraLarge,
+        shape  = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
         ),
