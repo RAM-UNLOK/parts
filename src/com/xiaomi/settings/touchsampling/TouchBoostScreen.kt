@@ -6,6 +6,7 @@
 package com.xiaomi.settings.touchsampling
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -52,6 +53,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val bgColor = if (isSystemInDarkTheme()) Color.Black else MaterialTheme.colorScheme.background
 
     fun toggle(newValue: Boolean) {
         runCatching {
@@ -64,7 +66,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = bgColor,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -84,7 +86,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    containerColor         = bgColor,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
             )
@@ -103,7 +105,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer, // System match
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
             ) {
                 ListItem(
@@ -129,7 +131,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.large,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer, // System match
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
             ) {
                 Row(
