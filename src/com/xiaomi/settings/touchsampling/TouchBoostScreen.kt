@@ -103,7 +103,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow, // Deeper contrast
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer, // System match
                 ),
             ) {
                 ListItem(
@@ -129,8 +129,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.large,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer, // System match
                 ),
             ) {
                 Row(
@@ -140,13 +139,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onTertiaryContainer,
+                        tint               = MaterialTheme.colorScheme.primary,
                         modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                     )
                     Text(
                         text       = stringResource(R.string.touch_boost_description),
                         style      = MaterialTheme.typography.bodyMedium,
-                        color      = MaterialTheme.colorScheme.onTertiaryContainer,
+                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                     )
                 }

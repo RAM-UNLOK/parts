@@ -138,7 +138,7 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(MaterialTheme.colorScheme.surfaceContainerLow) // Deeper contrast
+            .background(MaterialTheme.colorScheme.surfaceContainer) // System match
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
                     val w = size.width.toFloat()
@@ -354,7 +354,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow, // Deeper contrast
+                    containerColor = MaterialTheme.colorScheme.surfaceContainer, // System match
                 ),
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
