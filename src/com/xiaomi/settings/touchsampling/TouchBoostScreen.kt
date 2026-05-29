@@ -23,10 +23,10 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,7 +50,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     fun toggle(newValue: Boolean) {
         runCatching {
@@ -65,7 +65,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            MediumTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text     = stringResource(R.string.touch_boost_title),
@@ -82,7 +82,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                colors = TopAppBarDefaults.topAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
@@ -90,7 +90,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         },
     ) { innerPadding ->
         Column(
-            modifier            = Modifier
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
@@ -100,7 +100,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             // wallpaper-derived Monet tonal difference is visible.
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape    = MaterialTheme.shapes.extraLarge,
+                shape    = MaterialTheme.shapes.large,
                 colors   = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
@@ -130,30 +130,32 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 )
             }
 
-            // Info callout — secondaryContainer is a Monet-tinted surface that makes
-            // the wallpaper palette immediately visible in dark mode as a warm/cool tonal wash.
+            // Info callout — tertiaryContainer is the Monet accent-complement zone.
+            // In dark mode it produces a clearly tinted warm/cool surface that makes
+            // the wallpaper palette immediately legible, unlike secondaryContainer
+            // which tends to land near-neutral in dark Monet themes.
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape    = MaterialTheme.shapes.extraLarge,
+                shape    = MaterialTheme.shapes.large,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 ),
             ) {
                 Row(
-                    modifier          = Modifier.padding(20.dp),
-                    verticalAlignment = Alignment.Top,
+                    modifier              = Modifier.padding(20.dp),
+                    verticalAlignment     = Alignment.Top,
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
                     Icon(
                         imageVector        = Icons.Outlined.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                        tint               = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier           = Modifier.padding(top = 2.dp),
                     )
                     Text(
                         text  = stringResource(R.string.touch_boost_description),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
                     )
                 }
             }
