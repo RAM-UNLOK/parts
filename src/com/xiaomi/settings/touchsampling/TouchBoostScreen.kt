@@ -5,28 +5,39 @@
 
 package com.xiaomi.settings.touchsampling
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Info
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButtonDefaults
+import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -50,7 +61,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     fun toggle(newValue: Boolean) {
         runCatching {
@@ -61,11 +72,30 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         }
     }
 
+    // Animate hero card color between primaryContainer (on) and surfaceContainerHigh (off)
+    // so the wallpaper-derived Monet palette becomes visible the moment the user toggles.
+    val heroContainerColor by animateColorAsState(
+        targetValue = if (enabled)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "heroContainerColor",
+    )
+    val heroContentColor by animateColorAsState(
+        targetValue = if (enabled)
+            MaterialTheme.colorScheme.onPrimaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "heroContentColor",
+    )
+
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
+            LargeTopAppBar(
                 title = {
                     Text(
                         text     = stringResource(R.string.touch_boost_title),
@@ -82,7 +112,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     }
                 },
                 scrollBehavior = scrollBehavior,
-                colors = TopAppBarDefaults.topAppBarColors(
+                colors = TopAppBarDefaults.largeTopAppBarColors(
                     containerColor         = MaterialTheme.colorScheme.background,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
@@ -92,48 +122,63 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(rememberScrollState())
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Toggle card — surfaceContainerHigh lifts above background so the
-            // wallpaper-derived Monet tonal difference is visible.
+            // Hero toggle card — color animates with the switch state so the
+            // Monet primaryContainer token surfaces immediately on enable.
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape    = MaterialTheme.shapes.large,
-                colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                ),
+                shape    = MaterialTheme.shapes.extraLarge,
+                colors   = CardDefaults.cardColors(containerColor = heroContainerColor),
             ) {
-                ListItem(
-                    modifier = Modifier.clickable { toggle(!enabled) },
-                    headlineContent = {
-                        Text(
-                            text  = stringResource(R.string.touch_boost_title),
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                    },
-                    supportingContent = {
-                        Text(
-                            text  = stringResource(R.string.touch_boost_summary),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    trailingContent = {
+                Column(modifier = Modifier.padding(20.dp)) {
+                    Row(
+                        modifier          = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        // Tonal icon button reflects state with Monet color
+                        FilledTonalIconToggleButton(
+                            checked   = enabled,
+                            onCheckedChange = { toggle(it) },
+                            modifier  = Modifier.size(52.dp),
+                            colors    = IconToggleButtonDefaults.filledTonalIconToggleButtonColors(
+                                checkedContainerColor = MaterialTheme.colorScheme.primary,
+                                checkedContentColor   = MaterialTheme.colorScheme.onPrimary,
+                            ),
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Outlined.TouchApp,
+                                contentDescription = null,
+                                modifier           = Modifier.size(26.dp),
+                            )
+                        }
                         Switch(
                             checked         = enabled,
                             onCheckedChange = { toggle(it) },
                         )
-                    },
-                    colors = ListItemDefaults.colors(containerColor = Color.Unspecified),
-                )
+                    }
+                    Spacer(Modifier.height(16.dp))
+                    Text(
+                        text  = stringResource(R.string.touch_boost_title),
+                        style = MaterialTheme.typography.titleLarge,
+                        color = heroContentColor,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        text  = stringResource(R.string.touch_boost_summary),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = heroContentColor.copy(alpha = 0.75f),
+                    )
+                }
             }
 
             // Info callout — tertiaryContainer is the Monet accent-complement zone.
-            // In dark mode it produces a clearly tinted warm/cool surface that makes
-            // the wallpaper palette immediately legible, unlike secondaryContainer
-            // which tends to land near-neutral in dark Monet themes.
+            // Produces a distinctly tinted surface in dark Monet themes versus the
+            // near-neutral secondaryContainer, making the wallpaper palette legible.
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape    = MaterialTheme.shapes.large,
@@ -141,23 +186,26 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 ),
             ) {
-                Row(
-                    modifier              = Modifier.padding(20.dp),
-                    verticalAlignment     = Alignment.Top,
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Icon(
-                        imageVector        = Icons.Outlined.Info,
-                        contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onTertiaryContainer,
-                        modifier           = Modifier.padding(top = 2.dp),
-                    )
-                    Text(
-                        text  = stringResource(R.string.touch_boost_description),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                }
+                ListItem(
+                    headlineContent = {
+                        Text(
+                            text  = stringResource(R.string.touch_boost_description),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    },
+                    leadingContent = {
+                        Icon(
+                            imageVector        = Icons.Outlined.Info,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                    },
+                    colors = ListItemDefaults.colors(
+                        containerColor   = Color.Unspecified,
+                        headlineColor    = MaterialTheme.colorScheme.onTertiaryContainer,
+                        leadingIconColor = MaterialTheme.colorScheme.onTertiaryContainer,
+                    ),
+                )
             }
         }
     }
