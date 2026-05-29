@@ -2,19 +2,13 @@
 <!--
     Copyright (C) 2025 Paranoid Android
     SPDX-License-Identifier: Apache-2.0
-
-    Settings homepage tile icon — Xiaomi Parts.
-    Provides a clean, flat vector. AOSP Settings will automatically
-    wrap this in a coloured circle and tint it to white natively.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
     android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#000000">
-
+    android:viewportHeight="24">
     <path
         android:fillColor="@android:color/white"
-        android:pathData="M7,4c0,-1.1 0.9,-2 2,-2h6c1.1,0 2,0.9 2,2v2h3c1.1,0 2,0.9 2,2v10c0,1.1 -0.9,2 -2,2h-3v2c0,1.1 -0.9,2 -2,2H9c-1.1,0 -2,-0.9 -2,-2v-2H4c-1.1,0 -2,-0.9 -2,-2V8c0,-1.1 0.9,-2 2,-2h3V4zM9,4v2h6V4H9zM18,8H6v10h12V8zM8,10h8v6H8V10z"/>
+        android:pathData="M15,9H9V15H15V9ZM13,13H11V11H13V13ZM21,11V9H19V7C19,5.9 18.1,5 17,5H15V3H13V5H11V3H9V5H7C5.9,5 5,5.9 5,7V9H3V11H5V13H3V15H5V17C5,18.1 5.9,19 7,19H9V21H11V19H13V21H15V19H17C18.1,19 19,18.1 19,17V15H21V13H19V11H21ZM17,17H7V7H17V17Z" />
 </vector>
