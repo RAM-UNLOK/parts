@@ -59,7 +59,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -70,8 +70,8 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -82,15 +82,21 @@ fun XiaomiPartsHomeScreen(
             contentPadding = PaddingValues(bottom = 32.dp),
         ) {
 
-            item(key = "display-label") { PartsCategory(stringResource(R.string.display_category)) }
+            item(key = "display-label") {
+                PartsCategory(
+                    label    = stringResource(R.string.display_category),
+                    modifier = Modifier.animateItem(),
+                )
+            }
             item(key = "display-card") {
                 Card(
                     modifier = Modifier
+                        .animateItem()
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
                     shape  = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
                 ) {
                     PartsListItem(
@@ -104,15 +110,21 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            item(key = "perf-label") { PartsCategory(stringResource(R.string.performance_category)) }
+            item(key = "perf-label") {
+                PartsCategory(
+                    label    = stringResource(R.string.performance_category),
+                    modifier = Modifier.animateItem(),
+                )
+            }
             item(key = "perf-card") {
                 Card(
                     modifier = Modifier
+                        .animateItem()
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
                     shape  = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
                 ) {
                     Column {
@@ -140,15 +152,21 @@ fun XiaomiPartsHomeScreen(
                 }
             }
 
-            item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
+            item(key = "diag-label") {
+                PartsCategory(
+                    label    = stringResource(R.string.xiaomi_parts_category_diagnostics),
+                    modifier = Modifier.animateItem(),
+                )
+            }
             item(key = "diag-card") {
                 Card(
                     modifier = Modifier
+                        .animateItem()
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 4.dp),
                     shape  = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                     ),
                 ) {
                     Column {
@@ -188,12 +206,12 @@ fun XiaomiPartsHomeScreen(
 }
 
 @Composable
-fun PartsCategory(label: String) {
+fun PartsCategory(label: String, modifier: Modifier = Modifier) {
     Text(
         text     = label,
-        style    = MaterialTheme.typography.labelLarge,
+        style    = MaterialTheme.typography.titleSmall,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
+        modifier = modifier.padding(start = 24.dp, top = 20.dp, bottom = 8.dp),
     )
 }
 
@@ -242,7 +260,7 @@ private fun PartsListItem(
             Icon(
                 imageVector        = Icons.AutoMirrored.Filled.ArrowForwardIos,
                 contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                tint               = MaterialTheme.colorScheme.onSurface,
                 modifier           = Modifier.size(16.dp),
             )
         },
