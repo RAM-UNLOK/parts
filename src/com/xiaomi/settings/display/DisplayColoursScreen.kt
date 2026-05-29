@@ -6,6 +6,7 @@
 package com.xiaomi.settings.display
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
@@ -137,7 +138,9 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            // Hero uses surfaceContainerHighest — top of the surface tier,
+            // gives the preview canvas the strongest tonal pop from Monet.
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
                     val w = size.width.toFloat()
@@ -222,10 +225,23 @@ private fun SelectionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
-    val bgAlpha by animateFloatAsState(
-        targetValue   = if (isSelected) 0.12f else 0f,
+    // Animate the row background between secondaryContainer (selected)
+    // and transparent (unselected) so Monet tones are visible on tap.
+    val bgColor by animateColorAsState(
+        targetValue   = if (isSelected)
+            MaterialTheme.colorScheme.secondaryContainer
+        else
+            Color.Transparent,
         animationSpec = Motion.defaultEffectsSpec(),
         label         = "selectionBg",
+    )
+    val titleColor by animateColorAsState(
+        targetValue   = if (isSelected)
+            MaterialTheme.colorScheme.onSecondaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface,
+        animationSpec = Motion.defaultEffectsSpec(),
+        label         = "titleColor",
     )
 
     ListItem(
@@ -233,14 +249,13 @@ private fun SelectionRow(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 2.dp)
             .clip(MaterialTheme.shapes.large)
-            .background(MaterialTheme.colorScheme.primary.copy(alpha = bgAlpha))
+            .background(bgColor)
             .clickable(role = Role.RadioButton, onClick = onClick),
         headlineContent = {
             Text(
                 text  = stringResource(mode.label),
                 style = MaterialTheme.typography.bodyLarge,
-                color = if (isSelected) MaterialTheme.colorScheme.primary
-                        else            MaterialTheme.colorScheme.onSurface,
+                color = titleColor,
             )
         },
         supportingContent = {
@@ -268,7 +283,7 @@ private fun SelectionRow(
                     Icon(
                         imageVector        = Icons.Filled.Check,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
+                        tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                         modifier           = Modifier.size(24.dp),
                     )
                 } else {
@@ -293,7 +308,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        // background gives a clear tonal gap under surfaceContainerHigh cards
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -312,8 +328,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.background,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -342,10 +358,14 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(16.dp))
 
+            // Options card: surfaceContainerHigh lifts above background,
+            // making the Monet tonal difference visible.
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
-                colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+                colors   = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                ),
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
                     ColorMode.entries.forEach { mode ->

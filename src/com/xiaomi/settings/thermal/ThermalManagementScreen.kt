@@ -11,6 +11,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -42,9 +43,12 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
@@ -244,6 +248,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             }
 
             item(key = "reset-card") {
+                // Reset action uses errorContainer to signal destructive intent clearly.
                 Card(
                     modifier = Modifier
                         .animateItem()
@@ -251,7 +256,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         .padding(horizontal = 16.dp, vertical = 8.dp),
                     shape  = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
                     ),
                 ) {
                     ListItem(
@@ -262,21 +267,21 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.error,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
                             )
                         },
                         supportingContent = {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_summary),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
                             )
                         },
                         leadingContent = {
                             Icon(
                                 imageVector        = Icons.Filled.RestartAlt,
                                 contentDescription = null,
-                                tint               = MaterialTheme.colorScheme.error,
+                                tint               = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier           = Modifier.padding(start = 8.dp).size(24.dp),
                             )
                         },
@@ -341,10 +346,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     if (showResetDialog) {
         Dialog(onDismissRequest = { showResetDialog = false }) {
+            // Dialog container: surfaceContainerHighest for max elevation clarity.
             Card(
                 shape  = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
                 ),
             ) {
                 Column(modifier = Modifier.padding(24.dp)) {
@@ -368,7 +374,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(stringResource(android.R.string.cancel))
                         }
                         Spacer(Modifier.width(8.dp))
-                        TextButton(
+                        // FilledTonalButton uses the error tonal pair,
+                        // signalling a destructive action more clearly than TextButton.
+                        FilledTonalButton(
                             onClick = {
                                 runCatching {
                                     ThermalUtils.getInstance(context).resetProfiles()
@@ -376,6 +384,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 }
                                 showResetDialog = false
                             },
+                            colors = ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.errorContainer,
+                                contentColor   = MaterialTheme.colorScheme.onErrorContainer,
+                            ),
                         ) {
                             Text(stringResource(R.string.thermal_reset_confirm))
                         }
@@ -397,15 +409,36 @@ private fun AppThermalCard(
     val icon      = appIcon(entry.packageName)
     val isDefault = entry.profileId == ThermalUtils.ThermalState.DEFAULT.id
 
+    // Animate card container: tertiaryContainer when a custom profile is set,
+    // surfaceContainerHigh for default — shows Monet color on active entries.
+    val cardColor by animateColorAsState(
+        targetValue   = if (!isDefault && enabled)
+            MaterialTheme.colorScheme.tertiaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceContainerHigh,
+        animationSpec = androidx.compose.animation.core.spring(
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        ),
+        label = "cardColor",
+    )
+    val labelColor by animateColorAsState(
+        targetValue   = if (!isDefault && enabled)
+            MaterialTheme.colorScheme.onTertiaryContainer
+        else
+            MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = androidx.compose.animation.core.spring(
+            stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+        ),
+        label = "labelColor",
+    )
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .alpha(if (enabled) 1f else 0.38f),
         shape   = MaterialTheme.shapes.large,
-        colors  = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-        ),
+        colors  = CardDefaults.cardColors(containerColor = cardColor),
         onClick  = onClick,
         enabled  = enabled,
     ) {
@@ -463,8 +496,7 @@ private fun AppThermalCard(
                 Text(
                     text     = ThermalService.profileLabel(context, entry.profileId),
                     style    = MaterialTheme.typography.labelLarge,
-                    color    = if (isDefault) MaterialTheme.colorScheme.onSurfaceVariant
-                               else          MaterialTheme.colorScheme.primary,
+                    color    = labelColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
@@ -488,7 +520,7 @@ private fun ProfilePickerDialog(
         Card(
             shape  = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
             ),
         ) {
             Column(
@@ -513,9 +545,22 @@ private fun ProfilePickerDialog(
                 ) {
                     profiles.forEach { profile ->
                         val selected = profile.id == selectedId
+                        // Row background: tertiaryContainer tint when selected.
+                        val rowBg by animateColorAsState(
+                            targetValue   = if (selected)
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            else
+                                Color.Transparent,
+                            animationSpec = androidx.compose.animation.core.spring(
+                                stiffness = androidx.compose.animation.core.Spring.StiffnessMediumLow,
+                            ),
+                            label = "profileRowBg",
+                        )
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
+                                .clip(MaterialTheme.shapes.large)
+                                .background(rowBg)
                                 .clickable(role = Role.RadioButton) { onSelect(profile.id) }
                                 .padding(vertical = 14.dp, horizontal = 24.dp),
                             verticalAlignment     = Alignment.CenterVertically,
@@ -525,7 +570,10 @@ private fun ProfilePickerDialog(
                             Text(
                                 text  = context.getString(profile.label),
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSurface,
+                                color = if (selected)
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                else
+                                    MaterialTheme.colorScheme.onSurface,
                             )
                         }
                     }
@@ -549,7 +597,7 @@ private fun ProfilePickerDialog(
 @Composable
 private fun ChargingBanner() {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).padding(top = 12.dp),
         shape    = MaterialTheme.shapes.large,
         colors   = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,

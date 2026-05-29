@@ -8,8 +8,10 @@ package com.xiaomi.settings.touchsampling
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -92,8 +94,10 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .padding(top = 8.dp),
+                .padding(top = 12.dp),
         ) {
+            // Toggle card: surfaceContainerHigh lifted above background canvas
+            // so the Monet tonal difference registers visually.
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
@@ -120,15 +124,20 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 )
             }
 
+            Spacer(Modifier.height(8.dp))
+
+            // Info card: secondaryContainer for tinted informational callout.
+            // Uses onSecondaryContainer throughout for proper contrast on the
+            // Monet-derived secondary tonal surface.
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                shape    = MaterialTheme.shapes.large,
+                shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
                 ),
             ) {
                 Row(
-                    modifier          = Modifier.padding(16.dp),
+                    modifier          = Modifier.padding(20.dp),
                     verticalAlignment = Alignment.Top,
                 ) {
                     Icon(
