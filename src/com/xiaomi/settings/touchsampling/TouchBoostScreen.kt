@@ -5,11 +5,17 @@
 
 package com.xiaomi.settings.touchsampling
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +25,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -27,15 +34,14 @@ import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconToggleButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -72,8 +78,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         }
     }
 
-    // Animate hero card color between primaryContainer (on) and surfaceContainerHigh (off)
-    // so the wallpaper-derived Monet palette becomes visible the moment the user toggles.
     val heroContainerColor by animateColorAsState(
         targetValue = if (enabled)
             MaterialTheme.colorScheme.primaryContainer
@@ -89,6 +93,22 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             MaterialTheme.colorScheme.onSurface,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "heroContentColor",
+    )
+    val iconSurfaceColor by animateColorAsState(
+        targetValue = if (enabled)
+            MaterialTheme.colorScheme.primary
+        else
+            MaterialTheme.colorScheme.secondaryContainer,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "iconSurfaceColor",
+    )
+    val iconContentColor by animateColorAsState(
+        targetValue = if (enabled)
+            MaterialTheme.colorScheme.onPrimary
+        else
+            MaterialTheme.colorScheme.onSecondaryContainer,
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
+        label = "iconContentColor",
     )
 
     Scaffold(
@@ -127,8 +147,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            // Hero toggle card — color animates with the switch state so the
-            // Monet primaryContainer token surfaces immediately on enable.
+            // Hero toggle card — animates between primaryContainer (on) and
+            // surfaceContainerHigh (off) so the Monet palette is immediately visible.
             Card(
                 modifier = Modifier.fillMaxWidth(),
                 shape    = MaterialTheme.shapes.extraLarge,
@@ -136,25 +156,34 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Row(
-                        modifier          = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier              = Modifier.fillMaxWidth(),
+                        verticalAlignment     = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        // Tonal icon button reflects state with Monet color
-                        FilledTonalIconToggleButton(
-                            checked   = enabled,
-                            onCheckedChange = { toggle(it) },
-                            modifier  = Modifier.size(52.dp),
-                            colors    = IconToggleButtonDefaults.filledTonalIconToggleButtonColors(
-                                checkedContainerColor = MaterialTheme.colorScheme.primary,
-                                checkedContentColor   = MaterialTheme.colorScheme.onPrimary,
-                            ),
+                        // Animated icon surface — uses primary (on) / secondaryContainer (off)
+                        // so two distinct Monet zones are visible at once when enabled.
+                        Surface(
+                            shape = CircleShape,
+                            color = iconSurfaceColor,
+                            modifier = Modifier.size(52.dp),
                         ) {
-                            Icon(
-                                imageVector        = Icons.Outlined.TouchApp,
-                                contentDescription = null,
-                                modifier           = Modifier.size(26.dp),
-                            )
+                            Box(contentAlignment = Alignment.Center) {
+                                AnimatedContent(
+                                    targetState   = enabled,
+                                    transitionSpec = {
+                                        (scaleIn(initialScale = 0.72f) + fadeIn()) togetherWith
+                                            (scaleOut(targetScale = 0.72f) + fadeOut())
+                                    },
+                                    label = "touchBoostIcon",
+                                ) { isEnabled ->
+                                    Icon(
+                                        imageVector        = Icons.Outlined.TouchApp,
+                                        contentDescription = null,
+                                        tint               = iconContentColor,
+                                        modifier           = Modifier.size(26.dp),
+                                    )
+                                }
+                            }
                         }
                         Switch(
                             checked         = enabled,
@@ -176,12 +205,11 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 }
             }
 
-            // Info callout — tertiaryContainer is the Monet accent-complement zone.
-            // Produces a distinctly tinted surface in dark Monet themes versus the
-            // near-neutral secondaryContainer, making the wallpaper palette legible.
+            // Info callout — tertiaryContainer is the Monet accent-complement zone,
+            // giving this card a distinctly different tint from the hero card.
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape    = MaterialTheme.shapes.large,
+                shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.tertiaryContainer,
                 ),
