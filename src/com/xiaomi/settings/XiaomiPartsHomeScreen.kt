@@ -78,10 +78,13 @@ fun XiaomiPartsHomeScreen(
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier       = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 32.dp),
+            modifier       = Modifier.fillMaxSize(),
+            // Applying padding inside the scrollable area allows content to slide UNDER the collapsing TopAppBar
+            contentPadding = PaddingValues(
+                top    = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding() + 32.dp,
+            ),
         ) {
-
             item(key = "display-label") { PartsCategory(stringResource(R.string.display_category)) }
             item(key = "display-card") {
                 PartsCard {

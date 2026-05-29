@@ -207,7 +207,7 @@ private fun ColourPreviewHero(
         if (activeMode != null) {
             Text(
                 text     = stringResource(activeMode.label),
-                style    = MaterialTheme.typography.labelMedium,
+                style    = MaterialTheme.typography.titleSmall,
                 color    = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -329,11 +329,12 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    top    = innerPadding.calculateTopPadding() + 16.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 32.dp,
+                ),
         ) {
-            Spacer(Modifier.height(16.dp))
-
             ColourPreviewHero(
                 selectedId = selectedId,
                 onSelect   = { id ->
@@ -373,7 +374,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 }
             }
-            Spacer(Modifier.height(32.dp))
         }
     }
 }

@@ -38,9 +38,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Android
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -160,8 +162,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         },
     ) { innerPadding ->
         LazyColumn(
-            modifier       = Modifier.fillMaxSize().padding(innerPadding),
-            contentPadding = PaddingValues(bottom = 32.dp),
+            modifier       = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(
+                top    = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding() + 32.dp,
+            ),
         ) {
             item(key = "charging-banner") {
                 AnimatedVisibility(
@@ -328,45 +333,52 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     }
 
     if (showResetDialog) {
-        Dialog(onDismissRequest = { showResetDialog = false }) {
-            Card(
-                shape  = MaterialTheme.shapes.extraLarge,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            ) {
-                Column(modifier = Modifier.padding(24.dp)) {
-                    Text(
-                        text  = stringResource(R.string.thermal_reset_title),
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                    Spacer(Modifier.height(16.dp))
-                    Text(
-                        text  = stringResource(R.string.thermal_reset_confirm_body),
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        TextButton(onClick = { showResetDialog = false }) {
-                            Text(stringResource(android.R.string.cancel))
+        AlertDialog(
+            onDismissRequest = { showResetDialog = false },
+            icon = { 
+                Icon(
+                    imageVector        = Icons.Filled.RestartAlt, 
+                    contentDescription = null,
+                ) 
+            },
+            title = { 
+                Text(
+                    text  = stringResource(R.string.thermal_reset_title),
+                    style = MaterialTheme.typography.headlineSmall,
+                ) 
+            },
+            text = { 
+                Text(
+                    text  = stringResource(R.string.thermal_reset_confirm_body),
+                    style = MaterialTheme.typography.bodyMedium,
+                ) 
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        runCatching {
+                            ThermalUtils.getInstance(context).resetProfiles()
+                            appList = appList.map { it.copy(profileId = ThermalUtils.ThermalState.DEFAULT.id) }
                         }
-                        Spacer(Modifier.width(8.dp))
-                        TextButton(
-                            onClick = {
-                                runCatching {
-                                    ThermalUtils.getInstance(context).resetProfiles()
-                                    appList = appList.map { it.copy(profileId = ThermalUtils.ThermalState.DEFAULT.id) }
-                                }
-                                showResetDialog = false
-                            },
-                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                        ) {
-                            Text(stringResource(R.string.thermal_reset_confirm))
-                        }
-                    }
+                        showResetDialog = false
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(stringResource(R.string.thermal_reset_confirm))
                 }
-            }
-        }
+            },
+            dismissButton = {
+                TextButton(onClick = { showResetDialog = false }) {
+                    Text(stringResource(android.R.string.cancel))
+                }
+            },
+            containerColor    = MaterialTheme.colorScheme.surfaceContainerHigh,
+            iconContentColor  = MaterialTheme.colorScheme.error,
+            titleContentColor = MaterialTheme.colorScheme.onSurface,
+            textContentColor  = MaterialTheme.colorScheme.onSurfaceVariant
+        )
     }
 }
 
@@ -411,7 +423,15 @@ private fun AppThermalCard(
                             .size(40.dp)
                             .clip(CircleShape)
                             .background(MaterialTheme.colorScheme.secondaryContainer),
-                    )
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Filled.Android,
+                            contentDescription = null,
+                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
+                            modifier           = Modifier.size(24.dp),
+                        )
+                    }
                 }
 
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
