@@ -103,7 +103,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerLow, // Deeper contrast
                 ),
             ) {
                 ListItem(
