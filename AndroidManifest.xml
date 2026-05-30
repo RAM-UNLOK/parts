@@ -57,7 +57,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Single Settings homepage tile for modern ROMs -->
+<!-- Single Settings homepage tile for modern ROMs -->
         <activity-alias
             android:name=".XiaomiPartsSettingsTile"
             android:targetActivity=".XiaomiPartsActivity"
@@ -65,10 +65,9 @@
             android:icon="@drawable/ic_xiaomi_parts"
             android:exported="true">
 
-            <!-- Used by modern AOSP/Pixel-style IA homepage tiles -->
+            <!-- Pure IA_SETTINGS injection, just like Digital Wellbeing -->
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
-                <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
@@ -76,14 +75,10 @@
                 android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.homepage" />
 
-            <!-- Links the TopLevelPreference XML so the tile gets proper Card rounding -->
+            <!-- THIS IS THE FIX: Tells Android to wrap this item in a fully rounded Card -->
             <meta-data
-                android:name="com.android.settings.extra_settings.xml"
-                android:resource="@xml/settings_header" />
-            
-            <meta-data
-                android:name="com.android.settings.preference_xml"
-                android:resource="@xml/settings_header" />
+                android:name="com.android.settings.group_key"
+                android:value="top_level_xiaomi_parts_group" />
 
             <meta-data
                 android:name="com.android.settings.order"
@@ -116,6 +111,11 @@
             <meta-data
                 android:name="com.android.settings.keyhint"
                 android:value="top_level_xiaomi_parts" />
+
+            <!-- Optional: Prevents the tile from duplicating if the user has a Work Profile -->
+            <meta-data
+                android:name="com.android.settings.profile"
+                android:value="primary_profile_only" />
 
         </activity-alias>
 
