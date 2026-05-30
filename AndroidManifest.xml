@@ -57,8 +57,9 @@
             </intent-filter>
         </activity>
 
-        <!-- Settings homepage tile — IA_SETTINGS is the correct path for
-             the main Settings homepage card container on AOSP/Pixel ROMs. -->
+        <!-- Settings homepage tile — IA_SETTINGS injects this card into the
+             main Settings homepage. order=10 places it after core tiles
+             (Network=1, Connected=3, Apps=5, Battery=10) and before misc. -->
         <activity-alias
             android:name=".XiaomiPartsSettingsTile"
             android:targetActivity=".XiaomiPartsActivity"
@@ -75,9 +76,12 @@
                 android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.homepage" />
 
+            <!-- Corrected order: 10 places the tile after stock AOSP tiles
+                 that use single-digit orders, keeping it from floating to
+                 the very bottom at 110. -->
             <meta-data
                 android:name="com.android.settings.order"
-                android:value="110" />
+                android:value="10" />
 
             <meta-data
                 android:name="com.android.settings.title"
@@ -91,6 +95,8 @@
                 android:name="com.android.settings.icon"
                 android:resource="@drawable/ic_xiaomi_parts" />
 
+            <!-- Card container color: cyan icon color scheme + ARGB
+                 background drive the Material 3 card container tint. -->
             <meta-data
                 android:name="com.android.settings.icon_color_scheme"
                 android:value="cyan" />

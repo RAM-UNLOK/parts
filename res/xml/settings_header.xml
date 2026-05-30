@@ -4,8 +4,10 @@
      SPDX-License-Identifier: Apache-2.0
 
      Settings preference-header declaration for Xiaomi Parts.
-     Not used for homepage injection — IA_SETTINGS in AndroidManifest.xml
-     handles that. Kept for any ROM that queries preference headers.
+     android:order mirrors the IA_SETTINGS order in AndroidManifest.xml
+     so ROMs that resolve the tile via preference headers get the same
+     placement. Card container color is driven by the iconSpaceReserved
+     + TopLevelPreference combination which inherits the M3 surface tint.
 -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -16,6 +18,7 @@
         android:title="@string/xiaomi_parts_title"
         android:summary="@string/xiaomi_parts_summary"
         android:icon="@drawable/ic_xiaomi_parts"
+        android:order="10"
         app:iconSpaceReserved="true" />
 
 </PreferenceScreen>
