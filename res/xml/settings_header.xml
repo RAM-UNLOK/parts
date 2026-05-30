@@ -3,14 +3,18 @@
      Copyright (C) 2025 Paranoid Android
      SPDX-License-Identifier: Apache-2.0
 
-     Standard Preference (not TopLevelPreference) so that Settings'
-     TopLevelPreferenceFragment inflates the M3 MaterialCardView wrapper
-     around this row. TopLevelPreference is Settings-internal and skips
-     the card container when used from an external package.
+     Container inheritance: PreferenceScreen carries the M3 card container
+     color via app:cardBackgroundColor, inheriting from the Monet
+     colorSurfaceVariant token. The child Preference picks up the container
+     shape and elevation from ?attr/preferenceStyle so the tile row renders
+     inside a proper MaterialCardView on the Settings homepage.
 -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    app:cardBackgroundColor="?attr/colorSurfaceVariant"
+    app:cardCornerRadius="@dimen/settingslib_preferred_icon_size"
+    app:cardElevation="0dp">
 
     <Preference
         android:key="xiaomi_parts_settings"
@@ -18,6 +22,8 @@
         android:summary="@string/xiaomi_parts_summary"
         android:icon="@drawable/ic_xiaomi_parts"
         android:order="10"
-        app:iconSpaceReserved="true" />
+        app:iconSpaceReserved="true"
+        app:allowDividerAbove="false"
+        app:allowDividerBelow="false" />
 
 </PreferenceScreen>
