@@ -3,17 +3,16 @@
      Copyright (C) 2025 Paranoid Android
      SPDX-License-Identifier: Apache-2.0
 
-     Settings preference-header declaration for Xiaomi Parts.
-     android:order mirrors the IA_SETTINGS order in AndroidManifest.xml
-     so ROMs that resolve the tile via preference headers get the same
-     placement. Card container color is driven by the iconSpaceReserved
-     + TopLevelPreference combination which inherits the M3 surface tint.
+     Standard Preference (not TopLevelPreference) so that Settings'
+     TopLevelPreferenceFragment inflates the M3 MaterialCardView wrapper
+     around this row. TopLevelPreference is Settings-internal and skips
+     the card container when used from an external package.
 -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <com.android.settingslib.widget.TopLevelPreference
+    <Preference
         android:key="xiaomi_parts_settings"
         android:title="@string/xiaomi_parts_title"
         android:summary="@string/xiaomi_parts_summary"
