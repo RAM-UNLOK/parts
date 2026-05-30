@@ -18,7 +18,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -122,7 +121,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
     var pendingApp      by remember { mutableStateOf<AppThermalEntry?>(null) }
 
     val controlsEnabled = thermalEnabled && !isCharging
-    val bgColor = if (isSystemInDarkTheme()) Color.Black else MaterialTheme.colorScheme.background
 
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
@@ -146,7 +144,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = bgColor,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = { Text(stringResource(R.string.thermal_title), maxLines = 1, overflow = TextOverflow.Ellipsis) },
@@ -156,7 +154,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = bgColor,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -183,7 +181,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).padding(top = 12.dp),
                     shape = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Lighter card
                     ),
                 ) {
                     ListItem(
@@ -220,7 +218,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                     shape = MaterialTheme.shapes.large,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer, // Expressive Info Card
+                        contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
                     ),
                 ) {
                     Row(
@@ -230,13 +229,13 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Icon(
                             imageVector        = Icons.Filled.Info,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.primary,
+                            tint               = MaterialTheme.colorScheme.onTertiaryContainer,
                             modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                         )
                         Text(
                             text       = stringResource(R.string.thermal_enable_summary),
                             style      = MaterialTheme.typography.bodyMedium,
-                            color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                            color      = MaterialTheme.colorScheme.onTertiaryContainer,
                             lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                         )
                     }
@@ -248,7 +247,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
                     shape = MaterialTheme.shapes.extraLarge,
                     colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        containerColor = MaterialTheme.colorScheme.errorContainer, // Expressive Error Card
+                        contentColor   = MaterialTheme.colorScheme.onErrorContainer,
                     ),
                 ) {
                     ListItem(
@@ -259,21 +259,21 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_title),
                                 style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.error,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
                             )
                         },
                         supportingContent = {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_summary),
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.8f),
                             )
                         },
                         leadingContent = {
                             Icon(
                                 imageVector        = Icons.Filled.RestartAlt,
                                 contentDescription = null,
-                                tint               = MaterialTheme.colorScheme.error,
+                                tint               = MaterialTheme.colorScheme.onErrorContainer,
                                 modifier           = Modifier.padding(start = 8.dp).size(24.dp),
                             )
                         },
@@ -372,7 +372,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     Text(stringResource(android.R.string.cancel))
                 }
             },
-            containerColor    = MaterialTheme.colorScheme.surfaceContainer,
+            containerColor    = MaterialTheme.colorScheme.surfaceContainerHigh,
             iconContentColor  = MaterialTheme.colorScheme.error,
             titleContentColor = MaterialTheme.colorScheme.onSurface,
             textContentColor  = MaterialTheme.colorScheme.onSurfaceVariant
@@ -396,7 +396,7 @@ private fun AppThermalCard(
             .padding(horizontal = 16.dp, vertical = 4.dp)
             .alpha(if (enabled) 1f else 0.38f),
         shape    = MaterialTheme.shapes.large,
-        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh), // Lighter card
         onClick  = onClick,
         enabled  = enabled,
     ) {
@@ -420,13 +420,13 @@ private fun AppThermalCard(
                         modifier = Modifier
                             .size(40.dp)
                             .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primaryContainer), // Matches setting icons
+                            .background(MaterialTheme.colorScheme.secondaryContainer),
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
                             imageVector        = Icons.Filled.Android,
                             contentDescription = null,
-                            tint               = MaterialTheme.colorScheme.onPrimaryContainer,
+                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier           = Modifier.size(24.dp),
                         )
                     }
@@ -486,7 +486,7 @@ private fun ProfilePickerDialog(
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape  = MaterialTheme.shapes.extraLarge,
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(top = 24.dp),

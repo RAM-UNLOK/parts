@@ -7,7 +7,6 @@ package com.xiaomi.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -57,13 +56,10 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context        = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    
-    // AOSP Settings uses Pitch Black in dark mode, not dark grey.
-    val bgColor = if (isSystemInDarkTheme()) Color.Black else MaterialTheme.colorScheme.background
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = bgColor,
+        containerColor = MaterialTheme.colorScheme.surface, // Base dark background
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -74,7 +70,7 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = bgColor,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -93,8 +89,8 @@ fun XiaomiPartsHomeScreen(
                 PartsCard {
                     PartsListItem(
                         icon               = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        iconContainerColor = MaterialTheme.colorScheme.primary, // Vibrant Pastel
-                        iconContentColor   = MaterialTheme.colorScheme.onPrimary, // Dark Icon
+                        iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                        iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
                         title              = stringResource(R.string.display_colours_title),
                         summary            = stringResource(R.string.display_colours_summary),
                         onClick            = onNavigateToDisplay,
@@ -108,8 +104,8 @@ fun XiaomiPartsHomeScreen(
                     Column {
                         PartsListItem(
                             icon               = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
-                            iconContainerColor = MaterialTheme.colorScheme.error, // Vibrant Red/Orange
-                            iconContentColor   = MaterialTheme.colorScheme.onError,
+                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
                             title              = stringResource(R.string.thermal_title),
                             summary            = stringResource(R.string.thermal_summary),
                             onClick            = onNavigateToThermal,
@@ -117,8 +113,8 @@ fun XiaomiPartsHomeScreen(
                         PartsDivider()
                         PartsListItem(
                             icon               = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                            iconContainerColor = MaterialTheme.colorScheme.tertiary, // Vibrant Purple/Pink
-                            iconContentColor   = MaterialTheme.colorScheme.onTertiary,
+                            iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
                             title              = stringResource(R.string.touch_boost_title),
                             summary            = stringResource(R.string.touch_boost_summary),
                             onClick            = onNavigateToTouch,
@@ -133,8 +129,8 @@ fun XiaomiPartsHomeScreen(
                     Column {
                         PartsListItem(
                             icon               = Icons.Filled.Fingerprint,
-                            iconContainerColor = MaterialTheme.colorScheme.secondary, // Vibrant Grey/Green
-                            iconContentColor   = MaterialTheme.colorScheme.onSecondary,
+                            iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
                             title              = stringResource(R.string.fingerprint_calibration_title),
                             summary            = stringResource(R.string.fingerprint_calibration_summary),
                             onClick = {
@@ -146,8 +142,8 @@ fun XiaomiPartsHomeScreen(
                         PartsDivider()
                         PartsListItem(
                             icon               = Icons.Filled.Speaker,
-                            iconContainerColor = MaterialTheme.colorScheme.primary,
-                            iconContentColor   = MaterialTheme.colorScheme.onPrimary,
+                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
                             title              = stringResource(R.string.speaker_calibration_title),
                             summary            = stringResource(R.string.speaker_calibration_summary),
                             onClick = {
@@ -168,10 +164,10 @@ fun PartsCard(content: @Composable () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 2.dp),
+            .padding(horizontal = 16.dp, vertical = 4.dp),
         shape  = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainer, // Dark grey card pops against black bg
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Lighter step on the color ladder
         ),
         content = { content() }
     )
@@ -191,7 +187,7 @@ fun PartsCategory(label: String) {
         text     = label,
         style    = MaterialTheme.typography.titleSmall,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
+        modifier = Modifier.padding(start = 24.dp, top = 24.dp, bottom = 8.dp),
     )
 }
 

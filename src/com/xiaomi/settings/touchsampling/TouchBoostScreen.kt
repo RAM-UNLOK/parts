@@ -6,7 +6,6 @@
 package com.xiaomi.settings.touchsampling
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,7 +52,6 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val bgColor = if (isSystemInDarkTheme()) Color.Black else MaterialTheme.colorScheme.background
 
     fun toggle(newValue: Boolean) {
         runCatching {
@@ -66,7 +64,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = bgColor,
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -86,7 +84,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = bgColor,
+                    containerColor         = MaterialTheme.colorScheme.surface,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
             )
@@ -105,7 +103,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Lighter card
                 ),
             ) {
                 ListItem(
@@ -131,7 +129,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.large,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer, // Expressive highlight card
+                    contentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
                 ),
             ) {
                 Row(
@@ -141,13 +140,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
+                        tint               = MaterialTheme.colorScheme.onTertiaryContainer,
                         modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                     )
                     Text(
                         text       = stringResource(R.string.touch_boost_description),
                         style      = MaterialTheme.typography.bodyMedium,
-                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
+                        color      = MaterialTheme.colorScheme.onTertiaryContainer,
                         lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                     )
                 }
