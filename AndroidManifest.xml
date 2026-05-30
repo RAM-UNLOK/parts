@@ -55,11 +55,19 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
+        </activity>
 
-            <!-- EXTRA_SETTINGS wires settings_header.xml so the Settings app
-                 renders Xiaomi Parts with the Material3 card container. -->
+        <!-- Settings homepage tile — IA_SETTINGS is the correct path for
+             the main Settings homepage card container on AOSP/Pixel ROMs. -->
+        <activity-alias
+            android:name=".XiaomiPartsSettingsTile"
+            android:targetActivity=".XiaomiPartsActivity"
+            android:label="@string/xiaomi_parts_title"
+            android:icon="@drawable/ic_xiaomi_parts"
+            android:exported="true">
+
             <intent-filter>
-                <action android:name="com.android.settings.action.EXTRA_SETTINGS" />
+                <action android:name="com.android.settings.action.IA_SETTINGS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
@@ -98,7 +106,8 @@
             <meta-data
                 android:name="com.android.settings.keyhint"
                 android:value="top_level_xiaomi_parts" />
-        </activity>
+
+        </activity-alias>
 
     </application>
 </manifest>

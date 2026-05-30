@@ -4,17 +4,34 @@
     SPDX-License-Identifier: Apache-2.0
 
     Settings homepage tile icon — Xiaomi Parts.
-    Provides a clean, flat vector. AOSP Settings will automatically
-    wrap this in a coloured circle and tint it to white natively.
+    LayerList wraps the chip vector in a cyan circle so the Settings
+    homepage adapter renders it with the same card container treatment
+    as first-party tiles (e.g. Accessibility).
 -->
-<vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="24dp"
-    android:height="24dp"
-    android:viewportWidth="24"
-    android:viewportHeight="24"
-    android:tint="#000000">
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <path
-        android:fillColor="@android:color/white"
-        android:pathData="M7,4c0,-1.1 0.9,-2 2,-2h6c1.1,0 2,0.9 2,2v2h3c1.1,0 2,0.9 2,2v10c0,1.1 -0.9,2 -2,2h-3v2c0,1.1 -0.9,2 -2,2H9c-1.1,0 -2,-0.9 -2,-2v-2H4c-1.1,0 -2,-0.9 -2,-2V8c0,-1.1 0.9,-2 2,-2h3V4zM9,4v2h6V4H9zM18,8H6v10h12V8zM8,10h8v6H8V10z"/>
-</vector>
+    <!-- Cyan circle background -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FF00BCD4" />
+        </shape>
+    </item>
+
+    <!-- Chip icon, inset so it sits centred inside the circle -->
+    <item
+        android:top="12dp"
+        android:bottom="12dp"
+        android:left="12dp"
+        android:right="12dp">
+        <vector
+            android:width="24dp"
+            android:height="24dp"
+            android:viewportWidth="24"
+            android:viewportHeight="24">
+            <path
+                android:fillColor="@android:color/white"
+                android:pathData="M7,4c0,-1.1 0.9,-2 2,-2h6c1.1,0 2,0.9 2,2v2h3c1.1,0 2,0.9 2,2v10c0,1.1 -0.9,2 -2,2h-3v2c0,1.1 -0.9,2 -2,2H9c-1.1,0 -2,-0.9 -2,-2v-2H4c-1.1,0 -2,-0.9 -2,-2V8c0,-1.1 0.9,-2 2,-2h3V4zM9,4v2h6V4H9zM18,8H6v10h12V8zM8,10h8v6H8V10z" />
+        </vector>
+    </item>
+
+</layer-list>

@@ -4,14 +4,8 @@
      SPDX-License-Identifier: Apache-2.0
 
      Settings preference-header declaration for Xiaomi Parts.
-
-     Consumed by the AOSP Settings app through the
-     com.android.settings.action.EXTRA_SETTINGS intent-filter declared
-     on XiaomiPartsActivity in AndroidManifest.xml.
-
-     TopLevelPreference gives the entry the Material3 card container
-     and container-colour treatment used by all other top-level tiles
-     on the Settings homepage.
+     Not used for homepage injection — IA_SETTINGS in AndroidManifest.xml
+     handles that. Kept for any ROM that queries preference headers.
 -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
