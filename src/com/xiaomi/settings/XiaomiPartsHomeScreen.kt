@@ -5,9 +5,7 @@
 
 package com.xiaomi.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Fingerprint
@@ -33,9 +30,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -59,7 +54,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface, // Base dark background
+        containerColor = MaterialTheme.colorScheme.surface, // Lighter dark-grey background
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -88,12 +83,10 @@ fun XiaomiPartsHomeScreen(
             item(key = "display-card") {
                 PartsCard {
                     PartsListItem(
-                        icon               = ImageVector.vectorResource(R.drawable.ic_display_colours),
-                        iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                        iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
-                        title              = stringResource(R.string.display_colours_title),
-                        summary            = stringResource(R.string.display_colours_summary),
-                        onClick            = onNavigateToDisplay,
+                        icon    = ImageVector.vectorResource(R.drawable.ic_display_colours),
+                        title   = stringResource(R.string.display_colours_title),
+                        summary = stringResource(R.string.display_colours_summary),
+                        onClick = onNavigateToDisplay,
                     )
                 }
             }
@@ -103,21 +96,17 @@ fun XiaomiPartsHomeScreen(
                 PartsCard {
                     Column {
                         PartsListItem(
-                            icon               = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
-                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                            title              = stringResource(R.string.thermal_title),
-                            summary            = stringResource(R.string.thermal_summary),
-                            onClick            = onNavigateToThermal,
+                            icon    = ImageVector.vectorResource(R.drawable.ic_thermal_settings),
+                            title   = stringResource(R.string.thermal_title),
+                            summary = stringResource(R.string.thermal_summary),
+                            onClick = onNavigateToThermal,
                         )
                         PartsDivider()
                         PartsListItem(
-                            icon               = ImageVector.vectorResource(R.drawable.ic_touch_boost),
-                            iconContainerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                            iconContentColor   = MaterialTheme.colorScheme.onTertiaryContainer,
-                            title              = stringResource(R.string.touch_boost_title),
-                            summary            = stringResource(R.string.touch_boost_summary),
-                            onClick            = onNavigateToTouch,
+                            icon    = ImageVector.vectorResource(R.drawable.ic_touch_boost),
+                            title   = stringResource(R.string.touch_boost_title),
+                            summary = stringResource(R.string.touch_boost_summary),
+                            onClick = onNavigateToTouch,
                         )
                     }
                 }
@@ -128,11 +117,9 @@ fun XiaomiPartsHomeScreen(
                 PartsCard {
                     Column {
                         PartsListItem(
-                            icon               = Icons.Filled.Fingerprint,
-                            iconContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            iconContentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
-                            title              = stringResource(R.string.fingerprint_calibration_title),
-                            summary            = stringResource(R.string.fingerprint_calibration_summary),
+                            icon    = Icons.Filled.Fingerprint,
+                            title   = stringResource(R.string.fingerprint_calibration_title),
+                            summary = stringResource(R.string.fingerprint_calibration_summary),
                             onClick = {
                                 if (!CitLauncher.launchFingerprintCalibration(context)) {
                                     PartsToast.show(context, R.string.fingerprint_calibration_not_found)
@@ -141,11 +128,9 @@ fun XiaomiPartsHomeScreen(
                         )
                         PartsDivider()
                         PartsListItem(
-                            icon               = Icons.Filled.Speaker,
-                            iconContainerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            iconContentColor   = MaterialTheme.colorScheme.onSecondaryContainer,
-                            title              = stringResource(R.string.speaker_calibration_title),
-                            summary            = stringResource(R.string.speaker_calibration_summary),
+                            icon    = Icons.Filled.Speaker,
+                            title   = stringResource(R.string.speaker_calibration_title),
+                            summary = stringResource(R.string.speaker_calibration_summary),
                             onClick = {
                                 if (!CitLauncher.launchSpeakerCalibration(context)) {
                                     PartsToast.show(context, R.string.speaker_calibration_not_found)
@@ -167,7 +152,7 @@ fun PartsCard(content: @Composable () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 4.dp),
         shape  = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Lighter step on the color ladder
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Distinct, lighter card color
         ),
         content = { content() }
     )
@@ -193,12 +178,10 @@ fun PartsCategory(label: String) {
 
 @Composable
 private fun PartsListItem(
-    icon:               ImageVector,
-    iconContainerColor: Color,
-    iconContentColor:   Color,
-    title:              String,
-    summary:            String,
-    onClick:            () -> Unit,
+    icon:    ImageVector,
+    title:   String,
+    summary: String,
+    onClick: () -> Unit,
 ) {
     ListItem(
         modifier = Modifier.clickable { onClick() },
@@ -217,20 +200,13 @@ private fun PartsListItem(
             )
         },
         leadingContent = {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(CircleShape)
-                    .background(iconContainerColor),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector        = icon,
-                    contentDescription = null,
-                    tint               = iconContentColor,
-                    modifier           = Modifier.size(24.dp),
-                )
-            }
+            // Removed the circular background to match the clean AOSP sub-menu look
+            Icon(
+                imageVector        = icon,
+                contentDescription = null,
+                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier           = Modifier.size(24.dp).padding(top = 2.dp), // Slight padding to align with text
+            )
         },
         trailingContent = {
             Icon(
