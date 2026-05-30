@@ -67,12 +67,17 @@
 
             <intent-filter>
                 <action android:name="com.android.settings.action.IA_SETTINGS" />
+                <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
 
             <meta-data
                 android:name="com.android.settings.category"
                 android:value="com.android.settings.category.ia.homepage" />
+
+            <meta-data
+                android:name="com.android.settings.groupkey"
+                android:value="top_level_security_privacy_category" />
 
             <meta-data
                 android:name="com.android.settings.order"
@@ -103,14 +108,12 @@
                 android:value="-16725933" />
 
             <meta-data
+                android:name="com.android.settings.profile"
+                android:value="@string/primary_profile_only_or_all_profiles" />
+
+            <meta-data
                 android:name="com.android.settings.keyhint"
                 android:value="top_level_xiaomi_parts" />
-
-            <!-- Tells Settings to render this tile inside a MaterialCardView
-                 wrapper, matching the card container style of stock tiles. -->
-            <meta-data
-                android:name="com.android.settings.profile_supported"
-                android:value="true" />
 
         </activity-alias>
 
