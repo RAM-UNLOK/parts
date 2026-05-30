@@ -32,7 +32,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -57,7 +56,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface, // Clean base background
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow, // Modern M3 explicit base scale
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -68,7 +67,7 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLow,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -88,7 +87,7 @@ fun XiaomiPartsHomeScreen(
                     icon    = ImageVector.vectorResource(R.drawable.ic_display_colours),
                     title   = stringResource(R.string.display_colours_title),
                     summary = stringResource(R.string.display_colours_summary),
-                    shape   = RoundedCornerShape(28.dp), // Single item full rounding
+                    shape   = RoundedCornerShape(28.dp),
                     onClick = onNavigateToDisplay,
                 )
             }
@@ -102,7 +101,7 @@ fun XiaomiPartsHomeScreen(
                     shape   = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
                     onClick = onNavigateToThermal,
                 )
-                Spacer(modifier = Modifier.height(2.dp)) // M3 Expressive 2dp gap
+                Spacer(modifier = Modifier.height(2.dp))
             }
             item(key = "perf-card-2") {
                 PartsListItemCard(
@@ -127,7 +126,7 @@ fun XiaomiPartsHomeScreen(
                         }
                     },
                 )
-                Spacer(modifier = Modifier.height(2.dp)) // M3 Expressive 2dp gap
+                Spacer(modifier = Modifier.height(2.dp))
             }
             item(key = "diag-card-2") {
                 PartsListItemCard(
@@ -170,7 +169,7 @@ private fun PartsListItemCard(
             .padding(horizontal = 16.dp),
         shape  = shape,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Distinct, lighter grey
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Explicit explicit container scale
         ),
     ) {
         ListItem(

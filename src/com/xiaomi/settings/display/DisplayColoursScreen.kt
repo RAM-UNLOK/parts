@@ -227,8 +227,14 @@ private fun SelectionRowCard(
     modifier:   Modifier = Modifier,
     onClick:    () -> Unit,
 ) {
+    val containerColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer 
+                      else MaterialTheme.colorScheme.surfaceContainerHigh,
+        label       = "selectionBg",
+    )
+
     val contentColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary 
+        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer 
                       else MaterialTheme.colorScheme.onSurface,
         label       = "selectionContent",
     )
@@ -237,7 +243,7 @@ private fun SelectionRowCard(
         modifier = modifier.fillMaxWidth(),
         shape    = shape,
         colors   = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = containerColor,
         ),
     ) {
         ListItem(
@@ -301,7 +307,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -320,7 +326,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLow,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
