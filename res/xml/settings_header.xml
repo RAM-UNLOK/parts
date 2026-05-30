@@ -5,15 +5,15 @@
 
      Container inheritance: PreferenceScreen carries the M3 card container
      color via app:cardBackgroundColor, inheriting from the Monet
-     colorSurfaceVariant token. The child Preference picks up the container
-     shape and elevation from ?attr/preferenceStyle so the tile row renders
-     inside a proper MaterialCardView on the Settings homepage.
+     colorSurfaceVariant token. 28dp corner radius matches the Settings
+     homepage card shape (settingslib_preferred_icon_size = 28dp) without
+     referencing the settingslib namespace which is not accessible here.
 -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     app:cardBackgroundColor="?attr/colorSurfaceVariant"
-    app:cardCornerRadius="@dimen/settingslib_preferred_icon_size"
+    app:cardCornerRadius="28dp"
     app:cardElevation="0dp">
 
     <Preference
