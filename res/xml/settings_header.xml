@@ -5,21 +5,23 @@
 
      Settings preference-header declaration for Xiaomi Parts.
 
-     This file is read by the AOSP Settings app via the
-     com.android.settings.action.EXTRA_SETTINGS intent-filter on
-     XiaomiPartsActivity.
+     Consumed by the AOSP Settings app through the
+     com.android.settings.action.EXTRA_SETTINGS intent-filter declared
+     on XiaomiPartsActivity in AndroidManifest.xml.
 
-     Using TopLevelPreference ensures it inherits the proper "Card"
-     appearance inside the Android 12+ Settings homepage.
+     TopLevelPreference gives the entry the Material3 card container
+     and container-colour treatment used by all other top-level tiles
+     on the Settings homepage.
 -->
 <PreferenceScreen
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:settings="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <com.android.settingslib.widget.TopLevelPreference
         android:key="xiaomi_parts_settings"
         android:title="@string/xiaomi_parts_title"
         android:summary="@string/xiaomi_parts_summary"
-        android:icon="@drawable/ic_xiaomi_parts" />
+        android:icon="@drawable/ic_xiaomi_parts"
+        app:iconSpaceReserved="true" />
 
 </PreferenceScreen>
