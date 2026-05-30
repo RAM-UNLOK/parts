@@ -64,7 +64,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer, // Lighter background
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -84,8 +84,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor         = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
             )
         },
@@ -103,7 +103,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest, // Lightest card
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             ) {
                 ListItem(
@@ -129,7 +129,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
                 shape    = MaterialTheme.shapes.large,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             ) {
                 Row(
@@ -139,7 +139,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.primary,
+                        tint               = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                     )
                     Text(

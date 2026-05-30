@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -59,6 +60,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
@@ -138,7 +140,7 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
                     val w = size.width.toFloat()
@@ -218,73 +220,72 @@ private fun ColourPreviewHero(
 }
 
 @Composable
-private fun SelectionRow(
+private fun SelectionRowCard(
     mode:       ColorMode,
     isSelected: Boolean,
+    shape:      Shape,
+    modifier:   Modifier = Modifier,
     onClick:    () -> Unit,
 ) {
-    val containerColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer 
-                      else Color.Transparent,
-        label       = "selectionBg",
-    )
-
     val contentColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer 
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary 
                       else MaterialTheme.colorScheme.onSurface,
         label       = "selectionContent",
     )
 
-    ListItem(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 8.dp, vertical = 2.dp)
-            .clip(MaterialTheme.shapes.large)
-            .background(containerColor)
-            .clickable(role = Role.RadioButton, onClick = onClick),
-        headlineContent = {
-            Text(
-                text  = stringResource(mode.label),
-                style = MaterialTheme.typography.titleMedium,
-                color = contentColor,
-            )
-        },
-        supportingContent = {
-            Text(
-                text  = stringResource(mode.description),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isSelected) contentColor.copy(alpha = 0.8f) 
-                        else MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        leadingContent = {
-            RadioButton(
-                selected = isSelected,
-                onClick  = null,
-            )
-        },
-        trailingContent = {
-            AnimatedContent(
-                targetState = isSelected,
-                transitionSpec = {
-                    fadeIn(Motion.checkFadeInSpec()) togetherWith fadeOut(Motion.checkFadeOutSpec())
-                },
-                label = "checkIcon",
-            ) { selected ->
-                if (selected) {
-                    Icon(
-                        imageVector        = Icons.Filled.Check,
-                        contentDescription = null,
-                        tint               = contentColor,
-                        modifier           = Modifier.size(24.dp),
-                    )
-                } else {
-                    Box(Modifier.size(24.dp))
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape    = shape,
+        colors   = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        ),
+    ) {
+        ListItem(
+            modifier = Modifier.clickable(role = Role.RadioButton, onClick = onClick),
+            headlineContent = {
+                Text(
+                    text  = stringResource(mode.label),
+                    style = MaterialTheme.typography.titleMedium,
+                    color = contentColor,
+                )
+            },
+            supportingContent = {
+                Text(
+                    text  = stringResource(mode.description),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (isSelected) contentColor.copy(alpha = 0.8f) 
+                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            leadingContent = {
+                RadioButton(
+                    selected = isSelected,
+                    onClick  = null,
+                )
+            },
+            trailingContent = {
+                AnimatedContent(
+                    targetState = isSelected,
+                    transitionSpec = {
+                        fadeIn(Motion.checkFadeInSpec()) togetherWith fadeOut(Motion.checkFadeOutSpec())
+                    },
+                    label = "checkIcon",
+                ) { selected ->
+                    if (selected) {
+                        Icon(
+                            imageVector        = Icons.Filled.Check,
+                            contentDescription = null,
+                            tint               = contentColor,
+                            modifier           = Modifier.size(24.dp),
+                        )
+                    } else {
+                        Box(Modifier.size(24.dp))
+                    }
                 }
-            }
-        },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-    )
+            },
+            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -300,7 +301,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer, // Lighter background
+        containerColor = MaterialTheme.colorScheme.surface,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -319,8 +320,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor         = MaterialTheme.colorScheme.surface,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -350,29 +351,31 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
             Spacer(Modifier.height(16.dp))
 
-            Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape    = MaterialTheme.shapes.extraLarge,
-                colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest, // Lightest card
-                ),
-            ) {
-                Column(modifier = Modifier.padding(vertical = 8.dp)) {
-                    ColorMode.entries.forEach { mode ->
-                        SelectionRow(
-                            mode       = mode,
-                            isSelected = selectedId == mode.id,
-                            onClick    = {
-                                runCatching {
-                                    ColorService.setColorMode(context, mode.id)
-                                    selectedId = mode.id
-                                }.onFailure {
-                                    PartsToast.show(context, R.string.display_colours_failed)
-                                }
-                            },
-                        )
-                    }
-                }
+            ColorMode.entries.forEachIndexed { index, mode ->
+                val isFirst   = index == 0
+                val isLast    = index == ColorMode.entries.lastIndex
+                val bottomPad = if (isLast) 0.dp else 2.dp
+                val shape     = RoundedCornerShape(
+                    topStart    = if (isFirst) 28.dp else 4.dp,
+                    topEnd      = if (isFirst) 28.dp else 4.dp,
+                    bottomStart = if (isLast) 28.dp else 4.dp,
+                    bottomEnd   = if (isLast) 28.dp else 4.dp,
+                )
+
+                SelectionRowCard(
+                    mode       = mode,
+                    isSelected = selectedId == mode.id,
+                    shape      = shape,
+                    modifier   = Modifier.padding(horizontal = 16.dp).padding(bottom = bottomPad),
+                    onClick    = {
+                        runCatching {
+                            ColorService.setColorMode(context, mode.id)
+                            selectedId = mode.id
+                        }.onFailure {
+                            PartsToast.show(context, R.string.display_colours_failed)
+                        }
+                    },
+                )
             }
         }
     }
