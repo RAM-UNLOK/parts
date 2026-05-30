@@ -54,7 +54,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface, // Lighter dark-grey background
+        containerColor = MaterialTheme.colorScheme.surfaceContainer, // Lighter base background
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -65,8 +65,8 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -152,7 +152,7 @@ fun PartsCard(content: @Composable () -> Unit) {
             .padding(horizontal = 16.dp, vertical = 4.dp),
         shape  = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Distinct, lighter card color
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest, // Lightest card color
         ),
         content = { content() }
     )
@@ -200,12 +200,11 @@ private fun PartsListItem(
             )
         },
         leadingContent = {
-            // Removed the circular background to match the clean AOSP sub-menu look
             Icon(
                 imageVector        = icon,
                 contentDescription = null,
                 tint               = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier           = Modifier.size(24.dp).padding(top = 2.dp), // Slight padding to align with text
+                modifier           = Modifier.size(24.dp).padding(top = 2.dp),
             )
         },
         trailingContent = {

@@ -138,7 +138,7 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(MaterialTheme.shapes.extraLarge)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest)
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
                     val w = size.width.toFloat()
@@ -223,8 +223,14 @@ private fun SelectionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
+    val containerColor by animateColorAsState(
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer 
+                      else Color.Transparent,
+        label       = "selectionBg",
+    )
+
     val contentColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary 
+        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer 
                       else MaterialTheme.colorScheme.onSurface,
         label       = "selectionContent",
     )
@@ -234,6 +240,7 @@ private fun SelectionRow(
             .fillMaxWidth()
             .padding(horizontal = 8.dp, vertical = 2.dp)
             .clip(MaterialTheme.shapes.large)
+            .background(containerColor)
             .clickable(role = Role.RadioButton, onClick = onClick),
         headlineContent = {
             Text(
@@ -293,7 +300,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surfaceContainer, // Lighter background
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -312,8 +319,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surface,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainer,
+                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -347,7 +354,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
                 shape    = MaterialTheme.shapes.extraLarge,
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest, // Lightest card
                 ),
             ) {
                 Column(modifier = Modifier.padding(vertical = 8.dp)) {
