@@ -26,7 +26,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -41,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.xiaomi.settings.ui.SettingsTheme
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
@@ -56,7 +56,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow, // Modern explicit base layer
+        containerColor = SettingsTheme.colorScheme.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -67,8 +67,8 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLow,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = SettingsTheme.colorScheme.screenBackground,
+                    scrolledContainerColor = SettingsTheme.colorScheme.cardBackground,
                 ),
                 scrollBehavior = scrollBehavior,
             )
@@ -101,7 +101,7 @@ fun XiaomiPartsHomeScreen(
                     shape   = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
                     onClick = onNavigateToThermal,
                 )
-                Spacer(modifier = Modifier.height(2.dp)) // Native M3 2dp gap
+                Spacer(modifier = Modifier.height(2.dp))
             }
             item(key = "perf-card-2") {
                 PartsListItemCard(
@@ -149,9 +149,9 @@ fun XiaomiPartsHomeScreen(
 fun PartsCategory(label: String) {
     Text(
         text     = label,
-        style    = MaterialTheme.typography.titleSmall,
-        color    = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp), // 32dp perfectly aligns with ListItem text
+        style    = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+        color    = SettingsTheme.colorScheme.categoryText,
+        modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
     )
 }
 
@@ -163,8 +163,6 @@ private fun PartsListItemCard(
     shape:   Shape,
     onClick: () -> Unit,
 ) {
-    // Applying onClick to the Card directly ensures the ripple effect 
-    // perfectly respects the dynamic 28dp/4dp M3 corner shapes.
     Card(
         onClick  = onClick,
         modifier = Modifier
@@ -172,29 +170,29 @@ private fun PartsListItemCard(
             .padding(horizontal = 16.dp),
         shape    = shape,
         colors   = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            containerColor = SettingsTheme.colorScheme.cardBackground,
         ),
     ) {
         ListItem(
             headlineContent = {
                 Text(
                     text  = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
+                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                    color = SettingsTheme.colorScheme.titleText,
                 )
             },
             supportingContent = {
                 Text(
                     text  = summary,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    color = SettingsTheme.colorScheme.summaryText,
                 )
             },
             leadingContent = {
                 Icon(
                     imageVector        = icon,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint               = SettingsTheme.colorScheme.secondaryIcon,
                     modifier           = Modifier.size(24.dp).padding(top = 2.dp),
                 )
             },
@@ -202,7 +200,7 @@ private fun PartsListItemCard(
                 Icon(
                     imageVector        = Icons.AutoMirrored.Filled.ArrowForwardIos,
                     contentDescription = null,
-                    tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint               = SettingsTheme.colorScheme.secondaryIcon,
                     modifier           = Modifier.size(16.dp),
                 )
             },

@@ -6,7 +6,6 @@
 package com.xiaomi.settings.display
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
@@ -40,7 +39,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -70,6 +68,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.Motion
+import com.xiaomi.settings.ui.SettingsTheme
 import com.xiaomi.settings.ui.shimmerAlpha
 import com.xiaomi.settings.utils.PartsToast
 import kotlinx.coroutines.launch
@@ -139,7 +138,7 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
+            .background(SettingsTheme.colorScheme.cardBackground)
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
                     val w = size.width.toFloat()
@@ -208,7 +207,7 @@ private fun ColourPreviewHero(
         if (activeMode != null) {
             Text(
                 text     = stringResource(activeMode.label),
-                style    = MaterialTheme.typography.titleSmall,
+                style    = androidx.compose.material3.MaterialTheme.typography.titleSmall,
                 color    = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -226,46 +225,35 @@ private fun SelectionRowCard(
     modifier:   Modifier = Modifier,
     onClick:    () -> Unit,
 ) {
-    val containerColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer 
-                      else MaterialTheme.colorScheme.surfaceContainerHigh,
-        label       = "selectionBg",
-    )
-
-    val contentColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer 
-                      else MaterialTheme.colorScheme.onSurface,
-        label       = "selectionContent",
-    )
+    val contentColor = if (isSelected) SettingsTheme.colorScheme.primaryIcon else SettingsTheme.colorScheme.titleText
 
     Card(
         onClick  = onClick,
         modifier = modifier.fillMaxWidth(),
         shape    = shape,
         colors   = CardDefaults.cardColors(
-            containerColor = containerColor,
+            containerColor = SettingsTheme.colorScheme.cardBackground,
         ),
     ) {
         ListItem(
             headlineContent = {
                 Text(
                     text  = stringResource(mode.label),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = contentColor,
+                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                    color = SettingsTheme.colorScheme.titleText,
                 )
             },
             supportingContent = {
                 Text(
                     text  = stringResource(mode.description),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected) contentColor.copy(alpha = 0.8f) 
-                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                    color = SettingsTheme.colorScheme.summaryText,
                 )
             },
             leadingContent = {
                 RadioButton(
                     selected = isSelected,
-                    onClick  = null, // Let the Card handle the click/ripple
+                    onClick  = null,
                 )
             },
             trailingContent = {
@@ -306,7 +294,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = SettingsTheme.colorScheme.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -325,8 +313,8 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLow,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = SettingsTheme.colorScheme.screenBackground,
+                    scrolledContainerColor = SettingsTheme.colorScheme.cardBackground,
                 ),
                 scrollBehavior = scrollBehavior,
             )

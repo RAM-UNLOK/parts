@@ -16,6 +16,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -25,6 +26,7 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -110,3 +112,32 @@ val bottomSheetTopShape: Shape
 const val toastDebounceMs:    Long  = 2_000L
 const val shimmerAlpha:       Float = 0.05f
 const val blobRadiusFraction: Float = 0.38f
+
+// ──────────────────────────────────────────────────────────────────────────
+// Settings SPA Semantic Color Scheme
+// ──────────────────────────────────────────────────────────────────────────
+
+object SettingsTheme {
+    val colorScheme: SettingsColorScheme
+        @Composable get() = SettingsColorScheme(MaterialTheme.colorScheme)
+}
+
+class SettingsColorScheme(private val m3: ColorScheme) {
+    // Backgrounds
+    val screenBackground: Color get() = m3.surfaceContainerLow
+    val cardBackground:   Color get() = m3.surfaceContainerHigh
+    val dialogBackground: Color get() = m3.surfaceContainerHighest
+    
+    // Text
+    val titleText:        Color get() = m3.onSurface
+    val summaryText:      Color get() = m3.onSurfaceVariant
+    val categoryText:     Color get() = m3.primary
+    
+    // Icons
+    val primaryIcon:      Color get() = m3.primary
+    val secondaryIcon:    Color get() = m3.onSurfaceVariant
+    val errorIcon:        Color get() = m3.error
+    
+    // Dividers
+    val divider:          Color get() = m3.outlineVariant.copy(alpha = 0.3f)
+}

@@ -25,7 +25,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -45,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.R
+import com.xiaomi.settings.ui.SettingsTheme
 import com.xiaomi.settings.utils.PartsToast
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -66,7 +66,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+        containerColor = SettingsTheme.colorScheme.screenBackground,
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -86,8 +86,8 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 },
                 scrollBehavior = scrollBehavior,
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLow,
-                    scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+                    containerColor         = SettingsTheme.colorScheme.screenBackground,
+                    scrolledContainerColor = SettingsTheme.colorScheme.cardBackground,
                 ),
             )
         },
@@ -104,17 +104,17 @@ fun TouchBoostScreen(onBack: () -> Unit) {
             Card(
                 onClick  = { toggle(!enabled) },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape    = RoundedCornerShape(28.dp),
+                shape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = SettingsTheme.colorScheme.cardBackground,
                 ),
             ) {
                 ListItem(
                     headlineContent = {
                         Text(
                             text  = stringResource(R.string.touch_boost_title),
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
+                            color = SettingsTheme.colorScheme.titleText,
                         )
                     },
                     trailingContent = {
@@ -127,13 +127,13 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 )
             }
             
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(2.dp))
 
             Card(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape    = RoundedCornerShape(28.dp),
+                shape    = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
                 colors   = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    containerColor = SettingsTheme.colorScheme.cardBackground,
                 ),
             ) {
                 Row(
@@ -143,14 +143,14 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                        tint               = SettingsTheme.colorScheme.secondaryIcon,
                         modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
                     )
                     Text(
                         text       = stringResource(R.string.touch_boost_description),
-                        style      = MaterialTheme.typography.bodyMedium,
-                        color      = MaterialTheme.colorScheme.onSurfaceVariant,
-                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
+                        style      = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
+                        color      = SettingsTheme.colorScheme.summaryText,
+                        lineHeight = androidx.compose.material3.MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
                     )
                 }
             }
