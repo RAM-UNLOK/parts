@@ -5,13 +5,15 @@
 
 package com.xiaomi.settings.touchsampling
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -100,14 +102,14 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 ),
         ) {
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                shape    = MaterialTheme.shapes.extraLarge,
+                onClick  = { toggle(!enabled) },
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                shape    = RoundedCornerShape(28.dp),
                 colors   = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             ) {
                 ListItem(
-                    modifier = Modifier.clickable { toggle(!enabled) },
                     headlineContent = {
                         Text(
                             text  = stringResource(R.string.touch_boost_title),
@@ -124,10 +126,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                 )
             }
+            
+            Spacer(modifier = Modifier.height(16.dp))
 
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                shape    = MaterialTheme.shapes.large,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+                shape    = RoundedCornerShape(28.dp),
                 colors   = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),

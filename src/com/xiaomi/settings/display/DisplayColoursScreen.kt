@@ -17,7 +17,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -139,7 +138,7 @@ private fun ColourPreviewHero(
         modifier = modifier
             .fillMaxWidth()
             .height(200.dp)
-            .clip(MaterialTheme.shapes.extraLarge)
+            .clip(RoundedCornerShape(28.dp))
             .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
@@ -240,6 +239,7 @@ private fun SelectionRowCard(
     )
 
     Card(
+        onClick  = onClick,
         modifier = modifier.fillMaxWidth(),
         shape    = shape,
         colors   = CardDefaults.cardColors(
@@ -247,7 +247,6 @@ private fun SelectionRowCard(
         ),
     ) {
         ListItem(
-            modifier = Modifier.clickable(role = Role.RadioButton, onClick = onClick),
             headlineContent = {
                 Text(
                     text  = stringResource(mode.label),
@@ -266,7 +265,7 @@ private fun SelectionRowCard(
             leadingContent = {
                 RadioButton(
                     selected = isSelected,
-                    onClick  = null,
+                    onClick  = null, // Let the Card handle the click/ripple
                 )
             },
             trailingContent = {

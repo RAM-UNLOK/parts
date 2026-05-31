@@ -29,18 +29,18 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Android
+import androidx.compose.material.icons.filled.Apps // Changed from Android
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
@@ -112,13 +112,11 @@ private fun readIsCharging(context: Context): Boolean {
 }
 
 @Composable
-private fun getGroupedShape(index: Int, total: Int): Shape {
-    return when {
-        total == 1         -> RoundedCornerShape(28.dp)
-        index == 0         -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
-        index == total - 1 -> RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
-        else               -> RoundedCornerShape(4.dp)
-    }
+private fun getGroupedShape(index: Int, total: Int): Shape = when {
+    total == 1         -> RoundedCornerShape(28.dp)
+    index == 0         -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
+    index == total - 1 -> RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
+    else               -> RoundedCornerShape(4.dp)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -191,6 +189,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
             item(key = "enable-card") {
                 Card(
+                    onClick  = {
+                        if (!isCharging) {
+                            thermalEnabled = !thermalEnabled
+                            thermalUtils.enabled = thermalEnabled
+                        }
+                    },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp, bottom = 2.dp),
                     shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
                     colors = CardDefaults.cardColors(
@@ -198,13 +202,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     ),
                 ) {
                     ListItem(
-                        modifier = Modifier
-                            .alpha(if (isCharging) 0.38f else 1f)
-                            .clickable(enabled = !isCharging, role = Role.Switch) {
-                                thermalEnabled = !thermalEnabled
-                                thermalUtils.enabled = thermalEnabled
-                            },
+                        modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
                         headlineContent = {
+                            // This is the switch title which needed branding
                             Text(
                                 text  = stringResource(R.string.thermal_enable_title),
                                 style = MaterialTheme.typography.titleMedium,
@@ -256,6 +256,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
             item(key = "reset-card") {
                 Card(
+                    onClick  = { if (controlsEnabled) showResetDialog = true },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp),
                     shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
                     colors = CardDefaults.cardColors(
@@ -263,9 +264,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     ),
                 ) {
                     ListItem(
-                        modifier = Modifier
-                            .alpha(if (controlsEnabled) 1f else 0.38f)
-                            .clickable(enabled = controlsEnabled, role = Role.Button) { showResetDialog = true },
+                        modifier = Modifier.alpha(if (controlsEnabled) 1f else 0.38f),
                         headlineContent = {
                             Text(
                                 text  = stringResource(R.string.thermal_reset_title),
@@ -409,20 +408,20 @@ private fun AppThermalCard(
     val isDefault = entry.profileId == ThermalUtils.ThermalState.DEFAULT.id
 
     Card(
+        onClick  = onClick,
         modifier = modifier
             .fillMaxWidth()
             .alpha(if (enabled) 1f else 0.38f),
         shape    = shape,
         colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-        onClick  = onClick,
         enabled  = enabled,
     ) {
         Row(
-            modifier          = Modifier.fillMaxWidth().height(IntrinsicSize.Min),
+            modifier          = Modifier.fillMaxWidth().heightIn(min = 72.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Row(
-                modifier              = Modifier.weight(1f).padding(16.dp),
+                modifier              = Modifier.weight(1f).padding(horizontal = 16.dp, vertical = 12.dp),
                 verticalAlignment     = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -441,7 +440,7 @@ private fun AppThermalCard(
                         contentAlignment = Alignment.Center,
                     ) {
                         Icon(
-                            imageVector        = Icons.Filled.Android,
+                            imageVector        = Icons.Filled.Apps, // Changed to a neutral apps icon
                             contentDescription = null,
                             tint               = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier           = Modifier.size(24.dp),
@@ -468,17 +467,17 @@ private fun AppThermalCard(
             }
 
             VerticalDivider(
-                modifier = Modifier.padding(vertical = 12.dp),
+                modifier = Modifier.height(32.dp),
                 color    = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.3f),
             )
 
             Box(
-                modifier         = Modifier.width(96.dp).fillMaxHeight(),
+                modifier         = Modifier.width(100.dp).padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 Text(
                     text     = ThermalService.profileLabel(context, entry.profileId),
-                    style    = MaterialTheme.typography.labelMedium,
+                    style    = MaterialTheme.typography.labelLarge,
                     color    = if (isDefault) MaterialTheme.colorScheme.onSurfaceVariant
                                else          MaterialTheme.colorScheme.primary,
                     maxLines = 1,
@@ -506,7 +505,7 @@ private fun ProfilePickerDialog(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHighest),
         ) {
             Column(
-                modifier = Modifier.fillMaxWidth().padding(top = 24.dp),
+                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
             ) {
                 Text(
                     text     = title,
@@ -519,13 +518,13 @@ private fun ProfilePickerDialog(
 
                 Spacer(Modifier.height(16.dp))
 
-                Column(
+                LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState()),
+                        .heightIn(max = 336.dp), 
                 ) {
-                    profiles.forEach { profile ->
+                    items(profiles) { profile ->
                         val selected = profile.id == selectedId
                         Row(
                             modifier = Modifier
@@ -545,10 +544,12 @@ private fun ProfilePickerDialog(
                     }
                 }
 
+                Spacer(Modifier.height(8.dp))
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 24.dp, vertical = 16.dp),
+                        .padding(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
@@ -566,8 +567,7 @@ private fun ChargingBanner() {
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 4.dp),
         shape    = MaterialTheme.shapes.large,
         colors   = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.primaryContainer,
-            contentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
     ) {
         Row(
@@ -578,19 +578,19 @@ private fun ChargingBanner() {
             Icon(
                 imageVector        = Icons.Filled.BatteryChargingFull,
                 contentDescription = null,
-                tint               = MaterialTheme.colorScheme.onPrimaryContainer,
+                tint               = MaterialTheme.colorScheme.primary,
                 modifier           = Modifier.size(24.dp),
             )
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(
                     text  = stringResource(R.string.thermal_charging_toast_connected),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
                 Text(
                     text  = stringResource(R.string.thermal_charging_banner_body),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

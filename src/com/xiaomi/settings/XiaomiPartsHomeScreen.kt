@@ -5,7 +5,7 @@
 
 package com.xiaomi.settings
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,7 +56,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow, // Modern M3 explicit base scale
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLow, // Modern explicit base layer
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -101,7 +101,7 @@ fun XiaomiPartsHomeScreen(
                     shape   = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
                     onClick = onNavigateToThermal,
                 )
-                Spacer(modifier = Modifier.height(2.dp))
+                Spacer(modifier = Modifier.height(2.dp)) // Native M3 2dp gap
             }
             item(key = "perf-card-2") {
                 PartsListItemCard(
@@ -151,7 +151,7 @@ fun PartsCategory(label: String) {
         text     = label,
         style    = MaterialTheme.typography.titleSmall,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
+        modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp), // 32dp perfectly aligns with ListItem text
     )
 }
 
@@ -163,17 +163,19 @@ private fun PartsListItemCard(
     shape:   Shape,
     onClick: () -> Unit,
 ) {
+    // Applying onClick to the Card directly ensures the ripple effect 
+    // perfectly respects the dynamic 28dp/4dp M3 corner shapes.
     Card(
+        onClick  = onClick,
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        shape  = shape,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh, // Explicit explicit container scale
+        shape    = shape,
+        colors   = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
     ) {
         ListItem(
-            modifier = Modifier.clickable { onClick() },
             headlineContent = {
                 Text(
                     text  = title,
