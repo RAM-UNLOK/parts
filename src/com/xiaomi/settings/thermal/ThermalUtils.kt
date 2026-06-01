@@ -96,6 +96,7 @@ class ThermalUtils private constructor(private val context: Context) {
             val appInfo = pm.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
             return when {
                 isYuanshenApp(packageName)        -> ThermalState.YUANSHEN
+                isBenchmarkApp(packageName)       -> ThermalState.NOLIMITS
                 isCompetitiveGameApp(packageName) -> ThermalState.GAMING_COMPETITIVE
                 isHeavyGameApp(packageName)       -> ThermalState.GAMING_HEAVY
                 isGameApp(appInfo)                -> ThermalState.GAMING
@@ -104,6 +105,8 @@ class ThermalUtils private constructor(private val context: Context) {
                 isVideoCallApp(packageName)       -> ThermalState.VIDEO_CALL
                 is4KVideoApp(packageName)         -> ThermalState.VIDEO_4K
                 isVideoApp(packageName)           -> ThermalState.VIDEO
+                isMusicApp(appInfo, pm)           -> ThermalState.VIDEO
+                isSocialApp(appInfo)              -> ThermalState.VIDEO
                 isNavigationApp(packageName, pm)  -> ThermalState.NAVIGATION
                 else                              -> ThermalState.DEFAULT
             }
@@ -115,6 +118,9 @@ class ThermalUtils private constructor(private val context: Context) {
 
     private fun isYuanshenApp(packageName: String): Boolean =
         YUANSHEN_PKGS.any { packageName.startsWith(it) }
+
+    private fun isBenchmarkApp(packageName: String): Boolean =
+        BENCHMARK_PKGS.any { packageName.startsWith(it) }
 
     private fun isCompetitiveGameApp(packageName: String): Boolean =
         COMPETITIVE_GAME_PKGS.any { packageName.startsWith(it) }
@@ -144,6 +150,18 @@ class ThermalUtils private constructor(private val context: Context) {
 
     private fun isVideoApp(packageName: String): Boolean =
         VIDEO_PKGS.any { packageName.startsWith(it) }
+
+    private fun isMusicApp(appInfo: ApplicationInfo, pm: PackageManager): Boolean =
+        appInfo.category == ApplicationInfo.CATEGORY_AUDIO ||
+            MUSIC_PKGS.any { appInfo.packageName.startsWith(it) } ||
+            pm.queryIntentActivities(
+                Intent(Intent.ACTION_VIEW).setType("audio/*"),
+                PackageManager.MATCH_DEFAULT_ONLY,
+            ).any { it.activityInfo.packageName == appInfo.packageName }
+
+    private fun isSocialApp(appInfo: ApplicationInfo): Boolean =
+        appInfo.category == ApplicationInfo.CATEGORY_SOCIAL ||
+            SOCIAL_PKGS.any { appInfo.packageName.startsWith(it) }
 
     private fun isNavigationApp(packageName: String, pm: PackageManager): Boolean =
         pm.queryIntentActivities(
@@ -178,8 +196,9 @@ class ThermalUtils private constructor(private val context: Context) {
      * sconfig → thermal conf mapping (real confs available on device):
      *   0   thermal-normal.conf        DEFAULT
      *   5   thermal-phone.conf         DIALER
+     *   6   thermal-nolimits.conf      NOLIMITS (benchmarks)
      *   10  thermal-navigation.conf    NAVIGATION
-     *   11  thermal-video.conf         VIDEO
+     *   11  thermal-video.conf         VIDEO (video, music, social)
      *   14  thermal-videochat.conf     VIDEO_CALL
      *   15  thermal-camera.conf        CAMERA
      *   16  thermal-4k.conf            VIDEO_4K
@@ -196,17 +215,18 @@ class ThermalUtils private constructor(private val context: Context) {
         val userSelectable: Boolean = true,
     ) {
         DEFAULT            (0,  "0",   R.string.thermal_default),
-        NAVIGATION         (1,  "10",  R.string.thermal_navigation),
-        DIALER             (2,  "5",   R.string.thermal_dialer),
-        VIDEO_CALL         (3,  "14",  R.string.thermal_video_call),
-        CAMERA             (4,  "15",  R.string.thermal_camera),
-        VIDEO              (5,  "11",  R.string.thermal_video),
-        VIDEO_4K           (6,  "16",  R.string.thermal_video_4k),
-        GAMING             (7,  "19",  R.string.thermal_gaming),
-        GAMING_HEAVY       (8,  "18",  R.string.thermal_gaming_heavy),
-        GAMING_COMPETITIVE (9,  "700", R.string.thermal_gaming_competitive),
-        YUANSHEN           (10, "20",  R.string.thermal_yuanshen),
-        CHARGE             (11, "27",  R.string.thermal_charge, userSelectable = false),
+        NOLIMITS           (1,  "6",   R.string.thermal_nolimits),
+        NAVIGATION         (2,  "10",  R.string.thermal_navigation),
+        DIALER             (3,  "5",   R.string.thermal_dialer),
+        VIDEO_CALL         (4,  "14",  R.string.thermal_video_call),
+        CAMERA             (5,  "15",  R.string.thermal_camera),
+        VIDEO              (6,  "11",  R.string.thermal_video),
+        VIDEO_4K           (7,  "16",  R.string.thermal_video_4k),
+        GAMING             (8,  "19",  R.string.thermal_gaming),
+        GAMING_HEAVY       (9,  "18",  R.string.thermal_gaming_heavy),
+        GAMING_COMPETITIVE (10, "700", R.string.thermal_gaming_competitive),
+        YUANSHEN           (11, "20",  R.string.thermal_yuanshen),
+        CHARGE             (12, "27",  R.string.thermal_charge, userSelectable = false),
     }
 
     companion object {
@@ -223,6 +243,14 @@ class ThermalUtils private constructor(private val context: Context) {
             "com.HoYoverse.Nap",
             "com.kurogame.wutheringwaves",
             "com.kurogame.gplay.punishing.grayraven.en"
+        )
+        private val BENCHMARK_PKGS = listOf(
+            "com.antutu",
+            "com.futuremark",
+            "com.primatelabs",
+            "com.ludashi",
+            "net.kishonti",
+            "com.tencent.wetest"
         )
         private val COMPETITIVE_GAME_PKGS = listOf(
             "com.tencent.ig",
@@ -267,6 +295,31 @@ class ThermalUtils private constructor(private val context: Context) {
             "tv.twitch.android.app",
             "com.google.android.youtube.creator",
             "com.bilibili.app.in"
+        )
+        private val MUSIC_PKGS = listOf(
+            "com.spotify.music",
+            "com.apple.android.music",
+            "com.soundcloud.android",
+            "com.pandora.android",
+            "com.amazon.mp3",
+            "com.google.android.apps.youtube.music",
+            "deezer.android.app"
+        )
+        private val SOCIAL_PKGS = listOf(
+            "com.whatsapp",
+            "com.whatsapp.w4b",
+            "org.telegram.messenger",
+            "com.twitter.android",
+            "com.snapchat.android",
+            "com.zhiliaoapp.musically",
+            "com.ss.android.ugc.trill",
+            "com.facebook.orca",
+            "com.facebook.katana",
+            "com.instagram.android",
+            "com.viber.voip",
+            "com.vkontakte.android",
+            "com.reddit.frontpage",
+            "com.pinterest"
         )
 
         @Volatile private var instance: ThermalUtils? = null
