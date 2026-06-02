@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 package com.xiaomi.settings.thermal
-
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,21 +40,26 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -63,6 +67,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -70,6 +75,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,8 +98,10 @@ import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.Motion
 import com.xiaomi.settings.ui.SettingsTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+data class InstalledAppEntry(val packageName: String, val label: String)
 
 @Composable
 private fun appIcon(packageName: String): ImageBitmap? {
@@ -109,12 +117,10 @@ private fun appIcon(packageName: String): ImageBitmap? {
     return bitmap
 }
 
-
 private fun readIsCharging(context: Context): Boolean {
     val sticky = context.registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
     return (sticky?.getIntExtra(BatteryManager.EXTRA_PLUGGED, 0) ?: 0) != 0
 }
-
 
 @Composable
 private fun getGroupedShape(index: Int, total: Int): Shape = when {
@@ -124,23 +130,23 @@ private fun getGroupedShape(index: Int, total: Int): Shape = when {
     else               -> RoundedCornerShape(4.dp)
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
     val context      = LocalContext.current
     val thermalUtils = remember { ThermalUtils.getInstance(context) }
+    val scope        = rememberCoroutineScope()
 
-
-    var thermalEnabled  by remember { mutableStateOf(thermalUtils.enabled) }
-    var appList         by remember { mutableStateOf<List<AppThermalEntry>>(emptyList()) }
-    var isCharging      by remember { mutableStateOf(readIsCharging(context)) }
-    var showResetDialog by remember { mutableStateOf(false) }
-    var pendingApp      by remember { mutableStateOf<AppThermalEntry?>(null) }
-
+    var thermalEnabled   by remember { mutableStateOf(thermalUtils.enabled) }
+    var appList          by remember { mutableStateOf<List<AppThermalEntry>>(emptyList()) }
+    var isCharging       by remember { mutableStateOf(readIsCharging(context)) }
+    var showResetDialog  by remember { mutableStateOf(false) }
+    var pendingApp       by remember { mutableStateOf<AppThermalEntry?>(null) }
+    var showAddSheet     by remember { mutableStateOf(false) }
+    var pendingNewApp    by remember { mutableStateOf<InstalledAppEntry?>(null) }
 
     val controlsEnabled = thermalEnabled && !isCharging
-
+    val addSheetState   = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
@@ -153,17 +159,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         onDispose { context.unregisterReceiver(receiver) }
     }
 
-
     LaunchedEffect(Unit) {
         appList = withContext(Dispatchers.IO) {
             runCatching { ThermalService.getAppList(context) }.getOrDefault(emptyList())
         }
     }
 
-
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val profiles = remember { ThermalService.profiles() }
-
+    val profiles       = remember { ThermalService.profiles() }
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -172,9 +175,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             MediumTopAppBar(
                 title = {
                     Text(
-                        text = stringResource(R.string.thermal_title),
+                        text     = stringResource(R.string.thermal_title),
                         maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
@@ -189,12 +192,23 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 scrollBehavior = scrollBehavior,
             )
         },
+        floatingActionButton = {
+            if (controlsEnabled) {
+                FloatingActionButton(
+                    onClick            = { showAddSheet = true },
+                    containerColor     = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor       = MaterialTheme.colorScheme.onPrimaryContainer,
+                ) {
+                    Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.thermal_add_app))
+                }
+            }
+        },
     ) { innerPadding ->
         LazyColumn(
             modifier       = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
                 top    = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding() + 32.dp,
+                bottom = innerPadding.calculateBottomPadding() + 88.dp,
             ),
         ) {
             item(key = "charging-banner") {
@@ -205,7 +219,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 ) { ChargingBanner() }
             }
 
-
             item(key = "enable-card") {
                 Card(
                     onClick  = {
@@ -215,10 +228,8 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         }
                     },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp, bottom = 2.dp),
-                    shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SettingsTheme.colorScheme.cardBackground,
-                    ),
+                    shape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
+                    colors   = CardDefaults.cardColors(containerColor = SettingsTheme.colorScheme.cardBackground),
                 ) {
                     ListItem(
                         modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
@@ -236,7 +247,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 onCheckedChange = { checked ->
                                     thermalEnabled = checked
                                     thermalUtils.enabled = checked
-                                }
+                                },
                             )
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -244,17 +255,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-
             item(key = "info-card") {
                 Card(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 2.dp),
-                    shape = RoundedCornerShape(4.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SettingsTheme.colorScheme.cardBackground,
-                    ),
+                    shape    = RoundedCornerShape(4.dp),
+                    colors   = CardDefaults.cardColors(containerColor = SettingsTheme.colorScheme.cardBackground),
                 ) {
                     Row(
-                        modifier = Modifier.padding(16.dp),
+                        modifier          = Modifier.padding(16.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
                         Icon(
@@ -273,15 +281,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-
             item(key = "reset-card") {
                 Card(
                     onClick  = { if (controlsEnabled) showResetDialog = true },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp),
-                    shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
-                    colors = CardDefaults.cardColors(
-                        containerColor = SettingsTheme.colorScheme.cardBackground,
-                    ),
+                    shape    = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
+                    colors   = CardDefaults.cardColors(containerColor = SettingsTheme.colorScheme.cardBackground),
                 ) {
                     ListItem(
                         modifier = Modifier.alpha(if (controlsEnabled) 1f else 0.38f),
@@ -312,11 +317,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 }
             }
 
-
             item(key = "per-app-label") {
                 PartsCategory(stringResource(R.string.thermal_per_app_label))
             }
-
 
             if (appList.isEmpty()) {
                 item(key = "empty") {
@@ -334,8 +337,6 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                 ) { index, app ->
                     val shape     = getGroupedShape(index, appList.size)
                     val bottomPad = if (index == appList.lastIndex) 0.dp else 2.dp
-
-
                     AppThermalCard(
                         entry    = app,
                         enabled  = controlsEnabled,
@@ -348,6 +349,46 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         }
     }
 
+    if (showAddSheet) {
+        AppPickerSheet(
+            sheetState      = addSheetState,
+            alreadyOverridden = appList.map { it.packageName }.toSet(),
+            onDismiss       = {
+                scope.launch { addSheetState.hide() }.invokeOnCompletion { showAddSheet = false }
+            },
+            onAppSelected   = { picked ->
+                scope.launch { addSheetState.hide() }.invokeOnCompletion {
+                    showAddSheet  = false
+                    pendingNewApp = picked
+                }
+            },
+        )
+    }
+
+    pendingNewApp?.let { newApp ->
+        var tempProfile by remember(newApp.packageName) { mutableIntStateOf(ThermalUtils.ThermalState.DEFAULT.id) }
+        ProfilePickerDialog(
+            title      = newApp.label,
+            profiles   = profiles,
+            selectedId = tempProfile,
+            onSelect   = { tempProfile = it },
+            onDismiss  = { pendingNewApp = null },
+            onConfirm  = {
+                if (tempProfile != ThermalUtils.ThermalState.DEFAULT.id) {
+                    runCatching {
+                        ThermalService.setAppProfile(context, newApp.packageName, tempProfile)
+                        val newEntry = AppThermalEntry(
+                            packageName = newApp.packageName,
+                            label       = newApp.label,
+                            profileId   = tempProfile,
+                        )
+                        appList = (appList + newEntry).sortedBy { it.label.lowercase() }
+                    }
+                }
+                pendingNewApp = null
+            },
+        )
+    }
 
     pendingApp?.let { app ->
         var tempProfile by remember(app.packageName) { mutableIntStateOf(app.profileId) }
@@ -373,15 +414,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         )
     }
 
-
     if (showResetDialog) {
         AlertDialog(
             onDismissRequest = { showResetDialog = false },
             icon = {
-                Icon(
-                    imageVector        = Icons.Filled.RestartAlt,
-                    contentDescription = null,
-                )
+                Icon(imageVector = Icons.Filled.RestartAlt, contentDescription = null)
             },
             title = {
                 Text(
@@ -404,9 +441,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         }
                         showResetDialog = false
                     },
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = SettingsTheme.colorScheme.errorIcon
-                    )
+                    colors = ButtonDefaults.textButtonColors(contentColor = SettingsTheme.colorScheme.errorIcon),
                 ) {
                     Text(stringResource(R.string.thermal_reset_confirm))
                 }
@@ -419,11 +454,132 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             containerColor    = SettingsTheme.colorScheme.dialogBackground,
             iconContentColor  = SettingsTheme.colorScheme.errorIcon,
             titleContentColor = SettingsTheme.colorScheme.titleText,
-            textContentColor  = SettingsTheme.colorScheme.summaryText
+            textContentColor  = SettingsTheme.colorScheme.summaryText,
         )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun AppPickerSheet(
+    sheetState:         androidx.compose.material3.SheetState,
+    alreadyOverridden:  Set<String>,
+    onDismiss:          () -> Unit,
+    onAppSelected:      (InstalledAppEntry) -> Unit,
+) {
+    val context       = LocalContext.current
+    var query         by remember { mutableStateOf("") }
+    var installedApps by remember { mutableStateOf<List<InstalledAppEntry>>(emptyList()) }
+
+    LaunchedEffect(Unit) {
+        installedApps = withContext(Dispatchers.IO) {
+            val pm    = context.packageManager
+            val flags = PackageManager.GET_META_DATA
+            val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            pm.queryIntentActivities(intent, flags)
+                .map { it.activityInfo.packageName }
+                .distinct()
+                .filter { it !in alreadyOverridden }
+                .mapNotNull { pkg ->
+                    runCatching {
+                        val info = pm.getApplicationInfo(pkg, 0)
+                        InstalledAppEntry(pkg, pm.getApplicationLabel(info).toString())
+                    }.getOrNull()
+                }
+                .sortedBy { it.label.lowercase() }
+        }
+    }
+
+    val filtered = remember(query, installedApps) {
+        if (query.isBlank()) installedApps
+        else installedApps.filter {
+            it.label.contains(query, ignoreCase = true) ||
+            it.packageName.contains(query, ignoreCase = true)
+        }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest  = onDismiss,
+        sheetState        = sheetState,
+        containerColor    = SettingsTheme.colorScheme.cardBackground,
+        dragHandle        = null,
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(
+                text     = stringResource(R.string.thermal_add_app),
+                style    = MaterialTheme.typography.titleLarge,
+                color    = SettingsTheme.colorScheme.titleText,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp),
+            )
+            OutlinedTextField(
+                value         = query,
+                onValueChange = { query = it },
+                placeholder   = { Text(stringResource(R.string.thermal_search_apps)) },
+                leadingIcon   = { Icon(Icons.Filled.Search, contentDescription = null) },
+                singleLine    = true,
+                shape         = RoundedCornerShape(28.dp),
+                modifier      = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 8.dp),
+            )
+            LazyColumn(
+                modifier       = Modifier.heightIn(max = 480.dp),
+                contentPadding = PaddingValues(bottom = 24.dp),
+            ) {
+                items(filtered, key = { it.packageName }) { app ->
+                    val icon = appIcon(app.packageName)
+                    ListItem(
+                        modifier = Modifier.clickable { onAppSelected(app) },
+                        leadingContent = {
+                            if (icon != null) {
+                                Image(
+                                    bitmap             = icon,
+                                    contentDescription = null,
+                                    modifier           = Modifier.size(40.dp).clip(CircleShape),
+                                )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .size(40.dp)
+                                        .clip(CircleShape)
+                                        .background(SettingsTheme.colorScheme.screenBackground),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector        = Icons.Filled.Apps,
+                                        contentDescription = null,
+                                        tint               = SettingsTheme.colorScheme.secondaryIcon,
+                                        modifier           = Modifier.size(24.dp),
+                                    )
+                                }
+                            }
+                        },
+                        headlineContent = {
+                            Text(
+                                text     = app.label,
+                                style    = MaterialTheme.typography.titleMedium,
+                                color    = SettingsTheme.colorScheme.titleText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        supportingContent = {
+                            Text(
+                                text     = app.packageName,
+                                style    = MaterialTheme.typography.bodySmall,
+                                color    = SettingsTheme.colorScheme.summaryText,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        },
+                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
+                    )
+                }
+            }
+        }
+    }
+}
 
 @Composable
 private fun AppThermalCard(
@@ -436,7 +592,6 @@ private fun AppThermalCard(
     val context   = LocalContext.current
     val icon      = appIcon(entry.packageName)
     val isDefault = entry.profileId == ThermalUtils.ThermalState.DEFAULT.id
-
 
     Card(
         onClick  = onClick,
@@ -478,8 +633,6 @@ private fun AppThermalCard(
                         )
                     }
                 }
-
-
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
                         text     = entry.label,
@@ -497,14 +650,10 @@ private fun AppThermalCard(
                     )
                 }
             }
-
-
             VerticalDivider(
                 modifier = Modifier.height(32.dp),
                 color    = SettingsTheme.colorScheme.divider,
             )
-
-
             Box(
                 modifier         = Modifier.width(100.dp).padding(horizontal = 8.dp),
                 contentAlignment = Alignment.Center,
@@ -522,7 +671,6 @@ private fun AppThermalCard(
     }
 }
 
-
 @Composable
 private fun ProfilePickerDialog(
     title:      String,
@@ -533,16 +681,12 @@ private fun ProfilePickerDialog(
     onConfirm:  () -> Unit,
 ) {
     val context = LocalContext.current
-
-
     Dialog(onDismissRequest = onDismiss) {
         Card(
             shape  = MaterialTheme.shapes.extraLarge,
             colors = CardDefaults.cardColors(containerColor = SettingsTheme.colorScheme.dialogBackground),
         ) {
-            Column(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp),
-            ) {
+            Column(modifier = Modifier.fillMaxWidth().padding(vertical = 24.dp)) {
                 Text(
                     text     = title,
                     style    = MaterialTheme.typography.headlineSmall,
@@ -551,11 +695,7 @@ private fun ProfilePickerDialog(
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.padding(horizontal = 24.dp),
                 )
-
-
                 Spacer(Modifier.height(16.dp))
-
-
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -581,15 +721,9 @@ private fun ProfilePickerDialog(
                         }
                     }
                 }
-
-
                 Spacer(Modifier.height(8.dp))
-
-
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 24.dp),
+                    modifier              = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
                     horizontalArrangement = Arrangement.End,
                 ) {
                     TextButton(onClick = onDismiss) { Text(stringResource(android.R.string.cancel)) }
@@ -601,15 +735,12 @@ private fun ProfilePickerDialog(
     }
 }
 
-
 @Composable
 private fun ChargingBanner() {
     Card(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 4.dp),
         shape    = MaterialTheme.shapes.large,
-        colors   = CardDefaults.cardColors(
-            containerColor = SettingsTheme.colorScheme.cardBackground,
-        ),
+        colors   = CardDefaults.cardColors(containerColor = SettingsTheme.colorScheme.cardBackground),
     ) {
         Row(
             modifier              = Modifier.fillMaxWidth().padding(16.dp),
