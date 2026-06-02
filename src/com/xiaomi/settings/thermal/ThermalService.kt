@@ -54,13 +54,6 @@ class ThermalService : Service() {
     private lateinit var chargingMonitor: ChargingMonitor
     private lateinit var mainHandler: Handler
 
-    /**
-     * Holds the last Toast shown by this service so we can cancel it before
-     * showing a new one. Prevents stacked / queued toasts when charging events
-     * fire in rapid succession (e.g. charger wiggle, USB handshake retries).
-     * Always accessed on the main thread via mainHandler.post{}.
-     */
-
     private var currentApp = ""
         set(value) {
             if (field == value) return
@@ -75,23 +68,13 @@ class ThermalService : Service() {
             field = value
             dlog(TAG, "Screen: $value")
             if (value) {
-                // Screen on: re-read charging state and restart the poller.
-                // Catches USB connections made while the screen was off.
                 chargingMonitor.start()
             } else {
-                // Screen off: stop poller — no need to wake the CPU in the dark.
                 chargingMonitor.stop()
             }
             applyProfile()
         }
 
-    /**
-     * Tracks the charging state as of the last applyProfile() call.
-     *
-     * Initialised to null so the very first applyProfile() always writes
-     * the correct sconfig from a clean state but does NOT show a toast
-     * (the user didn't just plug in — the service simply started).
-     */
     private var wasCharging: Boolean? = null
 
     private val taskListener = object : TaskStackListener() {
@@ -103,11 +86,7 @@ class ThermalService : Service() {
         }
     }
 
-    // Only ACTION_SCREEN_ON/OFF remain here. Charging is handled by
-    // ChargingMonitor with no BroadcastReceiver at all.
-    // @Suppress is intentional: these are genuine system-only broadcasts that
-    // cannot originate from third-party apps. NOT_EXPORTED is incorrect for
-    // system broadcasts and causes a StrictMode warning on AOSP 16.
+    @Suppress("UnspecifiedRegisterReceiverFlag")
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
             when (intent.action) {
@@ -120,8 +99,6 @@ class ThermalService : Service() {
     override fun onCreate() {
         super.onCreate()
         dlog(TAG, "onCreate")
-        // Must be created on or after super.onCreate() so the main looper
-        // is guaranteed to be attached to this process.
         mainHandler  = Handler(Looper.getMainLooper())
         thermalUtils = ThermalUtils.getInstance(this)
     }
@@ -156,8 +133,6 @@ class ThermalService : Service() {
     override fun onDestroy() {
         dlog(TAG, "onDestroy")
         thermalUtils.setDefaultThermalProfile()
-        // Pass final = true so the ChargingMonitor HandlerThread is quit
-        // cleanly and does not leak after the service is destroyed.
         chargingMonitor.stop(final = true)
         unregisterReceiver(screenReceiver)
         runCatching { ActivityTaskManager.getService().unregisterTaskStackListener(taskListener) }
@@ -166,24 +141,6 @@ class ThermalService : Service() {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    /**
-     * Applies the correct thermal sconfig based on current state.
-     *
-     * Priority (highest wins):
-     *   1. Charging      → sconfig=27  + toast on plug-in / plug-out edge
-     *   2. Screen off    → sconfig=0
-     *   3. App known     → per-app sconfig via ThermalUtils
-     *   4. No app yet    → skip; TaskStackListener will fire shortly
-     *
-     * Toast logic:
-     *   wasCharging is null only on the very first call (service start).
-     *   We write the correct sconfig but skip the toast so the user doesn't
-     *   see a notification just because the service restarted while already
-     *   on charge.
-     *   On every subsequent call a toast fires only when isCharging flips
-     *   (true→false or false→true). currentToast?.cancel() dismisses any
-     *   queued toast before the new one shows, preventing visible stacking.
-     */
     private fun applyProfile() {
         val isCharging   = chargingMonitor.isCharging
         val prevCharging = wasCharging
@@ -199,12 +156,8 @@ class ThermalService : Service() {
             dlog(TAG, "applyProfile failed: ${e.message}")
         }
 
-        // Update edge-tracking state AFTER applying, so wasCharging always
-        // reflects what was just acted on.
         wasCharging = isCharging
 
-        // Show a toast only on a real plug-in / plug-out transition.
-        // prevCharging == null → first call (service start) — skip toast.
         if (prevCharging == null) return
         if (isCharging == prevCharging) return
 
@@ -221,7 +174,8 @@ class ThermalService : Service() {
         private const val TAG                 = "ThermalService"
         private const val PREF_GLOBAL_PROFILE = "thermal_global_profile"
 
-        fun profiles(): List<ThermalUtils.ThermalState> = ThermalUtils.ThermalState.entries
+        fun profiles(): List<ThermalUtils.ThermalState> =
+            ThermalUtils.ThermalState.entries.filter { it.userSelectable }
 
         fun profileLabel(context: Context, profileId: Int): String =
             ThermalUtils.ThermalState.entries
@@ -240,21 +194,30 @@ class ThermalService : Service() {
                 .apply()
         }
 
+        /**
+         * Returns only apps that have a saved non-DEFAULT override.
+         * Auto-classified apps are not shown — the list is for manual overrides only.
+         */
         fun getAppList(context: Context): List<AppThermalEntry> {
-            val utils = ThermalUtils.getInstance(context)
-            val pm    = context.packageManager
-            return pm.getInstalledApplications(PackageManager.GET_META_DATA)
-                .asSequence()
-                .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-                .map { appInfo ->
+            val utils  = ThermalUtils.getInstance(context)
+            val pm     = context.packageManager
+            val prefs  = androidx.preference.PreferenceManager.getDefaultSharedPreferences(context)
+            return prefs.all.keys
+                .filter { it.startsWith(ThermalUtils.THERMAL_PACKAGE_PREFIX) }
+                .mapNotNull { key ->
+                    val pkg       = key.removePrefix(ThermalUtils.THERMAL_PACKAGE_PREFIX)
+                    val profileId = prefs.getInt(key, ThermalUtils.ThermalState.DEFAULT.id)
+                    if (profileId == ThermalUtils.ThermalState.DEFAULT.id) return@mapNotNull null
+                    val appInfo   = runCatching {
+                        pm.getApplicationInfo(pkg, 0)
+                    }.getOrNull() ?: return@mapNotNull null
                     AppThermalEntry(
-                        packageName = appInfo.packageName,
+                        packageName = pkg,
                         label       = pm.getApplicationLabel(appInfo).toString(),
-                        profileId   = utils.getStateForPackage(appInfo.packageName).id,
+                        profileId   = profileId,
                     )
                 }
                 .sortedBy { it.label.lowercase() }
-                .toList()
         }
 
         fun setAppProfile(context: Context, packageName: String, profileId: Int) {
