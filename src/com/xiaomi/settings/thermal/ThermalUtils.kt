@@ -83,8 +83,10 @@ class ThermalUtils private constructor(private val context: Context) {
     }
 
     fun getStateForPackage(packageName: String): ThermalState {
-        val savedId = getPackagePreference(packageName)
-        if (savedId != ThermalState.DEFAULT.id) {
+        val key = "$THERMAL_PACKAGE_PREFIX$packageName"
+        // Use contains() to distinguish "key absent" from "key set to DEFAULT (id=0)"
+        if (sharedPrefs.contains(key)) {
+            val savedId = sharedPrefs.getInt(key, ThermalState.DEFAULT.id)
             ThermalState.entries.find { it.id == savedId }?.let { return it }
         }
         return classifyApp(packageName)
@@ -173,7 +175,12 @@ class ThermalUtils private constructor(private val context: Context) {
 
     fun writePackage(packageName: String, stateId: Int) {
         val key = "$THERMAL_PACKAGE_PREFIX$packageName"
-        sharedPrefs.edit().putInt(key, stateId).apply()
+        if (stateId == ThermalState.DEFAULT.id) {
+            // Explicitly remove so contains() correctly returns false = auto-classify
+            sharedPrefs.edit().remove(key).apply()
+        } else {
+            sharedPrefs.edit().putInt(key, stateId).apply()
+        }
     }
 
     fun resetProfiles() {
@@ -185,12 +192,6 @@ class ThermalUtils private constructor(private val context: Context) {
             }
             .apply()
     }
-
-    private fun getPackagePreference(packageName: String): Int =
-        sharedPrefs.getInt(
-            "$THERMAL_PACKAGE_PREFIX$packageName",
-            ThermalState.DEFAULT.id,
-        )
 
     /**
      * sconfig → thermal conf mapping (real confs available on device):

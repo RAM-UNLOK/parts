@@ -103,11 +103,7 @@ class ThermalService : Service() {
         }
     }
 
-    // Only ACTION_SCREEN_ON/OFF remain here. Charging is handled by
-    // ChargingMonitor with no BroadcastReceiver at all.
-    // @Suppress is intentional: these are genuine system-only broadcasts that
-    // cannot originate from third-party apps. NOT_EXPORTED is incorrect for
-    // system broadcasts and causes a StrictMode warning on AOSP 16.
+    @Suppress("UnspecifiedRegisterReceiverFlag")
     private val screenReceiver = object : BroadcastReceiver() {
         override fun onReceive(ctx: Context, intent: Intent) {
             when (intent.action) {
@@ -218,10 +214,10 @@ class ThermalService : Service() {
     }
 
     companion object {
-        private const val TAG                 = "ThermalService"
-        private const val PREF_GLOBAL_PROFILE = "thermal_global_profile"
+        private const val TAG = "ThermalService"
 
-        fun profiles(): List<ThermalUtils.ThermalState> = ThermalUtils.ThermalState.entries
+        fun profiles(): List<ThermalUtils.ThermalState> =
+            ThermalUtils.ThermalState.entries.filter { it.userSelectable }
 
         fun profileLabel(context: Context, profileId: Int): String =
             ThermalUtils.ThermalState.entries
@@ -229,32 +225,30 @@ class ThermalService : Service() {
                 ?.let { context.getString(it.label) }
                 .orEmpty()
 
-        fun getGlobalProfile(context: Context): Int =
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .getInt(PREF_GLOBAL_PROFILE, ThermalUtils.ThermalState.DEFAULT.id)
-
-        fun setGlobalProfile(context: Context, profileId: Int) {
-            PreferenceManager.getDefaultSharedPreferences(context)
-                .edit()
-                .putInt(PREF_GLOBAL_PROFILE, profileId)
-                .apply()
-        }
-
+        /**
+         * Returns apps that have an explicit non-DEFAULT override saved in prefs.
+         * Uses sharedPrefs.contains() via ThermalUtils.getStateForPackage logic —
+         * but here we just scan keys directly since DEFAULT overrides are never
+         * stored (writePackage removes the key for DEFAULT).
+         */
         fun getAppList(context: Context): List<AppThermalEntry> {
-            val utils = ThermalUtils.getInstance(context)
             val pm    = context.packageManager
-            return pm.getInstalledApplications(PackageManager.GET_META_DATA)
-                .asSequence()
-                .filter { pm.getLaunchIntentForPackage(it.packageName) != null }
-                .map { appInfo ->
+            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
+            return prefs.all.keys
+                .filter { it.startsWith(ThermalUtils.THERMAL_PACKAGE_PREFIX) }
+                .mapNotNull { key ->
+                    val pkg       = key.removePrefix(ThermalUtils.THERMAL_PACKAGE_PREFIX)
+                    val profileId = prefs.getInt(key, ThermalUtils.ThermalState.DEFAULT.id)
+                    val appInfo   = runCatching {
+                        pm.getApplicationInfo(pkg, 0)
+                    }.getOrNull() ?: return@mapNotNull null
                     AppThermalEntry(
-                        packageName = appInfo.packageName,
+                        packageName = pkg,
                         label       = pm.getApplicationLabel(appInfo).toString(),
-                        profileId   = utils.getStateForPackage(appInfo.packageName).id,
+                        profileId   = profileId,
                     )
                 }
                 .sortedBy { it.label.lowercase() }
-                .toList()
         }
 
         fun setAppProfile(context: Context, packageName: String, profileId: Int) {
