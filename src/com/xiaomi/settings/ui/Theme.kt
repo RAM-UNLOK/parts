@@ -16,7 +16,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
@@ -25,11 +24,45 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+
+// ──────────────────────────────────────────────────────────────────────────
+// Semantic colour tokens
+// ──────────────────────────────────────────────────────────────────────────
+
+@Immutable
+data class SettingsColorScheme(
+    val screenBackground: Color,
+    val cardBackground:   Color,
+    val dialogBackground: Color,
+    val titleText:        Color,
+    val summaryText:      Color,
+    val categoryText:     Color,
+    val primaryIcon:      Color,
+    val secondaryIcon:    Color,
+    val errorIcon:        Color,
+    val divider:          Color,
+)
+
+private val LocalSettingsColorScheme = staticCompositionLocalOf<SettingsColorScheme> {
+    error("Wrap content in XiaomiPartsTheme")
+}
+
+object SettingsTheme {
+    val colorScheme: SettingsColorScheme
+        @Composable get() = LocalSettingsColorScheme.current
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Theme entry point
+// ──────────────────────────────────────────────────────────────────────────
 
 private val LightColorScheme = lightColorScheme()
 private val DarkColorScheme  = darkColorScheme()
@@ -60,7 +93,20 @@ fun XiaomiPartsTheme(
             extraLarge = RoundedCornerShape(28.dp),
         ),
     ) {
-        ProvideSettingsColorScheme(content = content)
+        val m3 = MaterialTheme.colorScheme
+        val scheme = SettingsColorScheme(
+            screenBackground = m3.surface,
+            cardBackground   = m3.surfaceContainer,
+            dialogBackground = m3.surfaceContainerHigh,
+            titleText        = m3.onSurface,
+            summaryText      = m3.onSurfaceVariant,
+            categoryText     = m3.primary,
+            primaryIcon      = m3.primary,
+            secondaryIcon    = m3.onSurfaceVariant,
+            errorIcon        = m3.error,
+            divider          = m3.outlineVariant,
+        )
+        CompositionLocalProvider(LocalSettingsColorScheme provides scheme, content = content)
     }
 }
 
@@ -112,32 +158,3 @@ val bottomSheetTopShape: Shape
 const val toastDebounceMs:    Long  = 2_000L
 const val shimmerAlpha:       Float = 0.05f
 const val blobRadiusFraction: Float = 0.38f
-
-// ──────────────────────────────────────────────────────────────────────────
-// Settings SPA Semantic Color Scheme
-// ──────────────────────────────────────────────────────────────────────────
-
-object SettingsTheme {
-    val colorScheme: SettingsColorScheme
-        @Composable get() = SettingsColorScheme(MaterialTheme.colorScheme)
-}
-
-class SettingsColorScheme(private val m3: ColorScheme) {
-    // Backgrounds
-    val screenBackground: Color get() = m3.surfaceContainerLow
-    val cardBackground:   Color get() = m3.surfaceContainerHigh
-    val dialogBackground: Color get() = m3.surfaceContainerHighest
-    
-    // Text
-    val titleText:        Color get() = m3.onSurface
-    val summaryText:      Color get() = m3.onSurfaceVariant
-    val categoryText:     Color get() = m3.primary
-    
-    // Icons
-    val primaryIcon:      Color get() = m3.primary
-    val secondaryIcon:    Color get() = m3.onSurfaceVariant
-    val errorIcon:        Color get() = m3.error
-    
-    // Dividers
-    val divider:          Color get() = m3.outlineVariant.copy(alpha = 0.3f)
-}
