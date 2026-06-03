@@ -5,7 +5,6 @@
 
 package com.xiaomi.settings.display
 
-import android.os.UserHandle
 import android.provider.Settings
 import android.view.Display
 import android.view.WindowManagerGlobal
@@ -60,24 +59,19 @@ private const val PREF_KEY   = "custom_screen_resolution_key"
 private const val NATIVE_KEY = "res_1220p"
 
 private data class ResolutionOption(
-    val key:        String,
-    val labelRes:   Int,
+    val key:      String,
+    val labelRes: Int,
     val summaryRes: Int,
-    val width:      Int,
-    val height:     Int,
-    val density:    Int,
-    val isNative:   Boolean = false,
+    val width:    Int,
+    val height:   Int,
+    val isNative: Boolean = false,
 )
 
-/**
- * Resolutions for POCO X7 Pro (native panel: 1220x2712 @ 446 PPI).
- * Non-native densities: round((width / 1220.0) * 446).
- */
 private val RESOLUTIONS = listOf(
-    ResolutionOption("res_1440p", R.string.screen_resolution_1440p, R.string.screen_resolution_1440p_summary, 1440, 3200, 526),
-    ResolutionOption("res_1220p", R.string.screen_resolution_1220p, R.string.screen_resolution_1220p_summary, 1220, 2712, 446, isNative = true),
-    ResolutionOption("res_1080p", R.string.screen_resolution_1080p, R.string.screen_resolution_1080p_summary, 1080, 2400, 394),
-    ResolutionOption("res_720p",  R.string.screen_resolution_720p,  R.string.screen_resolution_720p_summary,   720, 1600, 263),
+    ResolutionOption("res_1440p", R.string.screen_resolution_1440p, R.string.screen_resolution_1440p_summary, 1440, 3200),
+    ResolutionOption("res_1220p", R.string.screen_resolution_1220p, R.string.screen_resolution_1220p_summary, 1220, 2712, isNative = true),
+    ResolutionOption("res_1080p", R.string.screen_resolution_1080p, R.string.screen_resolution_1080p_summary, 1080, 2400),
+    ResolutionOption("res_720p",  R.string.screen_resolution_720p,  R.string.screen_resolution_720p_summary,   720, 1600),
 )
 
 private fun applyResolution(option: ResolutionOption) {
@@ -86,10 +80,8 @@ private fun applyResolution(option: ResolutionOption) {
     }
     if (option.isNative) {
         wm.clearForcedDisplaySize(Display.DEFAULT_DISPLAY)
-        wm.clearForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, UserHandle.USER_CURRENT)
     } else {
         wm.setForcedDisplaySize(Display.DEFAULT_DISPLAY, option.width, option.height)
-        wm.setForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, option.density, UserHandle.USER_CURRENT)
     }
 }
 
@@ -133,7 +125,7 @@ private fun ResolutionRowCard(
             },
             trailingContent = {
                 AnimatedContent(
-                    targetState  = isSelected,
+                    targetState    = isSelected,
                     transitionSpec = {
                         fadeIn(Motion.checkFadeInSpec()) togetherWith fadeOut(Motion.checkFadeOutSpec())
                     },
