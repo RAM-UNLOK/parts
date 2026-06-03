@@ -145,7 +145,6 @@ class ThermalService : Service() {
         }
 
         applyProfile()
-
         return START_STICKY
     }
 
@@ -204,12 +203,8 @@ class ThermalService : Service() {
         if (prevCharging == null) return
         if (isCharging == prevCharging) return
 
-        val msgRes = if (isCharging) {
-            R.string.thermal_charging_toast_connected
-        } else {
-            R.string.thermal_charging_toast_disconnected
-        }
-
+        val msgRes = if (isCharging) R.string.thermal_charging_toast_connected
+                     else            R.string.thermal_charging_toast_disconnected
         mainHandler.post { PartsToast.show(applicationContext, msgRes) }
     }
 
@@ -226,28 +221,68 @@ class ThermalService : Service() {
                 .orEmpty()
 
         /**
-         * Returns apps that have an explicit non-DEFAULT override saved in prefs.
-         * Uses sharedPrefs.contains() via ThermalUtils.getStateForPackage logic —
-         * but here we just scan keys directly since DEFAULT overrides are never
-         * stored (writePackage removes the key for DEFAULT).
+         * Returns every installed app whose effective thermal profile is not DEFAULT.
+         *
+         * Two sources are merged:
+         *  1. Explicit pref overrides  — keys written by writePackage() for non-DEFAULT states.
+         *     writePackage() removes the key when DEFAULT is chosen, so any surviving key
+         *     should already be non-DEFAULT; we still guard against stale zero-value keys.
+         *  2. Auto-classified apps     — apps matched by the hardcoded listOf() package
+         *     sets inside classifyApp(). These are never persisted, so scanning prefs
+         *     alone misses them entirely. We enumerate installed launcher apps and call
+         *     getStateForPackage() to discover their effective profile.
+         *
+         * Explicit overrides win over auto-classification for the same package.
+         * Only entries with a final profileId != DEFAULT.id are included.
          */
         fun getAppList(context: Context): List<AppThermalEntry> {
-            val pm    = context.packageManager
-            val prefs = PreferenceManager.getDefaultSharedPreferences(context)
-            return prefs.all.keys
+            val pm           = context.packageManager
+            val prefs        = PreferenceManager.getDefaultSharedPreferences(context)
+            val thermalUtils = ThermalUtils.getInstance(context)
+            val defaultId    = ThermalUtils.ThermalState.DEFAULT.id
+
+            // --- source 1: explicit pref overrides ---
+            val explicitMap = prefs.all.keys
                 .filter { it.startsWith(ThermalUtils.THERMAL_PACKAGE_PREFIX) }
                 .mapNotNull { key ->
                     val pkg       = key.removePrefix(ThermalUtils.THERMAL_PACKAGE_PREFIX)
-                    val profileId = prefs.getInt(key, ThermalUtils.ThermalState.DEFAULT.id)
-                    val appInfo   = runCatching {
-                        pm.getApplicationInfo(pkg, 0)
-                    }.getOrNull() ?: return@mapNotNull null
-                    AppThermalEntry(
+                    val profileId = prefs.getInt(key, defaultId)
+                    if (profileId == defaultId) return@mapNotNull null
+                    val appInfo = runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull()
+                        ?: return@mapNotNull null
+                    pkg to AppThermalEntry(
                         packageName = pkg,
                         label       = pm.getApplicationLabel(appInfo).toString(),
                         profileId   = profileId,
                     )
                 }
+                .toMap()
+
+            // --- source 2: auto-classified apps (not in prefs) ---
+            val launcherIntent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
+            val installedPkgs  = pm
+                .queryIntentActivities(launcherIntent, PackageManager.GET_META_DATA)
+                .map { it.activityInfo.packageName }
+                .distinct()
+
+            val autoMap = installedPkgs
+                .filter { it !in explicitMap }          // explicit override already covers it
+                .mapNotNull { pkg ->
+                    val state = thermalUtils.getStateForPackage(pkg)
+                    if (state.id == defaultId) return@mapNotNull null
+                    val appInfo = runCatching { pm.getApplicationInfo(pkg, 0) }.getOrNull()
+                        ?: return@mapNotNull null
+                    pkg to AppThermalEntry(
+                        packageName = pkg,
+                        label       = pm.getApplicationLabel(appInfo).toString(),
+                        profileId   = state.id,
+                    )
+                }
+                .toMap()
+
+            // merge: explicit overrides win
+            return (autoMap + explicitMap)
+                .values
                 .sortedBy { it.label.lowercase() }
         }
 
