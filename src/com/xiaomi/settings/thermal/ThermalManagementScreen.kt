@@ -9,7 +9,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility
@@ -37,7 +36,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -71,6 +69,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -122,11 +121,16 @@ private fun readIsCharging(context: Context): Boolean {
 }
 
 @Composable
-private fun getGroupedShape(index: Int, total: Int): Shape = when {
-    total == 1         -> RoundedCornerShape(28.dp)
-    index == 0         -> RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp)
-    index == total - 1 -> RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp)
-    else               -> RoundedCornerShape(4.dp)
+@ReadOnlyComposable
+private fun groupedShape(index: Int, total: Int): Shape {
+    val outer = MaterialTheme.shapes.extraLarge
+    val inner = MaterialTheme.shapes.extraSmall
+    return when {
+        total == 1         -> outer
+        index == 0         -> outer.copy(bottomStart = inner.bottomStart, bottomEnd = inner.bottomEnd)
+        index == total - 1 -> outer.copy(topStart = inner.topStart, topEnd = inner.topEnd)
+        else               -> inner
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -166,6 +170,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val profiles       = remember { ThermalService.profiles() }
+
+    val shapeOuter = MaterialTheme.shapes.extraLarge
+    val shapeInner = MaterialTheme.shapes.extraSmall
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -221,8 +228,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                             thermalUtils.enabled = thermalEnabled
                         }
                     },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 12.dp, bottom = 2.dp),
-                    shape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(top = 12.dp, bottom = 2.dp),
+                    shape    = shapeOuter.copy(
+                        bottomStart = shapeInner.bottomStart,
+                        bottomEnd   = shapeInner.bottomEnd,
+                    ),
                     colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 ) {
                     ListItem(
@@ -250,8 +263,11 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
             item(key = "info-card") {
                 Card(
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 2.dp),
-                    shape    = RoundedCornerShape(4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 2.dp),
+                    shape    = shapeInner,
                     colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 ) {
                     Row(
@@ -275,8 +291,14 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
             item(key = "reset-card") {
                 Card(
                     onClick  = { if (controlsEnabled) showResetDialog = true },
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 8.dp),
-                    shape    = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 8.dp),
+                    shape    = shapeOuter.copy(
+                        topStart = shapeInner.topStart,
+                        topEnd   = shapeInner.topEnd,
+                    ),
                     colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 ) {
                     ListItem(
@@ -325,7 +347,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     items = appList,
                     key   = { _, app -> app.packageName },
                 ) { index, app ->
-                    val shape     = getGroupedShape(index, appList.size)
+                    val shape     = groupedShape(index, appList.size)
                     val bottomPad = if (index == appList.lastIndex) 0.dp else 2.dp
                     AppThermalCard(
                         entry    = app,
@@ -501,7 +523,7 @@ private fun AppPickerSheet(
                 placeholder   = { Text(stringResource(R.string.thermal_search_apps)) },
                 leadingIcon   = { Icon(Icons.Filled.Search, contentDescription = null) },
                 singleLine    = true,
-                shape         = RoundedCornerShape(28.dp),
+                shape         = MaterialTheme.shapes.extraLarge,
                 modifier      = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp)
@@ -715,7 +737,10 @@ private fun ProfilePickerDialog(
 @Composable
 private fun ChargingBanner() {
     Card(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(top = 8.dp, bottom = 4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp)
+            .padding(top = 8.dp, bottom = 4.dp),
         shape    = MaterialTheme.shapes.large,
         colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {

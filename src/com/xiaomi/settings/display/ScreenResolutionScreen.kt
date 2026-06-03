@@ -81,7 +81,9 @@ private val RESOLUTIONS = listOf(
 )
 
 private fun applyResolution(option: ResolutionOption) {
-    val wm = WindowManagerGlobal.getWindowManagerService()
+    val wm = requireNotNull(WindowManagerGlobal.getWindowManagerService()) {
+        "WindowManager service is unavailable"
+    }
     if (option.isNative) {
         wm.clearForcedDisplaySize(Display.DEFAULT_DISPLAY)
         wm.clearForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, UserHandle.USER_CURRENT)

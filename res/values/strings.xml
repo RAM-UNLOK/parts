@@ -6,27 +6,27 @@
 <resources>
     <string name="app_name">Xiaomi Parts</string>
 
-    <!-- ── Xiaomi Parts Hub ────────────────────────────────────────── -->
+    <!-- ── Xiaomi Parts Hub ────────────────────────────────────── -->
     <string name="xiaomi_parts_title">Xiaomi Parts</string>
     <string name="xiaomi_parts_summary">Display, Thermal &amp; Touch</string>
     <string name="xiaomi_parts_category_diagnostics">Diagnostics</string>
 
-    <!-- ── HomeScreen category headers ───────────────────────────── -->
+    <!-- ── HomeScreen category headers ─────────────────────── -->
     <string name="display_category">Display</string>
     <string name="performance_category">Performance</string>
 
-    <!-- ── HomeScreen row titles ─────────────────────────────────── -->
+    <!-- ── HomeScreen row titles ───────────────────────────── -->
     <string name="display_colours_title">Display Colours</string>
     <string name="display_colours_summary">Choose your colour profile</string>
     <string name="touch_boost_title">Touch Boost</string>
     <string name="touch_boost_summary">Higher polling rate, snappier touch</string>
 
-    <!-- ── Common UI ───────────────────────────────────────────── -->
+    <!-- ── Common UI ───────────────────────────────────────── -->
     <string name="dismiss">Dismiss</string>
     <string name="cancel">Cancel</string>
     <string name="navigate_up">Navigate up</string>
 
-    <!-- ── Display Colours ───────────────────────────────────────── -->
+    <!-- ── Display Colours ────────────────────────────────── -->
     <string name="color_mode_vivid">Vivid</string>
     <string name="color_mode_saturated">Saturated</string>
     <string name="color_mode_standard">Standard</string>
@@ -41,7 +41,7 @@
     <string name="color_mode_p3_summary">DCI-P3 cinema-grade gamut</string>
     <string name="color_mode_srgb_summary">True sRGB for web and design</string>
 
-    <!-- ── Screen Resolution ─────────────────────────────────────── -->
+    <!-- ── Screen Resolution ──────────────────────────────── -->
     <string name="screen_resolution_title">Screen Resolution</string>
     <string name="screen_resolution_home_summary">1.5K native · 1440p · 1080p · 720p</string>
     <string name="screen_resolution_description">Choose a display resolution. Higher resolutions are sharper but use more battery. Native 1.5K (1220p) is the factory default for this display.</string>
@@ -55,7 +55,7 @@
     <string name="screen_resolution_720p">720p — HD+</string>
     <string name="screen_resolution_720p_summary">720 × 1600 · 263 PPI · Maximum battery</string>
 
-    <!-- ── Thermal Management ──────────────────────────────────────── -->
+    <!-- ── Thermal Management ───────────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
     <string name="thermal_summary">Per-app thermal profiles</string>
     <string name="thermal_enable_title">Thermal profiles</string>
@@ -74,6 +74,8 @@
     <string name="thermal_reset_summary">Restore all per-app profiles to their defaults</string>
     <string name="thermal_reset_confirm">Reset</string>
     <string name="thermal_reset_confirm_body">All per-app thermal overrides will be cleared and profiles will revert to their automatically detected defaults.</string>
+    <string name="thermal_add_app">Add app</string>
+    <string name="thermal_search_apps">Search apps</string>
     <string name="thermal_default">Default</string>
     <string name="thermal_nolimits">No Limits</string>
     <string name="thermal_navigation">Navigation</string>
@@ -88,11 +90,11 @@
     <string name="thermal_yuanshen">Yuanshen</string>
     <string name="thermal_charge">Charging</string>
 
-    <!-- ── Touch Boost ───────────────────────────────────────────── -->
+    <!-- ── Touch Boost ───────────────────────────────────────── -->
     <string name="touch_boost_description">Raises the touch controller polling rate, reducing tap-to-response latency. May slightly increase power draw during active use.</string>
     <string name="touch_boost_failed">Touch boost failed to apply</string>
 
-    <!-- ── Diagnostics ───────────────────────────────────────────── -->
+    <!-- ── Diagnostics ─────────────────────────────────────── -->
     <string name="fingerprint_calibration_title">Jiiov Fingerprint Calibration</string>
     <string name="fingerprint_calibration_summary">Recalibrate the in-display fingerprint sensor</string>
     <string name="fingerprint_calibration_not_found">Fingerprint calibration not available</string>
