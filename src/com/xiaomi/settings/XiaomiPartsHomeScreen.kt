@@ -47,15 +47,16 @@ import com.xiaomi.settings.utils.PartsToast
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
-    onNavigateToDisplay: () -> Unit,
-    onNavigateToThermal: () -> Unit,
-    onNavigateToTouch:   () -> Unit,
+    onNavigateToDisplay:    () -> Unit,
+    onNavigateToResolution: () -> Unit,
+    onNavigateToThermal:    () -> Unit,
+    onNavigateToTouch:      () -> Unit,
 ) {
     val context        = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 
     Scaffold(
-        modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -76,17 +77,30 @@ fun XiaomiPartsHomeScreen(
                 bottom = innerPadding.calculateBottomPadding() + 32.dp,
             ),
         ) {
+
+            // ── Display ──────────────────────────────────────────────────
             item(key = "display-label") { PartsCategory(stringResource(R.string.display_category)) }
-            item(key = "display-card") {
+            item(key = "display-card-1") {
                 PartsListItemCard(
                     icon    = ImageVector.vectorResource(R.drawable.ic_display_colours),
                     title   = stringResource(R.string.display_colours_title),
                     summary = stringResource(R.string.display_colours_summary),
-                    shape   = RoundedCornerShape(28.dp),
+                    shape   = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
                     onClick = onNavigateToDisplay,
+                )
+                Spacer(Modifier.height(2.dp))
+            }
+            item(key = "display-card-2") {
+                PartsListItemCard(
+                    icon    = ImageVector.vectorResource(R.drawable.ic_screen_resolution),
+                    title   = stringResource(R.string.screen_resolution_title),
+                    summary = stringResource(R.string.screen_resolution_home_summary),
+                    shape   = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
+                    onClick = onNavigateToResolution,
                 )
             }
 
+            // ── Performance ───────────────────────────────────────────────
             item(key = "perf-label") { PartsCategory(stringResource(R.string.performance_category)) }
             item(key = "perf-card-1") {
                 PartsListItemCard(
@@ -108,6 +122,7 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
+            // ── Diagnostics ───────────────────────────────────────────────
             item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
             item(key = "diag-card-1") {
                 PartsListItemCard(
