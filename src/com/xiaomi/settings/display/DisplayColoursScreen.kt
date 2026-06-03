@@ -39,6 +39,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -68,8 +69,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.Motion
-import com.xiaomi.settings.ui.SettingsTheme
-import com.xiaomi.settings.ui.settingsTopAppBarColors
 import com.xiaomi.settings.ui.shimmerAlpha
 import com.xiaomi.settings.utils.PartsToast
 import kotlinx.coroutines.launch
@@ -139,7 +138,7 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(SettingsTheme.colorScheme.cardBackground)
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .pointerInput(selectedId) {
                 detectTapGestures { tapOffset ->
                     val w = size.width.toFloat()
@@ -208,7 +207,7 @@ private fun ColourPreviewHero(
         if (activeMode != null) {
             Text(
                 text     = stringResource(activeMode.label),
-                style    = androidx.compose.material3.MaterialTheme.typography.titleSmall,
+                style    = MaterialTheme.typography.titleSmall,
                 color    = Color.White,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
@@ -226,29 +225,25 @@ private fun SelectionRowCard(
     modifier:   Modifier = Modifier,
     onClick:    () -> Unit,
 ) {
-    val contentColor = if (isSelected) SettingsTheme.colorScheme.primaryIcon else SettingsTheme.colorScheme.titleText
-
     Card(
         onClick  = onClick,
         modifier = modifier.fillMaxWidth(),
         shape    = shape,
         colors   = CardDefaults.cardColors(
-            containerColor = SettingsTheme.colorScheme.cardBackground,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
     ) {
         ListItem(
             headlineContent = {
                 Text(
                     text  = stringResource(mode.label),
-                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
-                    color = SettingsTheme.colorScheme.titleText,
+                    style = MaterialTheme.typography.titleMedium,
                 )
             },
             supportingContent = {
                 Text(
                     text  = stringResource(mode.description),
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                    color = SettingsTheme.colorScheme.summaryText,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             leadingContent = {
@@ -269,7 +264,6 @@ private fun SelectionRowCard(
                         Icon(
                             imageVector        = Icons.Filled.Check,
                             contentDescription = null,
-                            tint               = contentColor,
                             modifier           = Modifier.size(24.dp),
                         )
                     } else {
@@ -294,8 +288,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
-        modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsTheme.colorScheme.screenBackground,
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
             MediumTopAppBar(
                 title = {
@@ -313,7 +306,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors        = settingsTopAppBarColors(),
                 scrollBehavior = scrollBehavior,
             )
         },

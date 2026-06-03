@@ -18,48 +18,16 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.staticCompositionLocalOf
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-
-// ──────────────────────────────────────────────────────────────────────────
-// Semantic colour tokens
-// ──────────────────────────────────────────────────────────────────────────
-
-@Immutable
-data class SettingsColorScheme(
-    val screenBackground: Color, // surfaceContainerLow
-    val cardBackground:   Color, // surfaceContainerHigh
-    val dialogBackground: Color, // surfaceContainerHighest
-    val titleText:        Color,
-    val summaryText:      Color,
-    val categoryText:     Color,
-    val primaryIcon:      Color,
-    val secondaryIcon:    Color,
-    val errorIcon:        Color,
-    val divider:          Color,
-)
-
-private val LocalSettingsColorScheme = staticCompositionLocalOf<SettingsColorScheme> {
-    error("Wrap content in XiaomiPartsTheme")
-}
-
-object SettingsTheme {
-    val colorScheme: SettingsColorScheme
-        @Composable get() = LocalSettingsColorScheme.current
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Theme entry point
@@ -93,36 +61,9 @@ fun XiaomiPartsTheme(
             large      = RoundedCornerShape(16.dp),
             extraLarge = RoundedCornerShape(28.dp),
         ),
-    ) {
-        val m3 = MaterialTheme.colorScheme
-        val scheme = SettingsColorScheme(
-            screenBackground = m3.surfaceContainerLow,
-            cardBackground   = m3.surfaceContainerHigh,
-            dialogBackground = m3.surfaceContainerHighest,
-            titleText        = m3.onSurface,
-            summaryText      = m3.onSurfaceVariant,
-            categoryText     = m3.primary,
-            primaryIcon      = m3.primary,
-            secondaryIcon    = m3.onSurfaceVariant,
-            errorIcon        = m3.error,
-            divider          = m3.outlineVariant,
-        )
-        CompositionLocalProvider(LocalSettingsColorScheme provides scheme, content = content)
-    }
+        content = content,
+    )
 }
-
-// ──────────────────────────────────────────────────────────────────────────
-// TopAppBar colour helper — fully specifies all 5 slots
-// ──────────────────────────────────────────────────────────────────────────
-
-@Composable
-fun settingsTopAppBarColors() = TopAppBarDefaults.topAppBarColors(
-    containerColor             = SettingsTheme.colorScheme.screenBackground,
-    scrolledContainerColor     = SettingsTheme.colorScheme.cardBackground,
-    titleContentColor          = SettingsTheme.colorScheme.titleText,
-    navigationIconContentColor = SettingsTheme.colorScheme.secondaryIcon,
-    actionIconContentColor     = SettingsTheme.colorScheme.secondaryIcon,
-)
 
 // ──────────────────────────────────────────────────────────────────────────
 // Motion engine — M3 Expressive spring tokens

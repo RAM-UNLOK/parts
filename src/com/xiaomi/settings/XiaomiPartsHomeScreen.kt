@@ -26,6 +26,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -40,8 +41,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.xiaomi.settings.ui.SettingsTheme
-import com.xiaomi.settings.ui.settingsTopAppBarColors
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
@@ -57,7 +56,6 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = SettingsTheme.colorScheme.screenBackground,
         topBar = {
             LargeTopAppBar(
                 title = {
@@ -67,7 +65,6 @@ fun XiaomiPartsHomeScreen(
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                colors         = settingsTopAppBarColors(),
                 scrollBehavior = scrollBehavior,
             )
         },
@@ -147,8 +144,8 @@ fun XiaomiPartsHomeScreen(
 fun PartsCategory(label: String) {
     Text(
         text     = label,
-        style    = androidx.compose.material3.MaterialTheme.typography.titleSmall,
-        color    = SettingsTheme.colorScheme.categoryText,
+        style    = MaterialTheme.typography.titleSmall,
+        color    = MaterialTheme.colorScheme.primary,
         modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
     )
 }
@@ -168,29 +165,26 @@ private fun PartsListItemCard(
             .padding(horizontal = 16.dp),
         shape    = shape,
         colors   = CardDefaults.cardColors(
-            containerColor = SettingsTheme.colorScheme.cardBackground,
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
         ),
     ) {
         ListItem(
             headlineContent = {
                 Text(
                     text  = title,
-                    style = androidx.compose.material3.MaterialTheme.typography.titleMedium,
-                    color = SettingsTheme.colorScheme.titleText,
+                    style = MaterialTheme.typography.titleMedium,
                 )
             },
             supportingContent = {
                 Text(
                     text  = summary,
-                    style = androidx.compose.material3.MaterialTheme.typography.bodyMedium,
-                    color = SettingsTheme.colorScheme.summaryText,
+                    style = MaterialTheme.typography.bodyMedium,
                 )
             },
             leadingContent = {
                 Icon(
                     imageVector        = icon,
                     contentDescription = null,
-                    tint               = SettingsTheme.colorScheme.secondaryIcon,
                     modifier           = Modifier.size(24.dp).padding(top = 2.dp),
                 )
             },
@@ -198,7 +192,6 @@ private fun PartsListItemCard(
                 Icon(
                     imageVector        = Icons.AutoMirrored.Filled.ArrowForwardIos,
                     contentDescription = null,
-                    tint               = SettingsTheme.colorScheme.secondaryIcon,
                     modifier           = Modifier.size(16.dp),
                 )
             },
