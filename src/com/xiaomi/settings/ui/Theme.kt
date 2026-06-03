@@ -6,8 +6,6 @@
 package com.xiaomi.settings.ui
 
 import android.os.Build
-import androidx.activity.SystemBarStyle
-import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.DurationBasedAnimationSpec
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -30,11 +28,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
@@ -85,28 +81,6 @@ fun XiaomiPartsTheme(
         dynamicColor && !darkTheme -> dynamicLightColorScheme(context)
         darkTheme                  -> DarkColorScheme
         else                       -> LightColorScheme
-    }
-
-    val activity = LocalActivity.current
-    SideEffect {
-        activity?.enableEdgeToEdge(
-            statusBarStyle = if (darkTheme) {
-                SystemBarStyle.dark(colorScheme.surfaceContainerLow.toArgb())
-            } else {
-                SystemBarStyle.light(
-                    colorScheme.surfaceContainerLow.toArgb(),
-                    colorScheme.surfaceContainerLow.toArgb(),
-                )
-            },
-            navigationBarStyle = if (darkTheme) {
-                SystemBarStyle.dark(colorScheme.surfaceContainerLow.toArgb())
-            } else {
-                SystemBarStyle.light(
-                    colorScheme.surfaceContainerLow.toArgb(),
-                    colorScheme.surfaceContainerLow.toArgb(),
-                )
-            },
-        )
     }
 
     MaterialTheme(

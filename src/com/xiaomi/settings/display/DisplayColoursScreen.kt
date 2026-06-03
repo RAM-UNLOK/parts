@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.Motion
 import com.xiaomi.settings.ui.SettingsTheme
+import com.xiaomi.settings.ui.settingsTopAppBarColors
 import com.xiaomi.settings.ui.shimmerAlpha
 import com.xiaomi.settings.utils.PartsToast
 import kotlinx.coroutines.launch
@@ -312,10 +313,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         )
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = SettingsTheme.colorScheme.screenBackground,
-                    scrolledContainerColor = SettingsTheme.colorScheme.cardBackground,
-                ),
+                colors        = settingsTopAppBarColors(),
                 scrollBehavior = scrollBehavior,
             )
         },
