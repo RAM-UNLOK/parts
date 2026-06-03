@@ -31,7 +31,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
-// Fallback static schemes used only when Monet dynamic colour is not available
 private val LightColorScheme = lightColorScheme()
 private val DarkColorScheme  = darkColorScheme()
 
@@ -60,8 +59,9 @@ fun XiaomiPartsTheme(
             large      = RoundedCornerShape(16.dp),
             extraLarge = RoundedCornerShape(28.dp),
         ),
-        content = content,
-    )
+    ) {
+        ProvideSettingsColorScheme(content = content)
+    }
 }
 
 // ──────────────────────────────────────────────────────────────────────────
