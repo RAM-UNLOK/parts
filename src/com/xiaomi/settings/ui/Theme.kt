@@ -6,6 +6,8 @@
 package com.xiaomi.settings.ui
 
 import android.os.Build
+import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.DurationBasedAnimationSpec
 import androidx.compose.animation.core.FiniteAnimationSpec
@@ -18,6 +20,7 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
@@ -27,9 +30,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
@@ -39,9 +44,9 @@ import androidx.compose.ui.unit.dp
 
 @Immutable
 data class SettingsColorScheme(
-    val screenBackground: Color,
-    val cardBackground:   Color,
-    val dialogBackground: Color,
+    val screenBackground: Color, // surfaceContainerLow
+    val cardBackground:   Color, // surfaceContainerHigh
+    val dialogBackground: Color, // surfaceContainerHighest
     val titleText:        Color,
     val summaryText:      Color,
     val categoryText:     Color,
@@ -82,6 +87,28 @@ fun XiaomiPartsTheme(
         else                       -> LightColorScheme
     }
 
+    val activity = LocalActivity.current
+    SideEffect {
+        activity?.enableEdgeToEdge(
+            statusBarStyle = if (darkTheme) {
+                SystemBarStyle.dark(colorScheme.surfaceContainerLow.toArgb())
+            } else {
+                SystemBarStyle.light(
+                    colorScheme.surfaceContainerLow.toArgb(),
+                    colorScheme.surfaceContainerLow.toArgb(),
+                )
+            },
+            navigationBarStyle = if (darkTheme) {
+                SystemBarStyle.dark(colorScheme.surfaceContainerLow.toArgb())
+            } else {
+                SystemBarStyle.light(
+                    colorScheme.surfaceContainerLow.toArgb(),
+                    colorScheme.surfaceContainerLow.toArgb(),
+                )
+            },
+        )
+    }
+
     MaterialTheme(
         colorScheme = colorScheme,
         typography  = Typography(),
@@ -95,9 +122,9 @@ fun XiaomiPartsTheme(
     ) {
         val m3 = MaterialTheme.colorScheme
         val scheme = SettingsColorScheme(
-            screenBackground = m3.surface,
-            cardBackground   = m3.surfaceContainer,
-            dialogBackground = m3.surfaceContainerHigh,
+            screenBackground = m3.surfaceContainerLow,
+            cardBackground   = m3.surfaceContainerHigh,
+            dialogBackground = m3.surfaceContainerHighest,
             titleText        = m3.onSurface,
             summaryText      = m3.onSurfaceVariant,
             categoryText     = m3.primary,
@@ -109,6 +136,19 @@ fun XiaomiPartsTheme(
         CompositionLocalProvider(LocalSettingsColorScheme provides scheme, content = content)
     }
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// TopAppBar colour helper — fully specifies all 5 slots
+// ──────────────────────────────────────────────────────────────────────────
+
+@Composable
+fun settingsTopAppBarColors() = TopAppBarDefaults.topAppBarColors(
+    containerColor             = SettingsTheme.colorScheme.screenBackground,
+    scrolledContainerColor     = SettingsTheme.colorScheme.cardBackground,
+    titleContentColor          = SettingsTheme.colorScheme.titleText,
+    navigationIconContentColor = SettingsTheme.colorScheme.secondaryIcon,
+    actionIconContentColor     = SettingsTheme.colorScheme.secondaryIcon,
+)
 
 // ──────────────────────────────────────────────────────────────────────────
 // Motion engine — M3 Expressive spring tokens

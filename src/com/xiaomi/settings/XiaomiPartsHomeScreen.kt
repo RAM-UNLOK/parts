@@ -41,6 +41,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.ui.SettingsTheme
+import com.xiaomi.settings.ui.settingsTopAppBarColors
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
@@ -66,10 +67,7 @@ fun XiaomiPartsHomeScreen(
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = SettingsTheme.colorScheme.screenBackground,
-                    scrolledContainerColor = SettingsTheme.colorScheme.cardBackground,
-                ),
+                colors         = settingsTopAppBarColors(),
                 scrollBehavior = scrollBehavior,
             )
         },

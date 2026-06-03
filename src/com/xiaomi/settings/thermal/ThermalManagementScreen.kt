@@ -97,6 +97,7 @@ import com.xiaomi.settings.PartsCategory
 import com.xiaomi.settings.R
 import com.xiaomi.settings.ui.Motion
 import com.xiaomi.settings.ui.SettingsTheme
+import com.xiaomi.settings.ui.settingsTopAppBarColors
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -185,19 +186,16 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.navigate_up))
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor         = SettingsTheme.colorScheme.screenBackground,
-                    scrolledContainerColor = SettingsTheme.colorScheme.cardBackground,
-                ),
+                colors         = settingsTopAppBarColors(),
                 scrollBehavior = scrollBehavior,
             )
         },
         floatingActionButton = {
             if (controlsEnabled) {
                 FloatingActionButton(
-                    onClick            = { showAddSheet = true },
-                    containerColor     = MaterialTheme.colorScheme.primaryContainer,
-                    contentColor       = MaterialTheme.colorScheme.onPrimaryContainer,
+                    onClick        = { showAddSheet = true },
+                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                    contentColor   = MaterialTheme.colorScheme.onPrimaryContainer,
                 ) {
                     Icon(Icons.Filled.Add, contentDescription = stringResource(R.string.thermal_add_app))
                 }
@@ -351,12 +349,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     if (showAddSheet) {
         AppPickerSheet(
-            sheetState      = addSheetState,
+            sheetState        = addSheetState,
             alreadyOverridden = appList.map { it.packageName }.toSet(),
-            onDismiss       = {
+            onDismiss         = {
                 scope.launch { addSheetState.hide() }.invokeOnCompletion { showAddSheet = false }
             },
-            onAppSelected   = { picked ->
+            onAppSelected     = { picked ->
                 scope.launch { addSheetState.hide() }.invokeOnCompletion {
                     showAddSheet  = false
                     pendingNewApp = picked
@@ -462,10 +460,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AppPickerSheet(
-    sheetState:         androidx.compose.material3.SheetState,
-    alreadyOverridden:  Set<String>,
-    onDismiss:          () -> Unit,
-    onAppSelected:      (InstalledAppEntry) -> Unit,
+    sheetState:        androidx.compose.material3.SheetState,
+    alreadyOverridden: Set<String>,
+    onDismiss:         () -> Unit,
+    onAppSelected:     (InstalledAppEntry) -> Unit,
 ) {
     val context       = LocalContext.current
     var query         by remember { mutableStateOf("") }
@@ -499,10 +497,10 @@ private fun AppPickerSheet(
     }
 
     ModalBottomSheet(
-        onDismissRequest  = onDismiss,
-        sheetState        = sheetState,
-        containerColor    = SettingsTheme.colorScheme.cardBackground,
-        dragHandle        = null,
+        onDismissRequest = onDismiss,
+        sheetState       = sheetState,
+        containerColor   = SettingsTheme.colorScheme.cardBackground,
+        dragHandle       = null,
     ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Text(
