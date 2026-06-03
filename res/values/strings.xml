@@ -43,17 +43,17 @@
 
     <!-- ── Screen Resolution ──────────────────────────────── -->
     <string name="screen_resolution_title">Screen Resolution</string>
-    <string name="screen_resolution_home_summary">1.5K native · 1440p · 1080p · 720p</string>
-    <string name="screen_resolution_description">Choose a display resolution. Higher resolutions are sharper but use more battery. Native 1.5K (1220p) is the factory default for this display.</string>
+    <string name="screen_resolution_home_summary">1.5K · 1440p · 1080p · 720p</string>
+    <string name="screen_resolution_description">Changing resolution only affects sharpness. Text scaling and UI density remain unchanged.</string>
     <string name="screen_resolution_failed">Failed to apply resolution</string>
     <string name="screen_resolution_1440p">1440p — WQHD+</string>
-    <string name="screen_resolution_1440p_summary">1440 × 3200 · 526 PPI · Sharpest</string>
+    <string name="screen_resolution_1440p_summary">1440 × 3200 · Sharpest</string>
     <string name="screen_resolution_1220p">1.5K — Native</string>
-    <string name="screen_resolution_1220p_summary">1220 × 2712 · 446 PPI · Recommended</string>
+    <string name="screen_resolution_1220p_summary">1220 × 2712 · Recommended</string>
     <string name="screen_resolution_1080p">1080p — FHD+</string>
-    <string name="screen_resolution_1080p_summary">1080 × 2400 · 394 PPI · Better battery</string>
+    <string name="screen_resolution_1080p_summary">1080 × 2400 · Better battery</string>
     <string name="screen_resolution_720p">720p — HD+</string>
-    <string name="screen_resolution_720p_summary">720 × 1600 · 263 PPI · Maximum battery</string>
+    <string name="screen_resolution_720p_summary">720 × 1600 · Maximum battery</string>
 
     <!-- ── Thermal Management ───────────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
