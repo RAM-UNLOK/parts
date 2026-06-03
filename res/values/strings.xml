@@ -43,10 +43,10 @@
 
     <!-- ── Screen Resolution ──────────────────────────────── -->
     <string name="screen_resolution_title">Screen Resolution</string>
-    <string name="screen_resolution_home_summary">1.5K · 1440p · 1080p · 720p</string>
+    <string name="screen_resolution_home_summary">Choose your display resolution</string>
     <string name="screen_resolution_description">Changing resolution only affects sharpness. Text scaling and UI density remain unchanged.</string>
     <string name="screen_resolution_failed">Failed to apply resolution</string>
-    <string name="screen_resolution_1440p">1440p — WQHD+</string>
+    <string name="screen_resolution_1440p">2K — WQHD+</string>
     <string name="screen_resolution_1440p_summary">1440 × 3200 · Sharpest</string>
     <string name="screen_resolution_1220p">1.5K — Native</string>
     <string name="screen_resolution_1220p_summary">1220 × 2712 · Recommended</string>
