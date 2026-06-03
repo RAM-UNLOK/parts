@@ -93,7 +93,6 @@ private fun applyResolution(option: ResolutionOption) {
         wm.setForcedDisplaySize(Display.DEFAULT_DISPLAY, option.width, option.height)
         wm.setForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, density, UserHandle.USER_CURRENT)
     }
-    restartSystemUi()
 }
 
 private fun restartSystemUi() {
@@ -259,6 +258,7 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                             applyResolution(option)
                             Settings.System.putString(context.contentResolver, PREF_KEY, option.key)
                             selectedKey = option.key
+                            restartSystemUi()
                         }.onFailure { e ->
                             dlog(TAG, "Failed to apply resolution: ${e.message}")
                             PartsToast.show(context, R.string.screen_resolution_failed)
