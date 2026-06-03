@@ -5,7 +5,6 @@
 
 package com.xiaomi.settings.display
 
-import android.os.RemoteException
 import android.os.UserHandle
 import android.provider.Settings
 import android.view.Display
@@ -14,20 +13,17 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material3.Box
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,28 +55,30 @@ import com.xiaomi.settings.ui.Motion
 import com.xiaomi.settings.utils.PartsToast
 import com.xiaomi.settings.utils.dlog
 
-private const val TAG = "ScreenResolutionScreen"
-private const val PREF_KEY = "custom_screen_resolution_key"
+private const val TAG        = "ScreenResolutionScreen"
+private const val PREF_KEY   = "custom_screen_resolution_key"
+private const val NATIVE_KEY = "res_1220p"
 
 private data class ResolutionOption(
-    val key:     String,
-    val labelRes: Int,
+    val key:        String,
+    val labelRes:   Int,
     val summaryRes: Int,
-    val width:   Int,
-    val height:  Int,
-    val density: Int,
-    val isNative: Boolean = false,
+    val width:      Int,
+    val height:     Int,
+    val density:    Int,
+    val isNative:   Boolean = false,
 )
 
-/** Densities: (width / 1220) * 446 PPI, rounded to nearest even. */
+/**
+ * Resolutions for POCO X7 Pro (native panel: 1220x2712 @ 446 PPI).
+ * Non-native densities: round((width / 1220.0) * 446).
+ */
 private val RESOLUTIONS = listOf(
     ResolutionOption("res_1440p", R.string.screen_resolution_1440p, R.string.screen_resolution_1440p_summary, 1440, 3200, 526),
     ResolutionOption("res_1220p", R.string.screen_resolution_1220p, R.string.screen_resolution_1220p_summary, 1220, 2712, 446, isNative = true),
     ResolutionOption("res_1080p", R.string.screen_resolution_1080p, R.string.screen_resolution_1080p_summary, 1080, 2400, 394),
     ResolutionOption("res_720p",  R.string.screen_resolution_720p,  R.string.screen_resolution_720p_summary,   720, 1600, 263),
 )
-
-private val NATIVE_KEY = "res_1220p"
 
 private fun applyResolution(option: ResolutionOption) {
     val wm = WindowManagerGlobal.getWindowManagerService()
@@ -117,20 +115,12 @@ private fun ResolutionRowCard(
                 Text(
                     text  = stringResource(option.labelRes),
                     style = MaterialTheme.typography.titleMedium,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.onSecondaryContainer
-                    else
-                        MaterialTheme.colorScheme.onSurface,
                 )
             },
             supportingContent = {
                 Text(
                     text  = stringResource(option.summaryRes),
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (isSelected)
-                        MaterialTheme.colorScheme.onSecondaryContainer
-                    else
-                        MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             },
             leadingContent = {
@@ -141,7 +131,7 @@ private fun ResolutionRowCard(
             },
             trailingContent = {
                 AnimatedContent(
-                    targetState   = isSelected,
+                    targetState  = isSelected,
                     transitionSpec = {
                         fadeIn(Motion.checkFadeInSpec()) togetherWith fadeOut(Motion.checkFadeOutSpec())
                     },
@@ -152,10 +142,9 @@ private fun ResolutionRowCard(
                             imageVector        = Icons.Filled.Check,
                             contentDescription = null,
                             modifier           = Modifier.size(24.dp),
-                            tint               = MaterialTheme.colorScheme.onSecondaryContainer,
                         )
                     } else {
-                        androidx.compose.foundation.layout.Box(Modifier.size(24.dp))
+                        Box(Modifier.size(24.dp))
                     }
                 }
             },
@@ -176,6 +165,9 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    val shapeOuter = MaterialTheme.shapes.extraLarge
+    val shapeInner = MaterialTheme.shapes.extraSmall
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -222,11 +214,12 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                 val isFirst   = index == 0
                 val isLast    = index == RESOLUTIONS.lastIndex
                 val bottomPad = if (isLast) 0.dp else 2.dp
-                val shape     = RoundedCornerShape(
-                    topStart    = if (isFirst) 28.dp else 4.dp,
-                    topEnd      = if (isFirst) 28.dp else 4.dp,
-                    bottomStart = if (isLast)  28.dp else 4.dp,
-                    bottomEnd   = if (isLast)  28.dp else 4.dp,
+
+                val shape = shapeOuter.copy(
+                    topStart    = if (isFirst) shapeOuter.topStart    else shapeInner.topStart,
+                    topEnd      = if (isFirst) shapeOuter.topEnd      else shapeInner.topEnd,
+                    bottomStart = if (isLast)  shapeOuter.bottomStart else shapeInner.bottomStart,
+                    bottomEnd   = if (isLast)  shapeOuter.bottomEnd   else shapeInner.bottomEnd,
                 )
 
                 ResolutionRowCard(
