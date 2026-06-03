@@ -5,6 +5,7 @@
 
 package com.xiaomi.settings.display
 
+import android.os.UserHandle
 import android.provider.Settings
 import android.view.Display
 import android.view.WindowManagerGlobal
@@ -61,13 +62,16 @@ private const val TAG        = "ScreenResolutionScreen"
 private const val PREF_KEY   = "custom_screen_resolution_key"
 private const val NATIVE_KEY = "res_1220p"
 
+private const val BASE_WIDTH   = 1220
+private const val BASE_DENSITY = 446
+
 private data class ResolutionOption(
-    val key:      String,
-    val labelRes: Int,
+    val key:       String,
+    val labelRes:  Int,
     val summaryRes: Int,
-    val width:    Int,
-    val height:   Int,
-    val isNative: Boolean = false,
+    val width:     Int,
+    val height:    Int,
+    val isNative:  Boolean = false,
 )
 
 private val RESOLUTIONS = listOf(
@@ -83,9 +87,17 @@ private fun applyResolution(option: ResolutionOption) {
     }
     if (option.isNative) {
         wm.clearForcedDisplaySize(Display.DEFAULT_DISPLAY)
+        wm.clearForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, UserHandle.USER_CURRENT)
     } else {
+        val density = (option.width * BASE_DENSITY) / BASE_WIDTH
         wm.setForcedDisplaySize(Display.DEFAULT_DISPLAY, option.width, option.height)
+        wm.setForcedDisplayDensityForUser(Display.DEFAULT_DISPLAY, density, UserHandle.USER_CURRENT)
     }
+    restartSystemUi()
+}
+
+private fun restartSystemUi() {
+    Runtime.getRuntime().exec(arrayOf("killall", "com.android.systemui"))
 }
 
 @Composable
