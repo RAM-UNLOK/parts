@@ -6,14 +6,10 @@
 package com.xiaomi.settings.touchsampling
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -54,6 +50,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val horizontalGutter = 20.dp
 
     fun toggle(newValue: Boolean) {
         runCatching {
@@ -98,9 +95,12 @@ fun TouchBoostScreen(onBack: () -> Unit) {
         ) {
             Card(
                 onClick  = { toggle(!enabled) },
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape    = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp, bottomStart = 4.dp, bottomEnd = 4.dp),
-                colors   = CardDefaults.cardColors(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalGutter)
+                    .padding(bottom = 12.dp),
+                shape  = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             ) {
@@ -121,23 +121,23 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                 )
             }
 
-            Spacer(modifier = Modifier.height(2.dp))
-
             Card(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
-                shape    = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp, bottomStart = 28.dp, bottomEnd = 28.dp),
-                colors   = CardDefaults.cardColors(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalGutter),
+                shape  = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             ) {
-                Row(
+                androidx.compose.foundation.layout.Row(
                     modifier          = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.Top,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
+                        modifier           = Modifier.padding(end = 16.dp),
                     )
                     Text(
                         text       = stringResource(R.string.touch_boost_description),
