@@ -27,6 +27,7 @@
     <string name="navigate_up">Navigate up</string>
 
     <!-- ── Display Colours ────────────────────────────────── -->
+    <string name="display_colours_description">Preview different colour profiles and apply them system-wide. Effects may be subtle depending on content.</string>
     <string name="color_mode_vivid">Vivid</string>
     <string name="color_mode_saturated">Saturated</string>
     <string name="color_mode_standard">Standard</string>
