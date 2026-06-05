@@ -10,9 +10,11 @@ import android.provider.Settings
 import android.view.Display
 import android.view.WindowManagerGlobal
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -28,6 +30,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -100,23 +103,190 @@ private fun restartSystemUi() {
 }
 
 @Composable
-private fun ResolutionRowCard(
-    option:     ResolutionOption,
-    isSelected: Boolean,
-    shape:      Shape,
-    modifier:   Modifier = Modifier,
-    onClick:    () -> Unit,
+private fun InfoCard(
+    title:            String? = null,
+    body:             String,
+    iconTint:         Color,
+    containerColor:   Color,
+    border:           BorderStroke? = null,
+    modifier:         Modifier = Modifier,
 ) {
     Card(
+        modifier = modifier,
+        shape    = MaterialTheme.shapes.extraLarge,
+        colors   = CardDefaults.cardColors(containerColor = containerColor),
+        border   = border,
+    ) {
+        Row(
+            modifier          = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector        = Icons.Filled.Info,
+                contentDescription = null,
+                modifier           = Modifier
+                    .padding(end = 16.dp)
+                    .size(24.dp),
+                tint               = iconTint,
+            )
+            Column {
+                if (title != null) {
+                    Text(
+                        text  = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = iconTint,
+                    )
+                }
+                Text(
+                    text       = body,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    color      = iconTint,
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.3f,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@Composable
+fun ScreenResolutionScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+
+    var selectedKey by remember {
+        mutableStateOf(
+            Settings.System.getString(context.contentResolver, PREF_KEY) ?: NATIVE_KEY
+        )
+    }
+
+    var showRestartWarning by remember { mutableStateOf(false) }
+
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+    Scaffold(
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            MediumTopAppBar(
+                title = {
+                    Text(
+                        text     = stringResource(R.string.screen_resolution_title),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(
+                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.navigate_up),
+                        )
+                    }
+                },
+                scrollBehavior = scrollBehavior,
+            )
+        },
+    ) { innerPadding ->
+        val horizontalGutter = 20.dp
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(
+                    top    = innerPadding.calculateTopPadding() + 12.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 32.dp,
+                ),
+        ) {
+            InfoCard(
+                body           = stringResource(R.string.screen_resolution_description),
+                iconTint       = MaterialTheme.colorScheme.onSurfaceVariant,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier       = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalGutter)
+                    .padding(bottom = 12.dp),
+            )
+
+            AnimatedContent(
+                targetState    = showRestartWarning,
+                transitionSpec = {
+                    fadeIn(Motion.navEffectsSpec()) togetherWith fadeOut(Motion.navEffectsSpec())
+                },
+                label = "screen_resolution_restart_warning",
+            ) { visible ->
+                if (visible) {
+                    InfoCard(
+                        title          = stringResource(R.string.screen_resolution_restart_hint_title),
+                        body           = stringResource(R.string.screen_resolution_restart_hint_body),
+                        iconTint       = MaterialTheme.colorScheme.onErrorContainer,
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        border         = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                        modifier       = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalGutter)
+                            .padding(bottom = 12.dp),
+                    )
+                }
+            }
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalGutter),
+                shape  = MaterialTheme.shapes.extraLarge,
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            ) {
+                RESOLUTIONS.forEachIndexed { index, option ->
+                    val isLast = index == RESOLUTIONS.lastIndex
+
+                    ResolutionRow(
+                        option     = option,
+                        isSelected = selectedKey == option.key,
+                        onClick    = {
+                            runCatching {
+                                applyResolution(option)
+                                Settings.System.putString(context.contentResolver, PREF_KEY, option.key)
+                                selectedKey = option.key
+                                showRestartWarning = true
+                                restartSystemUi()
+                            }.onFailure { e ->
+                                dlog(TAG, "Failed to apply resolution: ${e.message}")
+                                PartsToast.show(context, R.string.screen_resolution_failed)
+                            }
+                        },
+                    )
+
+                    if (!isLast) {
+                        Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ResolutionRow(
+    option:     ResolutionOption,
+    isSelected: Boolean,
+    onClick:    () -> Unit,
+) {
+    val targetContainer = if (isSelected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        Color.Transparent
+    }
+
+    Card(
         onClick  = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape    = shape,
-        colors   = CardDefaults.cardColors(
-            containerColor = if (isSelected)
-                MaterialTheme.colorScheme.secondaryContainer
-            else
-                MaterialTheme.colorScheme.surfaceContainerHigh,
+        modifier = Modifier.fillMaxWidth(),
+        shape    = MaterialTheme.shapes.extraLarge.copy(
+            bottomStart = CornerSize(0.dp),
+            bottomEnd   = CornerSize(0.dp),
+            topStart    = CornerSize(0.dp),
+            topEnd      = CornerSize(0.dp),
         ),
+        colors = CardDefaults.cardColors(containerColor = targetContainer),
     ) {
         ListItem(
             headlineContent = {
@@ -158,153 +328,5 @@ private fun ResolutionRowCard(
             },
             colors = ListItemDefaults.colors(containerColor = Color.Transparent),
         )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ScreenResolutionScreen(onBack: () -> Unit) {
-    val context = LocalContext.current
-
-    var selectedKey by remember {
-        mutableStateOf(
-            Settings.System.getString(context.contentResolver, PREF_KEY) ?: NATIVE_KEY
-        )
-    }
-
-    var showRestartWarning by remember { mutableStateOf(false) }
-
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-
-    val shapeOuter = MaterialTheme.shapes.extraLarge
-    val shapeInner = MaterialTheme.shapes.extraSmall
-
-    Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            MediumTopAppBar(
-                title = {
-                    Text(
-                        text     = stringResource(R.string.screen_resolution_title),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(
-                            imageVector        = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = stringResource(R.string.navigate_up),
-                        )
-                    }
-                },
-                scrollBehavior = scrollBehavior,
-            )
-        },
-    ) { innerPadding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-                .padding(
-                    top    = innerPadding.calculateTopPadding() + 12.dp,
-                    bottom = innerPadding.calculateBottomPadding() + 32.dp,
-                ),
-        ) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 12.dp),
-                shape  = MaterialTheme.shapes.extraLarge,
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            ) {
-                Row(
-                    modifier          = Modifier.padding(16.dp),
-                    verticalAlignment = Alignment.Top,
-                ) {
-                    Icon(
-                        imageVector        = Icons.Filled.Info,
-                        contentDescription = null,
-                        modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
-                    )
-                    Text(
-                        text       = stringResource(R.string.screen_resolution_description),
-                        style      = MaterialTheme.typography.bodyMedium,
-                        lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
-                    )
-                }
-            }
-
-            if (showRestartWarning) {
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 12.dp),
-                    shape  = MaterialTheme.shapes.extraLarge,
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                ) {
-                    Row(
-                        modifier          = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        Icon(
-                            imageVector        = Icons.Filled.Info,
-                            contentDescription = null,
-                            modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
-                            tint               = MaterialTheme.colorScheme.onErrorContainer,
-                        )
-                        Column {
-                            Text(
-                                text  = stringResource(R.string.screen_resolution_restart_hint_title),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.onErrorContainer,
-                            )
-                            Text(
-                                text       = stringResource(R.string.screen_resolution_restart_hint_body),
-                                style      = MaterialTheme.typography.bodyMedium,
-                                color      = MaterialTheme.colorScheme.onErrorContainer,
-                                lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
-                            )
-                        }
-                    }
-                }
-            }
-
-            RESOLUTIONS.forEachIndexed { index, option ->
-                val isFirst   = index == 0
-                val isLast    = index == RESOLUTIONS.lastIndex
-                val bottomPad = if (isLast) 0.dp else 2.dp
-
-                val shape = shapeOuter.copy(
-                    topStart    = if (isFirst) shapeOuter.topStart    else shapeInner.topStart,
-                    topEnd      = if (isFirst) shapeOuter.topEnd      else shapeInner.topEnd,
-                    bottomStart = if (isLast)  shapeOuter.bottomStart else shapeInner.bottomStart,
-                    bottomEnd   = if (isLast)  shapeOuter.bottomEnd   else shapeInner.bottomEnd,
-                )
-
-                ResolutionRowCard(
-                    option     = option,
-                    isSelected = selectedKey == option.key,
-                    shape      = shape,
-                    modifier   = Modifier
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = bottomPad),
-                    onClick = {
-                        runCatching {
-                            applyResolution(option)
-                            Settings.System.putString(context.contentResolver, PREF_KEY, option.key)
-                            selectedKey = option.key
-                            showRestartWarning = true
-                            restartSystemUi()
-                        }.onFailure { e ->
-                            dlog(TAG, "Failed to apply resolution: ${e.message}")
-                            PartsToast.show(context, R.string.screen_resolution_failed)
-                        }
-                    },
-                )
-            }
-        }
     }
 }
