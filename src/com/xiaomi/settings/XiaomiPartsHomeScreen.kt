@@ -76,6 +76,9 @@ fun XiaomiPartsHomeScreen(
                         text     = stringResource(R.string.xiaomi_parts_title),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
+                        // LargeTopAppBar provides 16dp start padding by default;
+                        // nudge by 4dp so the large title aligns with the 20dp card gutter.
+                        modifier = Modifier.padding(start = 4.dp),
                     )
                 },
                 scrollBehavior = scrollBehavior,
@@ -179,7 +182,8 @@ fun PartsCategory(label: String) {
         text     = label,
         style    = MaterialTheme.typography.titleSmall,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(start = 32.dp, top = 24.dp, bottom = 8.dp),
+        // Match the 20dp card gutter (16dp ListItem default + 4dp nudge = 20dp)
+        modifier = Modifier.padding(start = 36.dp, top = 24.dp, bottom = 8.dp),
     )
 }
 
