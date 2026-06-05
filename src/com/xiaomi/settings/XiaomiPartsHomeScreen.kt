@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.filled.Fingerprint
@@ -57,6 +57,12 @@ import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
+// M3 Expressive 2026: squircle icon shape (20dp radius matches spec)
+private val IconShape = RoundedCornerShape(20.dp)
+
+// M3 Expressive card shape
+private val CardShape = RoundedCornerShape(28.dp)
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun XiaomiPartsHomeScreen(
@@ -69,7 +75,7 @@ fun XiaomiPartsHomeScreen(
 
     Scaffold(
         modifier       = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
-        containerColor = MaterialTheme.colorScheme.background,
+        containerColor = MaterialTheme.colorScheme.surfaceContainerLowest,
         topBar = {
             LargeFlexibleTopAppBar(
                 title = {
@@ -80,7 +86,7 @@ fun XiaomiPartsHomeScreen(
                     )
                 },
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor         = MaterialTheme.colorScheme.background,
+                    containerColor         = MaterialTheme.colorScheme.surfaceContainerLowest,
                     scrolledContainerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
                 scrollBehavior = scrollBehavior,
@@ -208,12 +214,12 @@ private fun PartsGroupCard(
     content:  @Composable () -> Unit,
 ) {
     Card(
-        modifier = modifier
+        modifier  = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 4.dp),
-        shape  = MaterialTheme.shapes.extraLarge,
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+            .padding(horizontal = 16.dp, vertical = 6.dp),
+        shape     = CardShape,
+        colors    = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
     ) {
@@ -222,21 +228,24 @@ private fun PartsGroupCard(
 }
 
 @Composable
-fun PartsCategory(label: String, modifier: Modifier = Modifier) {
+fun PartsCategory(
+    label:    String,
+    modifier: Modifier = Modifier,
+) {
     Text(
         text     = label,
-        style    = MaterialTheme.typography.titleSmall,
+        style    = MaterialTheme.typography.labelLarge,
         color    = MaterialTheme.colorScheme.primary,
-        modifier = modifier.padding(start = 24.dp, top = 20.dp, bottom = 8.dp),
+        modifier = modifier.padding(start = 28.dp, top = 20.dp, bottom = 8.dp),
     )
 }
 
 @Composable
 private fun PartsDivider() {
     HorizontalDivider(
-        modifier  = Modifier.padding(horizontal = 16.dp),
+        modifier  = Modifier.padding(horizontal = 72.dp),
         thickness = 1.dp,
-        color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f),
+        color     = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f),
     )
 }
 
@@ -250,14 +259,14 @@ private fun PartsListItem(
     onClick:            () -> Unit,
 ) {
     val animatedContainerColor by animateColorAsState(
-        targetValue = iconContainerColor,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "iconContainerColor",
+        targetValue   = iconContainerColor,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label         = "iconContainerColor",
     )
     val animatedContentColor by animateColorAsState(
-        targetValue = iconContentColor,
-        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
-        label = "iconContentColor",
+        targetValue   = iconContentColor,
+        animationSpec = spring(stiffness = Spring.StiffnessMedium),
+        label         = "iconContentColor",
     )
 
     ListItem(
@@ -280,9 +289,9 @@ private fun PartsListItem(
         },
         leadingContent = {
             Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(CircleShape)
+                modifier         = Modifier
+                    .size(48.dp)
+                    .clip(IconShape)
                     .background(animatedContainerColor),
                 contentAlignment = Alignment.Center,
             ) {
