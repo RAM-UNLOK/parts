@@ -57,7 +57,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MediumTopAppBar
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -65,6 +64,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -86,7 +86,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -137,12 +136,12 @@ private fun groupedShape(index: Int, total: Int): Shape {
 
 @Composable
 private fun InfoCard(
-    title:            String? = null,
-    body:             String,
-    icon:             @Composable (() -> Unit)? = null,
-    iconTint:         Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    containerColor:   Color = MaterialTheme.colorScheme.surfaceContainerHigh,
-    modifier:         Modifier = Modifier,
+    title:          String? = null,
+    body:           String,
+    icon:           @Composable (() -> Unit)? = null,
+    iconTint:       Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    containerColor: Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    modifier:       Modifier = Modifier,
 ) {
     Card(
         modifier = modifier,
@@ -155,7 +154,7 @@ private fun InfoCard(
         ) {
             if (icon != null) {
                 Box(
-                    modifier = Modifier.padding(end = 16.dp).size(24.dp),
+                    modifier         = Modifier.padding(end = 16.dp).size(24.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     icon()
@@ -215,14 +214,12 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         }
     }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
-    val profiles       = remember { ThermalService.profiles() }
+    val profiles         = remember { ThermalService.profiles() }
     val horizontalGutter = 20.dp
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            MediumTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text     = stringResource(R.string.thermal_title),
@@ -235,7 +232,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.navigate_up))
                     }
                 },
-                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
             )
         },
         floatingActionButton = {

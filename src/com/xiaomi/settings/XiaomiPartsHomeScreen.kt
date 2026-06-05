@@ -21,12 +21,12 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
@@ -34,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -63,14 +62,12 @@ fun XiaomiPartsHomeScreen(
     onNavigateToThermal:    () -> Unit,
     onNavigateToTouch:      () -> Unit,
 ) {
-    val context        = LocalContext.current
-    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val context          = LocalContext.current
     val horizontalGutter = 20.dp
 
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            LargeTopAppBar(
+            TopAppBar(
                 title = {
                     Text(
                         text     = stringResource(R.string.xiaomi_parts_title),
@@ -78,7 +75,9 @@ fun XiaomiPartsHomeScreen(
                         overflow = TextOverflow.Ellipsis,
                     )
                 },
-                scrollBehavior = scrollBehavior,
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.surface,
+                ),
             )
         },
     ) { innerPadding ->
@@ -181,12 +180,12 @@ fun PartsCategory(label: String) {
 
 @Composable
 private fun PartsListItemCard(
-    icon:            ImageVector,
-    title:           String,
-    summary:         String,
-    shape:           Shape,
+    icon:             ImageVector,
+    title:            String,
+    summary:          String,
+    shape:            Shape,
     horizontalGutter: androidx.compose.ui.unit.Dp,
-    onClick:         () -> Unit,
+    onClick:          () -> Unit,
 ) {
     Card(
         onClick  = onClick,
