@@ -154,15 +154,13 @@ private fun InfoCard(
 fun ScreenResolutionScreen(onBack: () -> Unit) {
     val context = LocalContext.current
 
-    var selectedKey        by remember {
+    var selectedKey   by remember {
         mutableStateOf(
             Settings.System.getString(context.contentResolver, PREF_KEY) ?: NATIVE_KEY
         )
     }
-    var pendingOption      by remember { mutableStateOf<ResolutionOption?>(null) }
-    var showRestartWarning by remember { mutableStateOf(false) }
+    var pendingOption by remember { mutableStateOf<ResolutionOption?>(null) }
 
-    // Confirmation dialog — shown before applying any resolution change
     pendingOption?.let { option ->
         AlertDialog(
             onDismissRequest = { pendingOption = null },
@@ -176,7 +174,7 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                 Text(stringResource(R.string.screen_resolution_dialog_title))
             },
             text = {
-                Text(stringResource(R.string.screen_resolution_dialog_body))
+                Text(stringResource(R.string.screen_resolution_restart_hint_body))
             },
             confirmButton = {
                 TextButton(
@@ -185,8 +183,7 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                         runCatching {
                             applyResolution(option)
                             Settings.System.putString(context.contentResolver, PREF_KEY, option.key)
-                            selectedKey        = option.key
-                            showRestartWarning = true
+                            selectedKey = option.key
                             restartSystemUi()
                         }.onFailure { e ->
                             dlog(TAG, "Failed to apply resolution: ${e.message}")
@@ -249,28 +246,6 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                     .padding(horizontal = horizontalGutter)
                     .padding(bottom = 12.dp),
             )
-
-            AnimatedContent(
-                targetState    = showRestartWarning,
-                transitionSpec = {
-                    fadeIn(Motion.navEffectsSpec()) togetherWith fadeOut(Motion.navEffectsSpec())
-                },
-                label = "screen_resolution_restart_warning",
-            ) { visible ->
-                if (visible) {
-                    InfoCard(
-                        title          = stringResource(R.string.screen_resolution_restart_hint_title),
-                        body           = stringResource(R.string.screen_resolution_restart_hint_body),
-                        iconTint       = MaterialTheme.colorScheme.onErrorContainer,
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        border         = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-                        modifier       = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = horizontalGutter)
-                            .padding(bottom = 12.dp),
-                    )
-                }
-            }
 
             Card(
                 modifier = Modifier

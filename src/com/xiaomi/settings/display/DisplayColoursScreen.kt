@@ -365,16 +365,6 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     bottom = innerPadding.calculateBottomPadding() + 32.dp,
                 ),
         ) {
-            InfoCard(
-                body           = stringResource(R.string.display_colours_description),
-                iconTint       = MaterialTheme.colorScheme.onSurfaceVariant,
-                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                modifier       = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = horizontalGutter)
-                    .padding(bottom = 16.dp),
-            )
-
             ColourPreviewHero(
                 selectedId = selectedId,
                 onSelect   = { id ->
@@ -386,6 +376,16 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     }
                 },
                 modifier = Modifier
+                    .padding(horizontal = horizontalGutter)
+                    .padding(bottom = 16.dp),
+            )
+
+            InfoCard(
+                body           = stringResource(R.string.display_colours_description),
+                iconTint       = MaterialTheme.colorScheme.onSurfaceVariant,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier       = Modifier
+                    .fillMaxWidth()
                     .padding(horizontal = horizontalGutter)
                     .padding(bottom = 16.dp),
             )
