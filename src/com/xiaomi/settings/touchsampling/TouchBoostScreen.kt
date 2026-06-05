@@ -6,9 +6,11 @@
 package com.xiaomi.settings.touchsampling
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -49,7 +51,7 @@ fun TouchBoostScreen(onBack: () -> Unit) {
     val context = LocalContext.current
     var enabled by remember { mutableStateOf(TouchSamplingService.isEnabled(context)) }
 
-    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val scrollBehavior   = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val horizontalGutter = 20.dp
 
     fun toggle(newValue: Boolean) {
@@ -130,14 +132,16 @@ fun TouchBoostScreen(onBack: () -> Unit) {
                     containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                 ),
             ) {
-                androidx.compose.foundation.layout.Row(
+                Row(
                     modifier          = Modifier.padding(16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         imageVector        = Icons.Filled.Info,
                         contentDescription = null,
-                        modifier           = Modifier.padding(end = 16.dp),
+                        modifier           = Modifier
+                            .padding(end = 16.dp)
+                            .size(24.dp),
                     )
                     Text(
                         text       = stringResource(R.string.touch_boost_description),

@@ -50,7 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -69,12 +69,12 @@ private const val BASE_WIDTH   = 1220
 private const val BASE_DENSITY = 446
 
 private data class ResolutionOption(
-    val key:       String,
-    val labelRes:  Int,
+    val key:        String,
+    val labelRes:   Int,
     val summaryRes: Int,
-    val width:     Int,
-    val height:    Int,
-    val isNative:  Boolean = false,
+    val width:      Int,
+    val height:     Int,
+    val isNative:   Boolean = false,
 )
 
 private val RESOLUTIONS = listOf(
@@ -104,12 +104,12 @@ private fun restartSystemUi() {
 
 @Composable
 private fun InfoCard(
-    title:            String? = null,
-    body:             String,
-    iconTint:         Color,
-    containerColor:   Color,
-    border:           BorderStroke? = null,
-    modifier:         Modifier = Modifier,
+    title:          String? = null,
+    body:           String,
+    iconTint:       Color,
+    containerColor: Color,
+    border:         BorderStroke? = null,
+    modifier:       Modifier = Modifier,
 ) {
     Card(
         modifier = modifier,
@@ -271,22 +271,13 @@ private fun ResolutionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
-    val targetContainer = if (isSelected) {
-        MaterialTheme.colorScheme.secondaryContainer
-    } else {
-        Color.Transparent
-    }
+    val targetContainer = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
 
     Card(
         onClick  = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape    = MaterialTheme.shapes.extraLarge.copy(
-            bottomStart = CornerSize(0.dp),
-            bottomEnd   = CornerSize(0.dp),
-            topStart    = CornerSize(0.dp),
-            topEnd      = CornerSize(0.dp),
-        ),
-        colors = CardDefaults.cardColors(containerColor = targetContainer),
+        shape    = RectangleShape,
+        colors   = CardDefaults.cardColors(containerColor = targetContainer),
     ) {
         ListItem(
             headlineContent = {
@@ -302,10 +293,7 @@ private fun ResolutionRow(
                 )
             },
             leadingContent = {
-                RadioButton(
-                    selected = isSelected,
-                    onClick  = null,
-                )
+                RadioButton(selected = isSelected, onClick = null)
             },
             trailingContent = {
                 AnimatedContent(

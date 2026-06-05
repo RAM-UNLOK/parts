@@ -5,7 +5,6 @@
 
 package com.xiaomi.settings
 
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -56,9 +55,6 @@ private val bottomCardShape: Shape
         topEnd   = MaterialTheme.shapes.extraSmall.topEnd,
     )
 
-private val singleCardShape: Shape
-    @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun XiaomiPartsHomeScreen(
@@ -69,6 +65,7 @@ fun XiaomiPartsHomeScreen(
 ) {
     val context        = LocalContext.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+    val horizontalGutter = 20.dp
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -99,6 +96,7 @@ fun XiaomiPartsHomeScreen(
                     title   = stringResource(R.string.display_colours_title),
                     summary = stringResource(R.string.display_colours_summary),
                     shape   = topCardShape,
+                    horizontalGutter = horizontalGutter,
                     onClick = onNavigateToDisplay,
                 )
                 Spacer(Modifier.height(2.dp))
@@ -109,6 +107,7 @@ fun XiaomiPartsHomeScreen(
                     title   = stringResource(R.string.screen_resolution_title),
                     summary = stringResource(R.string.screen_resolution_home_summary),
                     shape   = bottomCardShape,
+                    horizontalGutter = horizontalGutter,
                     onClick = onNavigateToResolution,
                 )
             }
@@ -120,6 +119,7 @@ fun XiaomiPartsHomeScreen(
                     title   = stringResource(R.string.thermal_title),
                     summary = stringResource(R.string.thermal_summary),
                     shape   = topCardShape,
+                    horizontalGutter = horizontalGutter,
                     onClick = onNavigateToThermal,
                 )
                 Spacer(modifier = Modifier.height(2.dp))
@@ -130,6 +130,7 @@ fun XiaomiPartsHomeScreen(
                     title   = stringResource(R.string.touch_boost_title),
                     summary = stringResource(R.string.touch_boost_summary),
                     shape   = bottomCardShape,
+                    horizontalGutter = horizontalGutter,
                     onClick = onNavigateToTouch,
                 )
             }
@@ -141,6 +142,7 @@ fun XiaomiPartsHomeScreen(
                     title   = stringResource(R.string.fingerprint_calibration_title),
                     summary = stringResource(R.string.fingerprint_calibration_summary),
                     shape   = topCardShape,
+                    horizontalGutter = horizontalGutter,
                     onClick = {
                         if (!CitLauncher.launchFingerprintCalibration(context)) {
                             PartsToast.show(context, R.string.fingerprint_calibration_not_found)
@@ -155,6 +157,7 @@ fun XiaomiPartsHomeScreen(
                     title   = stringResource(R.string.speaker_calibration_title),
                     summary = stringResource(R.string.speaker_calibration_summary),
                     shape   = bottomCardShape,
+                    horizontalGutter = horizontalGutter,
                     onClick = {
                         if (!CitLauncher.launchSpeakerCalibration(context)) {
                             PartsToast.show(context, R.string.speaker_calibration_not_found)
@@ -178,17 +181,18 @@ fun PartsCategory(label: String) {
 
 @Composable
 private fun PartsListItemCard(
-    icon:    ImageVector,
-    title:   String,
-    summary: String,
-    shape:   Shape,
-    onClick: () -> Unit,
+    icon:            ImageVector,
+    title:           String,
+    summary:         String,
+    shape:           Shape,
+    horizontalGutter: androidx.compose.ui.unit.Dp,
+    onClick:         () -> Unit,
 ) {
     Card(
         onClick  = onClick,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = horizontalGutter),
         shape    = shape,
         colors   = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,

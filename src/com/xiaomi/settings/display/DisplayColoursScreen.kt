@@ -21,14 +21,12 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -61,12 +59,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.R
@@ -95,12 +92,12 @@ private val blobPositions = listOf(
 
 @Composable
 private fun InfoCard(
-    title:            String? = null,
-    body:             String,
-    iconTint:         Color,
-    containerColor:   Color,
-    border:           BorderStroke? = null,
-    modifier:         Modifier = Modifier,
+    title:          String? = null,
+    body:           String,
+    iconTint:       Color,
+    containerColor: Color,
+    border:         BorderStroke? = null,
+    modifier:       Modifier = Modifier,
 ) {
     Card(
         modifier = modifier,
@@ -185,7 +182,7 @@ private fun ColourPreviewHero(
         modifier = modifier
             .fillMaxWidth()
             .height(200.dp)
-            .clip(RoundedCornerShape(28.dp))
+            .clip(MaterialTheme.shapes.extraLarge)
             .background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         val widthPx  = with(LocalDensity.current) { maxWidth.toPx() }
@@ -259,13 +256,11 @@ private fun ColorModeList(
     ) {
         ColorMode.entries.forEachIndexed { index, mode ->
             val isLast = index == ColorMode.entries.lastIndex
-
             SelectionRow(
                 mode       = mode,
                 isSelected = selectedId == mode.id,
                 onClick    = { onSelect(mode) },
             )
-
             if (!isLast) {
                 Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
             }
@@ -279,22 +274,13 @@ private fun SelectionRow(
     isSelected: Boolean,
     onClick:    () -> Unit,
 ) {
-    val targetContainer = if (isSelected) {
-        MaterialTheme.colorScheme.secondaryContainer
-    } else {
-        Color.Transparent
-    }
+    val targetContainer = if (isSelected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent
 
     Card(
         onClick  = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape    = MaterialTheme.shapes.extraLarge.copy(
-            topStart    = androidx.compose.foundation.shape.CornerSize(0.dp),
-            topEnd      = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
-            bottomEnd   = androidx.compose.foundation.shape.CornerSize(0.dp),
-        ),
-        colors = CardDefaults.cardColors(containerColor = targetContainer),
+        shape    = RectangleShape,
+        colors   = CardDefaults.cardColors(containerColor = targetContainer),
     ) {
         ListItem(
             headlineContent = {
@@ -310,10 +296,7 @@ private fun SelectionRow(
                 )
             },
             leadingContent = {
-                RadioButton(
-                    selected = isSelected,
-                    onClick  = null,
-                )
+                RadioButton(selected = isSelected, onClick = null)
             },
             trailingContent = {
                 AnimatedContent(
@@ -418,8 +401,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         PartsToast.show(context, R.string.display_colours_failed)
                     }
                 },
-                modifier = Modifier
-                    .padding(horizontal = horizontalGutter),
+                modifier = Modifier.padding(horizontal = horizontalGutter),
             )
         }
     }
