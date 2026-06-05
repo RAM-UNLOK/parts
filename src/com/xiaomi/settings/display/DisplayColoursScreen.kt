@@ -6,6 +6,7 @@
 package com.xiaomi.settings.display
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateFloat
@@ -14,9 +15,9 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -32,8 +33,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -60,7 +63,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -90,6 +92,52 @@ private val blobPositions = listOf(
     Pair(0.18f, 0.30f), Pair(0.50f, 0.20f), Pair(0.82f, 0.30f),
     Pair(0.18f, 0.72f), Pair(0.50f, 0.80f), Pair(0.82f, 0.72f),
 )
+
+@Composable
+private fun InfoCard(
+    title:            String? = null,
+    body:             String,
+    iconTint:         Color,
+    containerColor:   Color,
+    border:           BorderStroke? = null,
+    modifier:         Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape    = MaterialTheme.shapes.extraLarge,
+        colors   = CardDefaults.cardColors(containerColor = containerColor),
+        border   = border,
+    ) {
+        androidx.compose.foundation.layout.Row(
+            modifier          = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(
+                imageVector        = Icons.Filled.Info,
+                contentDescription = null,
+                modifier           = Modifier
+                    .padding(end = 16.dp)
+                    .size(24.dp),
+                tint               = iconTint,
+            )
+            Column {
+                if (title != null) {
+                    Text(
+                        text  = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = iconTint,
+                    )
+                }
+                Text(
+                    text       = body,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    color      = iconTint,
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.3f,
+                )
+            }
+        }
+    }
+}
 
 @Composable
 private fun ColourPreviewHero(
@@ -138,27 +186,7 @@ private fun ColourPreviewHero(
             .fillMaxWidth()
             .height(200.dp)
             .clip(RoundedCornerShape(28.dp))
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
-            .pointerInput(selectedId) {
-                detectTapGestures { tapOffset ->
-                    val w = size.width.toFloat()
-                    val h = size.height.toFloat()
-                    var best = -1
-                    var bestDist = Float.MAX_VALUE
-                    blobPositions.forEachIndexed { i, (fx, fy) ->
-                        val cx = fx * w
-                        val cy = fy * h
-                        val dx = tapOffset.x - cx
-                        val dy = tapOffset.y - cy
-                        val dist = sqrt(dx * dx + dy * dy)
-                        if (dist < bestDist) {
-                            bestDist = dist
-                            best = i
-                        }
-                    }
-                    if (best >= 0) onSelect(allModes[best].id)
-                }
-            },
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh),
     ) {
         val widthPx  = with(LocalDensity.current) { maxWidth.toPx() }
         val heightPx = with(LocalDensity.current) { maxHeight.toPx() }
@@ -208,7 +236,7 @@ private fun ColourPreviewHero(
             Text(
                 text     = stringResource(activeMode.label),
                 style    = MaterialTheme.typography.titleSmall,
-                color    = Color.White,
+                color    = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier
                     .align(Alignment.BottomStart)
                     .padding(start = 16.dp, bottom = 12.dp),
@@ -217,21 +245,56 @@ private fun ColourPreviewHero(
     }
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
-private fun SelectionRowCard(
-    mode:       ColorMode,
-    isSelected: Boolean,
-    shape:      Shape,
+private fun ColorModeList(
+    selectedId: Int,
+    onSelect:   (ColorMode) -> Unit,
     modifier:   Modifier = Modifier,
-    onClick:    () -> Unit,
 ) {
     Card(
-        onClick  = onClick,
         modifier = modifier.fillMaxWidth(),
-        shape    = shape,
-        colors   = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape    = MaterialTheme.shapes.extraLarge,
+        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        ColorMode.entries.forEachIndexed { index, mode ->
+            val isLast = index == ColorMode.entries.lastIndex
+
+            SelectionRow(
+                mode       = mode,
+                isSelected = selectedId == mode.id,
+                onClick    = { onSelect(mode) },
+            )
+
+            if (!isLast) {
+                Divider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SelectionRow(
+    mode:       ColorMode,
+    isSelected: Boolean,
+    onClick:    () -> Unit,
+) {
+    val targetContainer = if (isSelected) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        Color.Transparent
+    }
+
+    Card(
+        onClick  = onClick,
+        modifier = Modifier.fillMaxWidth(),
+        shape    = MaterialTheme.shapes.extraLarge.copy(
+            topStart    = androidx.compose.foundation.shape.CornerSize(0.dp),
+            topEnd      = androidx.compose.foundation.shape.CornerSize(0.dp),
+            bottomStart = androidx.compose.foundation.shape.CornerSize(0.dp),
+            bottomEnd   = androidx.compose.foundation.shape.CornerSize(0.dp),
         ),
+        colors = CardDefaults.cardColors(containerColor = targetContainer),
     ) {
         ListItem(
             headlineContent = {
@@ -254,11 +317,11 @@ private fun SelectionRowCard(
             },
             trailingContent = {
                 AnimatedContent(
-                    targetState = isSelected,
+                    targetState    = isSelected,
                     transitionSpec = {
                         fadeIn(Motion.checkFadeInSpec()) togetherWith fadeOut(Motion.checkFadeOutSpec())
                     },
-                    label = "checkIcon",
+                    label = "checkIcon_${mode.name}",
                 ) { selected ->
                     if (selected) {
                         Icon(
@@ -276,7 +339,7 @@ private fun SelectionRowCard(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun DisplayColoursScreen(onBack: () -> Unit) {
     val context = LocalContext.current
@@ -286,6 +349,7 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    val horizontalGutter = 20.dp
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -319,6 +383,16 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                     bottom = innerPadding.calculateBottomPadding() + 32.dp,
                 ),
         ) {
+            InfoCard(
+                body           = stringResource(R.string.display_colours_description),
+                iconTint       = MaterialTheme.colorScheme.onSurfaceVariant,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                modifier       = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalGutter)
+                    .padding(bottom = 16.dp),
+            )
+
             ColourPreviewHero(
                 selectedId = selectedId,
                 onSelect   = { id ->
@@ -329,37 +403,24 @@ fun DisplayColoursScreen(onBack: () -> Unit) {
                         PartsToast.show(context, R.string.display_colours_failed)
                     }
                 },
-                modifier = Modifier.padding(horizontal = 16.dp)
+                modifier = Modifier
+                    .padding(horizontal = horizontalGutter)
+                    .padding(bottom = 16.dp),
             )
 
-            Spacer(Modifier.height(16.dp))
-
-            ColorMode.entries.forEachIndexed { index, mode ->
-                val isFirst   = index == 0
-                val isLast    = index == ColorMode.entries.lastIndex
-                val bottomPad = if (isLast) 0.dp else 2.dp
-                val shape     = RoundedCornerShape(
-                    topStart    = if (isFirst) 28.dp else 4.dp,
-                    topEnd      = if (isFirst) 28.dp else 4.dp,
-                    bottomStart = if (isLast) 28.dp else 4.dp,
-                    bottomEnd   = if (isLast) 28.dp else 4.dp,
-                )
-
-                SelectionRowCard(
-                    mode       = mode,
-                    isSelected = selectedId == mode.id,
-                    shape      = shape,
-                    modifier   = Modifier.padding(horizontal = 16.dp).padding(bottom = bottomPad),
-                    onClick    = {
-                        runCatching {
-                            ColorService.setColorMode(context, mode.id)
-                            selectedId = mode.id
-                        }.onFailure {
-                            PartsToast.show(context, R.string.display_colours_failed)
-                        }
-                    },
-                )
-            }
+            ColorModeList(
+                selectedId = selectedId,
+                onSelect   = { mode ->
+                    runCatching {
+                        ColorService.setColorMode(context, mode.id)
+                        selectedId = mode.id
+                    }.onFailure {
+                        PartsToast.show(context, R.string.display_colours_failed)
+                    }
+                },
+                modifier = Modifier
+                    .padding(horizontal = horizontalGutter),
+            )
         }
     }
 }
