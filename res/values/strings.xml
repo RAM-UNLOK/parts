@@ -54,6 +54,8 @@
     <string name="screen_resolution_1080p_summary">1080 × 2400 · Better battery</string>
     <string name="screen_resolution_720p">720p — HD+</string>
     <string name="screen_resolution_720p_summary">720 × 1600 · Maximum battery</string>
+    <string name="screen_resolution_restart_hint_title">Restart System UI recommended</string>
+    <string name="screen_resolution_restart_hint_body">After changing resolution, restart System UI so the new density fully applies. Avoid changing display size in system Display settings, this is a custom display feature.</string>
 
     <!-- ── Thermal Management ───────────────────────────────── -->
     <string name="thermal_title">Thermal Management</string>
