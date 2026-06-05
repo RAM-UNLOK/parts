@@ -45,8 +45,10 @@ fun XiaomiPartsTheme(
     val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
     val colorScheme = when {
-        dynamicColor -> dynamicLightColorScheme(context)
-        else         -> LightColorScheme
+        dynamicColor && darkTheme  -> dynamicDarkColorScheme(context)
+        dynamicColor && !darkTheme -> dynamicLightColorScheme(context)
+        darkTheme                  -> DarkColorScheme
+        else                       -> LightColorScheme
     }
 
     MaterialTheme(
