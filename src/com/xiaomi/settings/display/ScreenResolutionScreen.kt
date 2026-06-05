@@ -28,6 +28,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +41,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -152,13 +154,56 @@ private fun InfoCard(
 fun ScreenResolutionScreen(onBack: () -> Unit) {
     val context = LocalContext.current
 
-    var selectedKey by remember {
+    var selectedKey        by remember {
         mutableStateOf(
             Settings.System.getString(context.contentResolver, PREF_KEY) ?: NATIVE_KEY
         )
     }
-
+    var pendingOption      by remember { mutableStateOf<ResolutionOption?>(null) }
     var showRestartWarning by remember { mutableStateOf(false) }
+
+    // Confirmation dialog — shown before applying any resolution change
+    pendingOption?.let { option ->
+        AlertDialog(
+            onDismissRequest = { pendingOption = null },
+            icon = {
+                Icon(
+                    imageVector        = Icons.Filled.Info,
+                    contentDescription = null,
+                )
+            },
+            title = {
+                Text(stringResource(R.string.screen_resolution_dialog_title))
+            },
+            text = {
+                Text(stringResource(R.string.screen_resolution_dialog_body))
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        pendingOption = null
+                        runCatching {
+                            applyResolution(option)
+                            Settings.System.putString(context.contentResolver, PREF_KEY, option.key)
+                            selectedKey        = option.key
+                            showRestartWarning = true
+                            restartSystemUi()
+                        }.onFailure { e ->
+                            dlog(TAG, "Failed to apply resolution: ${e.message}")
+                            PartsToast.show(context, R.string.screen_resolution_failed)
+                        }
+                    },
+                ) {
+                    Text(stringResource(R.string.screen_resolution_dialog_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingOption = null }) {
+                    Text(stringResource(R.string.screen_resolution_dialog_cancel))
+                }
+            },
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -240,18 +285,7 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                     ResolutionRow(
                         option     = option,
                         isSelected = selectedKey == option.key,
-                        onClick    = {
-                            runCatching {
-                                applyResolution(option)
-                                Settings.System.putString(context.contentResolver, PREF_KEY, option.key)
-                                selectedKey = option.key
-                                showRestartWarning = true
-                                restartSystemUi()
-                            }.onFailure { e ->
-                                dlog(TAG, "Failed to apply resolution: ${e.message}")
-                                PartsToast.show(context, R.string.screen_resolution_failed)
-                            }
-                        },
+                        onClick    = { pendingOption = option },
                     )
 
                     if (!isLast) {
