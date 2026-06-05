@@ -172,6 +172,8 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
         )
     }
 
+    var showRestartWarning by remember { mutableStateOf(false) }
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     val shapeOuter = MaterialTheme.shapes.extraLarge
@@ -234,6 +236,42 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                 }
             }
 
+            if (showRestartWarning) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                        .padding(bottom = 12.dp),
+                    shape  = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                ) {
+                    Row(
+                        modifier          = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        Icon(
+                            imageVector        = Icons.Filled.Info,
+                            contentDescription = null,
+                            modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
+                            tint               = MaterialTheme.colorScheme.onErrorContainer,
+                        )
+                        Column {
+                            Text(
+                                text  = stringResource(R.string.screen_resolution_restart_hint_title),
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onErrorContainer,
+                            )
+                            Text(
+                                text       = stringResource(R.string.screen_resolution_restart_hint_body),
+                                style      = MaterialTheme.typography.bodyMedium,
+                                color      = MaterialTheme.colorScheme.onErrorContainer,
+                                lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
+                            )
+                        }
+                    }
+                }
+            }
+
             RESOLUTIONS.forEachIndexed { index, option ->
                 val isFirst   = index == 0
                 val isLast    = index == RESOLUTIONS.lastIndex
@@ -258,6 +296,7 @@ fun ScreenResolutionScreen(onBack: () -> Unit) {
                             applyResolution(option)
                             Settings.System.putString(context.contentResolver, PREF_KEY, option.key)
                             selectedKey = option.key
+                            showRestartWarning = true
                             restartSystemUi()
                         }.onFailure { e ->
                             dlog(TAG, "Failed to apply resolution: ${e.message}")
