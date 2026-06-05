@@ -12,6 +12,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.BatteryManager
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -48,6 +49,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -133,7 +135,52 @@ private fun groupedShape(index: Int, total: Int): Shape {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun InfoCard(
+    title:            String? = null,
+    body:             String,
+    icon:             @Composable (() -> Unit)? = null,
+    iconTint:         Color = MaterialTheme.colorScheme.onSurfaceVariant,
+    containerColor:   Color = MaterialTheme.colorScheme.surfaceContainerHigh,
+    modifier:         Modifier = Modifier,
+) {
+    Card(
+        modifier = modifier,
+        shape    = MaterialTheme.shapes.extraLarge,
+        colors   = CardDefaults.cardColors(containerColor = containerColor),
+    ) {
+        Row(
+            modifier          = Modifier.padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (icon != null) {
+                Box(
+                    modifier = Modifier.padding(end = 16.dp).size(24.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    icon()
+                }
+            }
+            Column {
+                if (title != null) {
+                    Text(
+                        text  = title,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = iconTint,
+                    )
+                }
+                Text(
+                    text       = body,
+                    style      = MaterialTheme.typography.bodyMedium,
+                    color      = iconTint,
+                    lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.3f,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun ThermalManagementScreen(onBack: () -> Unit) {
     val context      = LocalContext.current
@@ -170,9 +217,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val profiles       = remember { ThermalService.profiles() }
-
-    val shapeOuter = MaterialTheme.shapes.extraLarge
-    val shapeInner = MaterialTheme.shapes.extraSmall
+    val horizontalGutter = 20.dp
 
     Scaffold(
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -208,7 +253,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
         LazyColumn(
             modifier       = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(
-                top    = innerPadding.calculateTopPadding(),
+                top    = innerPadding.calculateTopPadding() + 8.dp,
                 bottom = innerPadding.calculateBottomPadding() + 88.dp,
             ),
         ) {
@@ -217,74 +262,94 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     visible = isCharging,
                     enter   = expandVertically(animationSpec = Motion.defaultEffectsSpec()) + fadeIn(),
                     exit    = shrinkVertically(animationSpec = Motion.defaultEffectsSpec()) + fadeOut(),
-                ) { ChargingBanner() }
-            }
-
-            item(key = "enable-card") {
-                Card(
-                    onClick  = {
-                        if (!isCharging) {
-                            thermalEnabled = !thermalEnabled
-                            thermalUtils.enabled = thermalEnabled
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(top = 12.dp, bottom = 2.dp),
-                    shape    = shapeOuter.copy(
-                        bottomStart = shapeInner.bottomStart,
-                        bottomEnd   = shapeInner.bottomEnd,
-                    ),
-                    colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 ) {
-                    ListItem(
-                        modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
-                        headlineContent = {
-                            Text(
-                                text  = stringResource(R.string.thermal_enable_title),
-                                style = MaterialTheme.typography.titleMedium,
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = horizontalGutter)
+                            .padding(bottom = 8.dp),
+                        shape  = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                    ) {
+                        Row(
+                            modifier              = Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment     = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        ) {
+                            Icon(
+                                imageVector        = Icons.Filled.BatteryChargingFull,
+                                contentDescription = null,
+                                tint               = MaterialTheme.colorScheme.primary,
+                                modifier           = Modifier.size(24.dp),
                             )
-                        },
-                        trailingContent = {
-                            Switch(
-                                checked         = thermalEnabled,
-                                enabled         = !isCharging,
-                                onCheckedChange = { checked ->
-                                    thermalEnabled = checked
-                                    thermalUtils.enabled = checked
-                                },
-                            )
-                        },
-                        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-                    )
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    text  = stringResource(R.string.thermal_charging_toast_connected),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    text  = stringResource(R.string.thermal_charging_banner_body),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
+                        }
+                    }
                 }
             }
 
-            item(key = "info-card") {
-                Card(
+            item(key = "enable+info") {
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 2.dp),
-                    shape    = shapeInner,
-                    colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        .padding(horizontal = horizontalGutter)
+                        .padding(bottom = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Row(
-                        modifier          = Modifier.padding(16.dp),
-                        verticalAlignment = Alignment.Top,
+                    Card(
+                        onClick  = {
+                            if (!isCharging) {
+                                thermalEnabled = !thermalEnabled
+                                thermalUtils.enabled = thermalEnabled
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape    = MaterialTheme.shapes.extraLarge,
+                        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                     ) {
-                        Icon(
-                            imageVector        = Icons.Filled.Info,
-                            contentDescription = null,
-                            modifier           = Modifier.padding(end = 16.dp, top = 2.dp),
-                        )
-                        Text(
-                            text       = stringResource(R.string.thermal_enable_summary),
-                            style      = MaterialTheme.typography.bodyMedium,
-                            lineHeight = MaterialTheme.typography.bodyMedium.lineHeight * 1.2f,
+                        ListItem(
+                            modifier = Modifier.alpha(if (isCharging) 0.38f else 1f),
+                            headlineContent = {
+                                Text(
+                                    text  = stringResource(R.string.thermal_enable_title),
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                            },
+                            trailingContent = {
+                                Switch(
+                                    checked         = thermalEnabled,
+                                    enabled         = !isCharging,
+                                    onCheckedChange = { checked ->
+                                        thermalEnabled = checked
+                                        thermalUtils.enabled = checked
+                                    },
+                                )
+                            },
+                            colors = ListItemDefaults.colors(containerColor = Color.Transparent),
                         )
                     }
+
+                    InfoCard(
+                        body = stringResource(R.string.thermal_enable_summary),
+                        icon = {
+                            Icon(
+                                imageVector        = Icons.Filled.Info,
+                                contentDescription = null,
+                                tint               = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier           = Modifier.size(20.dp),
+                            )
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                 }
             }
 
@@ -293,13 +358,10 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                     onClick  = { if (controlsEnabled) showResetDialog = true },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 8.dp),
-                    shape    = shapeOuter.copy(
-                        topStart = shapeInner.topStart,
-                        topEnd   = shapeInner.topEnd,
-                    ),
-                    colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+                        .padding(horizontal = horizontalGutter)
+                        .padding(bottom = 16.dp),
+                    shape  = MaterialTheme.shapes.extraLarge,
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
                 ) {
                     ListItem(
                         modifier = Modifier.alpha(if (controlsEnabled) 1f else 0.38f),
@@ -321,7 +383,7 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                                 imageVector        = Icons.Filled.RestartAlt,
                                 contentDescription = null,
                                 tint               = MaterialTheme.colorScheme.error,
-                                modifier           = Modifier.padding(start = 8.dp).size(24.dp),
+                                modifier           = Modifier.size(24.dp),
                             )
                         },
                         colors = ListItemDefaults.colors(containerColor = Color.Transparent),
@@ -353,7 +415,9 @@ fun ThermalManagementScreen(onBack: () -> Unit) {
                         entry    = app,
                         enabled  = controlsEnabled,
                         shape    = shape,
-                        modifier = Modifier.padding(horizontal = 16.dp).padding(bottom = bottomPad),
+                        modifier = Modifier
+                            .padding(horizontal = horizontalGutter)
+                            .padding(bottom = bottomPad),
                         onClick  = { if (controlsEnabled) pendingApp = app },
                     )
                 }
@@ -729,41 +793,6 @@ private fun ProfilePickerDialog(
                     Spacer(Modifier.width(8.dp))
                     TextButton(onClick = onConfirm) { Text(stringResource(R.string.thermal_apply)) }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun ChargingBanner() {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp)
-            .padding(top = 8.dp, bottom = 4.dp),
-        shape    = MaterialTheme.shapes.large,
-        colors   = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Row(
-            modifier              = Modifier.fillMaxWidth().padding(16.dp),
-            verticalAlignment     = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
-            Icon(
-                imageVector        = Icons.Filled.BatteryChargingFull,
-                contentDescription = null,
-                tint               = MaterialTheme.colorScheme.primary,
-                modifier           = Modifier.size(24.dp),
-            )
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                Text(
-                    text  = stringResource(R.string.thermal_charging_toast_connected),
-                    style = MaterialTheme.typography.titleMedium,
-                )
-                Text(
-                    text  = stringResource(R.string.thermal_charging_banner_body),
-                    style = MaterialTheme.typography.bodyMedium,
-                )
             }
         }
     }
