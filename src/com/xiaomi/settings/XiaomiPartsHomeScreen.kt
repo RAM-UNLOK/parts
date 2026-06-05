@@ -44,21 +44,18 @@ import androidx.compose.ui.unit.dp
 import com.xiaomi.settings.utils.CitLauncher
 import com.xiaomi.settings.utils.PartsToast
 
-/** Top card in a grouped stack: full outer radius on top, squeezed on bottom. */
 private val topCardShape: Shape
     @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge.copy(
         bottomStart = MaterialTheme.shapes.extraSmall.bottomStart,
         bottomEnd   = MaterialTheme.shapes.extraSmall.bottomEnd,
     )
 
-/** Bottom card in a grouped stack: squeezed on top, full outer radius on bottom. */
 private val bottomCardShape: Shape
     @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge.copy(
         topStart = MaterialTheme.shapes.extraSmall.topStart,
         topEnd   = MaterialTheme.shapes.extraSmall.topEnd,
     )
 
-/** Single card (no grouping): full outer radius on all corners. */
 private val singleCardShape: Shape
     @Composable @ReadOnlyComposable get() = MaterialTheme.shapes.extraLarge
 
@@ -95,8 +92,6 @@ fun XiaomiPartsHomeScreen(
                 bottom = innerPadding.calculateBottomPadding() + 32.dp,
             ),
         ) {
-
-            // ── Display ──────────────────────────────────────────────────
             item(key = "display-label") { PartsCategory(stringResource(R.string.display_category)) }
             item(key = "display-card-1") {
                 PartsListItemCard(
@@ -118,7 +113,6 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Performance ───────────────────────────────────────────────
             item(key = "perf-label") { PartsCategory(stringResource(R.string.performance_category)) }
             item(key = "perf-card-1") {
                 PartsListItemCard(
@@ -140,7 +134,6 @@ fun XiaomiPartsHomeScreen(
                 )
             }
 
-            // ── Diagnostics ───────────────────────────────────────────────
             item(key = "diag-label") { PartsCategory(stringResource(R.string.xiaomi_parts_category_diagnostics)) }
             item(key = "diag-card-1") {
                 PartsListItemCard(
@@ -218,7 +211,7 @@ private fun PartsListItemCard(
                 Icon(
                     imageVector        = icon,
                     contentDescription = null,
-                    modifier           = Modifier.size(24.dp).padding(top = 2.dp),
+                    modifier           = Modifier.size(24.dp),
                 )
             },
             trailingContent = {
