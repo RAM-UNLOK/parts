@@ -1,9 +1,8 @@
 //
-// XiaomiParts — modernized Settings extension using Jetpack Compose.
+// SPDX-FileCopyrightText: The LineageOS Project
+// SPDX-License-Identifier: Apache-2.0
 //
-// NOTE: All Compose modules are taken directly from
-//   prebuilts/sdk/current/androidx/m2repository
-// as detected in this ROM tree.
+// XiaomiParts — modernized Settings extension using Jetpack Compose.
 //
 
 android_app {

@@ -139,12 +139,15 @@ class TouchSamplingService : Service() {
             Log.w(TAG, "TouchFeature AIDL not available — skipping rate apply")
             return
         }
-        runCatching { tf.setTouchMode(0, 0,   state) }
-        runCatching { tf.setTouchMode(0, 202, state) }
-        runCatching { tf.setTouchMode(0, 1,   state) }
-        runCatching { tf.setTouchMode(0, 3,   if (state == 1) 34 else 0) }
-        runCatching { tf.setTouchMode(0, 2,   if (state == 1) 99 else 0) }
-        runCatching { tf.setTouchMode(0, 7,   if (state == 1) 0  else 1) }
+        
+        // Use setModeValue based on your ITouchFeature.aidl
+        runCatching { tf.setModeValue(0, 0,   state) }
+        runCatching { tf.setModeValue(0, 202, state) }
+        runCatching { tf.setModeValue(0, 1,   state) }
+        runCatching { tf.setModeValue(0, 3,   if (state == 1) 34 else 0) }
+        runCatching { tf.setModeValue(0, 2,   if (state == 1) 99 else 0) }
+        runCatching { tf.setModeValue(0, 7,   if (state == 1) 0  else 1) }
+        
         if (DEBUG) Log.d(TAG, "Touch sampling rate applied: state=$state")
     }
 

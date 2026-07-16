@@ -1,6 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2018 The LineageOS Project
- * SPDX-FileCopyrightText: 2025 Paranoid Android
+ * SPDX-FileCopyrightText: The LineageOS Project
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -27,9 +26,16 @@ class BootCompletedReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != Intent.ACTION_LOCKED_BOOT_COMPLETED) return
-        if (DEBUG) Log.d(TAG, "LOCKED_BOOT_COMPLETED received")
-        onLockedBootCompleted(context)
+        if (DEBUG) Log.d(TAG, "Received boot completed intent: ${intent.action}")
+        
+        when (intent.action) {
+            Intent.ACTION_BOOT_COMPLETED -> onBootCompleted(context)
+            Intent.ACTION_LOCKED_BOOT_COMPLETED -> onLockedBootCompleted(context)
+        }
+    }
+
+    private fun onBootCompleted(context: Context) {
+        if (DEBUG) Log.d(TAG, "BOOT_COMPLETED received")
     }
 
     /**
@@ -39,6 +45,8 @@ class BootCompletedReceiver : BroadcastReceiver() {
      * from stopping the remaining services from starting.
      */
     private fun onLockedBootCompleted(context: Context) {
+        if (DEBUG) Log.d(TAG, "LOCKED_BOOT_COMPLETED received")
+        
         // Display colour mode
         runCatching {
             context.startServiceAsUser(
@@ -60,18 +68,22 @@ class BootCompletedReceiver : BroadcastReceiver() {
             ThermalUtils.getInstance(context.applicationContext).startService()
         }.onFailure { e -> Log.e(TAG, "Failed to start ThermalService", e) }
 
-        // Force-enable all HDR types (Dolby Vision, HDR10, HLG, HDR10+)
+        // Override HDR types - Stock display HAL doesn't enable Dolby Vision support.
+        // This API moved to DisplayManager in Android U (API level 34+).
+        // We override supported HDR types at boot to enable Dolby Vision since
+        // the stock MIUI approach using a custom SurfaceFlinger lib is not available.
         runCatching {
-            context.getSystemService(DisplayManager::class.java)
-                ?.overrideHdrTypes(
-                    Display.DEFAULT_DISPLAY,
-                    intArrayOf(
-                        HdrCapabilities.HDR_TYPE_DOLBY_VISION,
-                        HdrCapabilities.HDR_TYPE_HDR10,
-                        HdrCapabilities.HDR_TYPE_HLG,
-                        HdrCapabilities.HDR_TYPE_HDR10_PLUS,
-                    ),
-                )
+            val displayManager = context.getSystemService(DisplayManager::class.java)
+            displayManager.overrideHdrTypes(
+                Display.DEFAULT_DISPLAY,
+                intArrayOf(
+                    HdrCapabilities.HDR_TYPE_DOLBY_VISION,
+                    HdrCapabilities.HDR_TYPE_HDR10,
+                    HdrCapabilities.HDR_TYPE_HLG,
+                    HdrCapabilities.HDR_TYPE_HDR10_PLUS,
+                ),
+            )
+            if (DEBUG) Log.d(TAG, "Successfully overrode HDR types")
         }.onFailure { e -> Log.e(TAG, "Failed to override HDR types", e) }
     }
 }
